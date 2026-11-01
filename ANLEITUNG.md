@@ -94,6 +94,10 @@ Beispiel der Bayerische Landesbeauftragte für den Datenschutz.
   selbst an; in der D1-Konsole ist nichts zu tun.
 - **Alle Spiele**: jede Stufe, die in der Klasse schon jemand gespielt hat –
   wer hat was geübt.
+- Regler **Noten ⟷ Score**: statt der Note die Sterne (5/6), Prozent richtig
+  oder die Punkte der besten Runde. Prozent gibt es nur für Runden, die nach
+  dem zweiten Worker-Update vom 01.11.2026 gespielt wurden (Spalten
+  `richtig`/`von`, legt der Worker ebenfalls selbst an).
 
 Eigene Zugänge (z. B. für die eigenen Kinder): School-Tool → Extras →
 „music-trainer: eigene Zugänge“. Gruppe mit Passwort anlegen, Benutzernamen

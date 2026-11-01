@@ -4,7 +4,8 @@
 // Pseudonym wie PandaGeige42, das das School-Tool der Lehrkraft vergibt; nur
 // dort steht, wer dahintersteckt. Kinder melden sich mit Pseudonym und dem
 // Passwort ihrer Klasse an. Gespeichert werden Pseudonym, Klasse, beste
-// Ergebnisse und ein Verlauf der Runden (nach VERLAUF_TAGE gelöscht). Je
+// Ergebnisse (Sterne, Punkte, richtige Antworten) und ein Verlauf der Runden
+// (nach VERLAUF_TAGE gelöscht). Je
 // Klasse dazu die Auswahl der Lehrkraft, welche Spiele und Stufen für die Note
 // zählen – daraus zeigt der music-trainer jedem Kind seine eigene Note.
 // IP-Adressen werden nur als gekürzter Prüfwert für die Sperre nach
@@ -141,20 +142,29 @@ async function fehlversuch(env, schluessel) {
   ).bind(schluessel, t + SPERRE, t).run();
 }
 
-/* Auswahl für die Note, je Klasse als JSON: { liste: ['stamm-lesen|0', …], fehltAls6 }.
-   Die Spalte kam am 01.11.2026 dazu; ältere Datenbanken bekommen sie beim
-   ersten Bedarf, danach merkt sich der Worker, dass sie da ist. */
-let benotungSpalteDa = false;
+/* Spalten, die nach dem ersten Einrichten dazukamen (alle 01.11.2026). Ältere
+   Datenbanken bekommen sie beim ersten Bedarf; danach merkt sich der Worker,
+   dass sie da sind. In der D1-Konsole ist dafür nichts zu tun. */
+const NEUE_SPALTEN = [
+  ['klassen', 'benotung', 'TEXT'],         // Auswahl für die Note: { liste: ['stamm-lesen|0', …], fehltAls6 }
+  ['fortschritt', 'richtig', 'INTEGER'],   // richtige Antworten der Runde mit dem besten Anteil …
+  ['fortschritt', 'von', 'INTEGER'],       // … von so vielen (Blitzlesen: Ziel für die Note 1)
+  ['verlauf', 'richtig', 'INTEGER'],
+  ['verlauf', 'von', 'INTEGER'],
+];
+let spaltenDa = false;
 
-async function benotungSpalte(env) {
-  if (benotungSpalteDa) return;
-  try {
-    await env.DB.prepare('SELECT benotung FROM klassen LIMIT 0').all();
-  } catch {
-    try { await env.DB.prepare('ALTER TABLE klassen ADD COLUMN benotung TEXT').run(); }
-    catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }   // gleichzeitig schon angelegt
+async function spaltenSichern(env) {
+  if (spaltenDa) return;
+  for (const [tabelle, spalte, typ] of NEUE_SPALTEN) {
+    try {
+      await env.DB.prepare(`SELECT ${spalte} FROM ${tabelle} LIMIT 0`).all();
+    } catch {
+      try { await env.DB.prepare(`ALTER TABLE ${tabelle} ADD COLUMN ${spalte} ${typ}`).run(); }
+      catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }   // gleichzeitig schon angelegt
+    }
   }
-  benotungSpalteDa = true;
+  spaltenDa = true;
 }
 
 function pruefeBenotung(b) {
@@ -171,7 +181,7 @@ function leseBenotung(json) {
 }
 
 async function benotungVonKind(env, schuelerId) {
-  await benotungSpalte(env);
+  await spaltenSichern(env);
   const k = await env.DB.prepare(
     'SELECT k.benotung FROM klassen k JOIN schueler s ON s.klasse_id = k.id WHERE s.id = ?'
   ).bind(schuelerId).first();
@@ -197,7 +207,7 @@ async function anmelden(env, body, ip) {
   if (await gesperrt(env, 'kind:' + benutzer, MAX_JE_KIND) || await gesperrt(env, her, MAX_UNBEKANNT))
     throw new Fehler(429, 'Zu viele Fehlversuche. Bitte in 10 Minuten nochmal versuchen.');
 
-  await benotungSpalte(env);
+  await spaltenSichern(env);
   const s = await env.DB.prepare(
     `SELECT s.id, s.anzeige, k.name AS klasse, k.passwort, k.benotung
      FROM schueler s JOIN klassen k ON k.id = s.klasse_id WHERE s.benutzername = ?`
@@ -226,7 +236,12 @@ async function anmelden(env, body, ip) {
   };
 }
 
+/* Beim Bestwert zählt für richtig/von die Runde mit dem besten Anteil (über
+   Kreuz multipliziert, ohne Division); Runden ohne die Angabe ändern nichts */
+const BESSERER_ANTEIL = 'excluded.richtig IS NOT NULL AND (richtig IS NULL OR excluded.richtig * von > richtig * excluded.von)';
+
 async function ergebnisseSpeichern(env, wer, body) {
+  await spaltenSichern(env);
   const liste = Array.isArray(body.ergebnisse) ? body.ergebnisse.slice(0, 50) : [];
   const t = jetzt();
   const anweisungen = [];
@@ -238,18 +253,23 @@ async function ergebnisseSpeichern(env, wer, body) {
     if (!/^[a-z-]{1,30}$/.test(spiel)) continue;
     if (![stufe, sterne, punkte].every(Number.isInteger)) continue;
     if (stufe < 0 || stufe > 9 || sterne < 0 || sterne > 6 || punkte < 0 || punkte > 10000) continue;   // 6 Sterne = Note 1
+    // Richtige Antworten von wie vielen Aufgaben – ältere Seiten schicken das nicht mit
+    let richtig = e.richtig, von = e.von;
+    if (!Number.isInteger(richtig) || !Number.isInteger(von) || richtig < 0 || richtig > 1000 || von < 1 || von > 1000) richtig = von = null;
     anweisungen.push(env.DB.prepare(
-      `INSERT INTO fortschritt (schueler_id, spiel, stufe, sterne, punkte, runden, geaendert)
-       VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6)
+      `INSERT INTO fortschritt (schueler_id, spiel, stufe, sterne, punkte, runden, geaendert, richtig, von)
+       VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6, ?7, ?8)
        ON CONFLICT (schueler_id, spiel, stufe) DO UPDATE SET
          sterne = MAX(sterne, excluded.sterne),
          punkte = MAX(punkte, excluded.punkte),
          runden = runden + 1,
-         geaendert = excluded.geaendert`
-    ).bind(wer.id, spiel, stufe, sterne, punkte, zeit));
+         geaendert = excluded.geaendert,
+         richtig = CASE WHEN ${BESSERER_ANTEIL} THEN excluded.richtig ELSE richtig END,
+         von = CASE WHEN ${BESSERER_ANTEIL} THEN excluded.von ELSE von END`
+    ).bind(wer.id, spiel, stufe, sterne, punkte, zeit, richtig, von));
     anweisungen.push(env.DB.prepare(
-      'INSERT INTO verlauf (schueler_id, spiel, stufe, sterne, punkte, zeit) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(wer.id, spiel, stufe, sterne, punkte, zeit));
+      'INSERT INTO verlauf (schueler_id, spiel, stufe, sterne, punkte, zeit, richtig, von) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(wer.id, spiel, stufe, sterne, punkte, zeit, richtig, von));
   }
   // Gelöschte Kinder dürfen mit einer alten Marke nichts mehr schreiben
   const da = await env.DB.prepare('SELECT id FROM schueler WHERE id = ?').bind(wer.id).first();
@@ -312,7 +332,7 @@ async function klasseAnlegen(env, body) {
 }
 
 async function klasseAendern(env, id, body) {
-  await benotungSpalte(env);
+  await spaltenSichern(env);
   const k = await env.DB.prepare('SELECT * FROM klassen WHERE id = ?').bind(id).first();
   if (!k) throw new Fehler(404, 'Klasse nicht gefunden');
   const name = body.name === undefined ? k.name : pruefeText(body.name, 40, 'Klassenname');
@@ -336,7 +356,7 @@ async function klasseLoeschen(env, id) {
 
 /* Alles zu einer Klasse: Pseudonyme, Bestwerte und der Verlauf seit „seit“ */
 async function klassenUebersicht(env, id, seit) {
-  await benotungSpalte(env);
+  await spaltenSichern(env);
   const klasse = await env.DB.prepare('SELECT id, name, passwort, benotung FROM klassen WHERE id = ?').bind(id).first();
   if (!klasse) throw new Fehler(404, 'Klasse nicht gefunden');
   klasse.benotung = leseBenotung(klasse.benotung);
@@ -344,18 +364,18 @@ async function klassenUebersicht(env, id, seit) {
     'SELECT id, anzeige AS benutzername, zuletzt FROM schueler WHERE klasse_id = ? ORDER BY anzeige'
   ).bind(id).all();
   const { results: zeilen } = await env.DB.prepare(
-    `SELECT f.schueler_id, f.spiel, f.stufe, f.sterne, f.punkte, f.runden, f.geaendert
+    `SELECT f.schueler_id, f.spiel, f.stufe, f.sterne, f.punkte, f.runden, f.geaendert, f.richtig, f.von
      FROM fortschritt f JOIN schueler s ON s.id = f.schueler_id WHERE s.klasse_id = ?`
   ).bind(id).all();
   const { results: verlauf } = await env.DB.prepare(
-    `SELECT v.schueler_id, v.spiel, v.stufe, v.sterne, v.punkte, v.zeit
+    `SELECT v.schueler_id, v.spiel, v.stufe, v.sterne, v.punkte, v.zeit, v.richtig, v.von
      FROM verlauf v JOIN schueler s ON s.id = v.schueler_id
      WHERE s.klasse_id = ? AND v.zeit >= ? ORDER BY v.zeit`
   ).bind(id, Math.max(0, Number(seit) || 0)).all();
   const nachKind = {};
   zeilen.forEach(z => {
     ((nachKind[z.schueler_id] ||= {})[z.spiel] ||= {})[z.stufe] =
-      { sterne: z.sterne, punkte: z.punkte, runden: z.runden, geaendert: z.geaendert };
+      { sterne: z.sterne, punkte: z.punkte, runden: z.runden, geaendert: z.geaendert, richtig: z.richtig, von: z.von };
   });
   return { klasse, schueler: kinder.map(k => ({ ...k, fortschritt: nachKind[k.id] || {} })), verlauf };
 }

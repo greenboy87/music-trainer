@@ -4,7 +4,8 @@
 -- (z. B. PandaGeige42); wer dahintersteckt, weiß allein das School-Tool der
 -- Lehrkraft. Gespeichert werden Klassenname, Klassenpasswort, Pseudonym,
 -- beste Ergebnisse und ein Verlauf der Runden, der nach 365 Tagen gelöscht wird.
--- Die Spalte klassen.benotung legt der Worker in älteren Datenbanken selbst an.
+-- Später dazugekommene Spalten (klassen.benotung, richtig/von) legt der Worker
+-- in älteren Datenbanken selbst an.
 
 CREATE TABLE IF NOT EXISTS klassen (
   id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,6 +33,8 @@ CREATE TABLE IF NOT EXISTS fortschritt (
   punkte      INTEGER NOT NULL,
   runden      INTEGER NOT NULL DEFAULT 0,
   geaendert   INTEGER NOT NULL,
+  richtig     INTEGER,                    -- richtige Antworten der Runde mit dem besten Anteil …
+  von         INTEGER,                    -- … von so vielen Aufgaben (Blitzlesen: Ziel für die Note 1)
   PRIMARY KEY (schueler_id, spiel, stufe)
 );
 
@@ -44,7 +47,9 @@ CREATE TABLE IF NOT EXISTS verlauf (
   stufe       INTEGER NOT NULL,
   sterne      INTEGER NOT NULL,
   punkte      INTEGER NOT NULL,
-  zeit        INTEGER NOT NULL
+  zeit        INTEGER NOT NULL,
+  richtig     INTEGER,
+  von         INTEGER
 );
 CREATE INDEX IF NOT EXISTS verlauf_kind ON verlauf (schueler_id, zeit);
 CREATE INDEX IF NOT EXISTS verlauf_zeit ON verlauf (zeit);

@@ -30,13 +30,15 @@ const Fortschritt = {
     return (this.daten[spielId] || {})[stufe] || { sterne: 0, punkte: 0 };
   },
 
-  /* Merkt sich nur Verbesserungen. Gibt zurück, ob es ein neuer Rekord war. */
-  eintragen(spielId, stufe, sterne, punkte) {
+  /* Merkt sich nur Verbesserungen. Gibt zurück, ob es ein neuer Rekord war.
+     richtig/von (richtige Antworten von so vielen Aufgaben) gehen nur an den
+     Server – fürs School-Tool („Prozent richtig“). */
+  eintragen(spielId, stufe, sterne, punkte, richtig, von) {
     const alt = this.bester(spielId, stufe);
     const neu = { sterne: Math.max(alt.sterne, sterne), punkte: Math.max(alt.punkte, punkte) };
     this.daten[spielId] = { ...(this.daten[spielId] || {}), [stufe]: neu };
     this.speichern();
-    Konto.melden({ spiel: spielId, stufe, sterne, punkte });
+    Konto.melden({ spiel: spielId, stufe, sterne, punkte, richtig, von });
     return punkte > alt.punkte;
   },
 
@@ -613,7 +615,9 @@ const App = {
     const sterne = spiel.zeit ? Bewertung.ausZeit(r.richtig, st.ziel) : Bewertung.ausRichtig(r.richtig, Bewertung.anzahl(spiel));
     const note = Bewertung.note(sterne);
     const vorher = Fortschritt.bester(spiel.id, stufeIdx);
-    const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte);
+    // Bei Zeitspielen zählt als „von“ das Ziel für die Note 1 – mehr Richtige gehen also über 100 %
+    const von = spiel.zeit ? st.ziel?.[2] : Bewertung.anzahl(spiel);
+    const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte, r.richtig, von);
     this.aufraeumen();
     const lob = ['', 'Nicht aufgeben – nochmal!', 'Weiter üben!', 'Da geht noch mehr!', 'Gut gemacht!', 'Super!', 'Perfekt!'][sterne];
     const naechste = stufeIdx + 1 < spiel.stufen.length && sterne >= 4;
