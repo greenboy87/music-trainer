@@ -13,7 +13,16 @@ Alle eingebundenen Dateien tragen `?v=N`. Nach einer Änderung die Zahl in
 
 Es gibt keine eigene Lehrerseite. Pseudonyme, QR-Codes und Auswertung stehen
 in `school-tool/js/musiktrainer.js`. Dessen Spielliste `MT_SPIELE` muss zu
-`js/spiele.js` und `js/notenspiele.js` passen – neue Spiele dort nachtragen.
+`js/spiele.js`, `js/notenspiele.js`, `js/instrumente.js` und
+`js/hoerbeispiele.js` passen – neue Spiele und Stufen dort nachtragen. Neue
+Stufen nur hinten anhängen: gespeicherte Ergebnisse hängen an der Stufennummer.
+
+## Aufnahmen
+
+Instrumente, Stilrichtungen und Spielweisen nutzen echte Aufnahmen
+(Wikimedia Commons, Freesound): nur gemeinfrei, CC0, CC BY oder CC BY-SA,
+nichts aus Schulbüchern (MusiX, Helbling). Jede Aufnahme mit Urheber und
+Lizenz auf `quellen.html` nachweisen.
 
 ## Datenschutz
 

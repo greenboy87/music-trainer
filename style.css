@@ -258,7 +258,7 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .optionen.notenwahl { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 640px; }
 .optionen.notenwahl .option { padding: .4rem; }
 .optionen.drei { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 640px; }
-.optionen.drei .option { hyphens: manual; overflow-wrap: anywhere; }
+.optionen.drei .option { hyphens: manual; overflow-wrap: anywhere; padding-left: 1.7rem; padding-right: 1.7rem; }
 @media (max-width: 520px) { .optionen.drei { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .optionen.notenwahl .notenbild { width: 100%; }
 @media (max-width: 520px) { .optionen.notenwahl { grid-template-columns: 1fr; } }
