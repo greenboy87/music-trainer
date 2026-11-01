@@ -26,7 +26,7 @@ const Konto = {
   API: 'https://music-trainer.tomgruenig87.workers.dev',
   KEY: 'musiktrainer-konto',
   OFFEN_KEY: 'musiktrainer-offen',
-  daten: null,          // { token, id, name, klasse }
+  daten: null,          // { token, id, name, klasse, benotung }
 
   verfuegbar() { return !!this.API; },
 
@@ -59,10 +59,16 @@ const Konto = {
     return daten;
   },
 
+  merken() {
+    try { localStorage.setItem(this.KEY, JSON.stringify(this.daten)); } catch { /* privates Fenster */ }
+  },
+
+  /* benotung: was die Lehrkraft für die Note ausgewählt hat ({ liste, fehltAls6 }),
+     daraus zeigt die Startseite „Meine Note“. Ältere Worker schicken nichts mit. */
   async anmelden(benutzername, passwort) {
     const d = await this.api('/api/anmelden', { methode: 'POST', body: { benutzername, passwort }, token: null });
-    this.daten = { token: d.token, id: d.id, name: d.name, klasse: d.klasse };
-    try { localStorage.setItem(this.KEY, JSON.stringify(this.daten)); } catch { /* privates Fenster */ }
+    this.daten = { token: d.token, id: d.id, name: d.name, klasse: d.klasse, benotung: d.benotung || null };
+    this.merken();
     this.offeneLeeren();
     return d;
   },
@@ -110,8 +116,12 @@ const Konto = {
     if (!this.angemeldet()) return;
     try {
       this.senden();
-      const { fortschritt } = await this.api('/api/fortschritt');
+      const { fortschritt, benotung } = await this.api('/api/fortschritt');
       Fortschritt.zusammenfuehren(fortschritt);
+      if (benotung !== undefined && this.angemeldet()) {
+        this.daten.benotung = benotung;
+        this.merken();
+      }
     } catch (e) {
       if (e.status === 401) { this.abmelden(); App.abgemeldet(e.message); }
     }

@@ -4,12 +4,14 @@
 -- (z. B. PandaGeige42); wer dahintersteckt, weiß allein das School-Tool der
 -- Lehrkraft. Gespeichert werden Klassenname, Klassenpasswort, Pseudonym,
 -- beste Ergebnisse und ein Verlauf der Runden, der nach 365 Tagen gelöscht wird.
+-- Die Spalte klassen.benotung legt der Worker in älteren Datenbanken selbst an.
 
 CREATE TABLE IF NOT EXISTS klassen (
   id       INTEGER PRIMARY KEY AUTOINCREMENT,
   name     TEXT    NOT NULL,              -- z. B. „5a“, ohne Namen von Personen
   passwort TEXT    NOT NULL,              -- ein Passwort für die ganze Klasse
-  erstellt INTEGER NOT NULL
+  erstellt INTEGER NOT NULL,
+  benotung TEXT                           -- was für die Note zählt: {"liste":["stamm-lesen|0",…],"fehltAls6":false}
 );
 
 CREATE TABLE IF NOT EXISTS schueler (

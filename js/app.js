@@ -369,6 +369,7 @@ const App = {
           <div class="bahn"><div class="balken" style="width:${gesamt / moeglich * 100}%"></div></div>
         </div>
       </section>
+      ${konto ? this.meineNote() : ''}
       ${bereiche.map(b => `
         <h2 class="bereich-titel">${b}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
         <div class="spiele-raster">
@@ -382,6 +383,51 @@ const App = {
         </div>`).join('')}`;
     const feld = document.getElementById('name');
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });
+  },
+
+  /* „Meine Note“: die Aufgaben, die die Lehrkraft für die Note ausgewählt hat,
+     mit der eigenen besten Runde. Dieselbe Rechnung wie im School-Tool: Note je
+     Aufgabe = 7 − beste Sterne, davon der Schnitt; nicht Gespieltes zählt nur
+     mit, wenn die Lehrkraft „zählt als 6“ gewählt hat. */
+  meineNote() {
+    const b = Konto.daten?.benotung;
+    const aufgaben = (b?.liste || []).map(w => {
+      const [id, i] = w.split('|');
+      const spiel = SPIELE.find(s => s.id === id);
+      return spiel?.stufen[+i] ? { spiel, stufe: +i, note: Bewertung.note(Fortschritt.bester(id, +i).sterne) } : null;
+    }).filter(Boolean).sort((x, y) => SPIELE.indexOf(x.spiel) - SPIELE.indexOf(y.spiel) || x.stufe - y.stufe);
+    if (!aufgaben.length) return '';
+    const zaehlen = aufgaben.map(a => a.note ?? (b.fehltAls6 ? 6 : null)).filter(n => n !== null);
+    const schnitt = zaehlen.length ? zaehlen.reduce((s, n) => s + n, 0) / zaehlen.length : null;
+    const komma = x => x.toFixed(1).replace('.', ',');
+    const offen = aufgaben.filter(a => !a.note);
+    const schlechteste = aufgaben.reduce((x, a) => (a.note > (x?.note ?? 1) ? a : x), null);
+    const name = a => `„${a.spiel.titel} (${a.spiel.bereich}) – ${a.spiel.stufen[a.stufe].name}“`;
+    const tipp = offen.length
+      ? `Noch ${offen.length === 1 ? 'eine Aufgabe' : `${offen.length} Aufgaben`} offen${b.fehltAls6 ? ' – was du nicht spielst, zählt als 6' : ''}. Tipp drauf und spiel los!`
+      : schlechteste
+        ? `Am meisten bringt dir ${name(schlechteste)}: Mit ${8 - schlechteste.note} Sternen wird daraus eine ${schlechteste.note - 1}.`
+        : 'Überall eine 1 – stark!';
+    return `
+      <section class="card meine-note">
+        <div class="meine-note-kopf">
+          <div>
+            <h2>${Icons.raw('star')}Meine Note</h2>
+            <p class="hint">Diese ${aufgaben.length === 1 ? 'Aufgabe zählt' : `${aufgaben.length} Aufgaben zählen`} für deine Note.
+              Es zählt immer deine beste Runde – du kannst so oft üben, wie du willst.</p>
+          </div>
+          <div class="note-gross${schnitt ? ` n${Math.round(schnitt)}` : ''}" title="Durchschnitt deiner Aufgaben">${schnitt ? komma(schnitt) : '–'}</div>
+        </div>
+        <ul class="note-liste">
+          ${aufgaben.map(a => `
+            <li><a href="#/spiel/${a.spiel.id}">
+              <span class="note-aufgabe">${esc(a.spiel.titel)}<span class="hint">${esc(a.spiel.bereich)} · ${esc(a.spiel.stufen[a.stufe].name)}</span></span>
+              ${a.note ? `<span class="note-kreis n${a.note}" title="Beste Runde: ${7 - a.note} Sterne">${a.note}</span>`
+                : '<span class="note-kreis offen">offen</span>'}
+            </a></li>`).join('')}
+        </ul>
+        <p class="note-tipp">${Icons.raw('next')}${tipp}</p>
+      </section>`;
   },
 
   /* ---------- Spielseite mit Stufenwahl ---------- */

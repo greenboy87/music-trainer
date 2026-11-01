@@ -15,7 +15,9 @@ Es gibt keine eigene Lehrerseite. Pseudonyme, QR-Codes und Auswertung stehen
 in `school-tool/js/musiktrainer.js`. Dessen Spielliste `MT_SPIELE` muss zu
 `js/spiele.js`, `js/notenspiele.js`, `js/instrumente.js` und
 `js/hoerbeispiele.js` passen – neue Spiele und Stufen dort nachtragen. Neue
-Stufen nur hinten anhängen: gespeicherte Ergebnisse hängen an der Stufennummer.
+Stufen nur hinten anhängen: gespeicherte Ergebnisse hängen an der Stufennummer
+– auch die Auswahl für die Note (`klassen.benotung` im Worker, „Meine Note“ auf
+der Startseite) besteht aus `spiel|stufe`.
 
 ## Aufnahmen
 

@@ -180,6 +180,32 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .spiele-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .75rem; }
 .spiele-raster .spiel-karte { padding: 1rem; }
 .spiele-raster .spiel-karte .hint { font-size: .8rem; }
+
+/* Meine Note (nur angemeldet): Ampelfarben wie im School-Tool – 1–2 grün, 3 gelb, 4 orange, 5–6 rot,
+   hell mit dunkler Schrift, damit sie im hellen und im dunklen Design gleich gut lesbar sind */
+.meine-note { margin-top: 1rem; }
+.meine-note-kopf { display: flex; gap: 1.5rem; align-items: center; justify-content: space-between; }
+.meine-note h2 { display: flex; align-items: center; }
+.meine-note h2 .icon { color: var(--yellow); fill: currentColor; }
+.meine-note-kopf .hint { margin: 0; }
+.note-gross { flex: 0 0 auto; min-width: 5.5rem; padding: .35rem .8rem; border-radius: var(--radius-sm); text-align: center;
+  font-size: 2.4rem; font-weight: 800; background: var(--panel); }
+.note-liste { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .5rem; }
+.note-liste a { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .5rem .7rem;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); color: inherit; text-decoration: none; }
+.note-liste a:hover { background: var(--hover); }
+.note-aufgabe { display: flex; flex-direction: column; font-weight: 600; font-size: .92rem; }
+.note-aufgabe .hint { font-weight: 400; font-size: .8rem; }
+.note-kreis { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 2.2rem; height: 2.2rem; border-radius: 50%; font-weight: 800; font-size: 1.05rem; }
+.note-kreis.offen { border: 2px dashed var(--muted); color: var(--muted); font-size: .64rem; font-weight: 700; }
+.note-gross.n1, .note-gross.n2, .note-kreis.n1, .note-kreis.n2 { background: #86efac; color: #14532d; }
+.note-gross.n3, .note-kreis.n3 { background: #fde047; color: #713f12; }
+.note-gross.n4, .note-kreis.n4 { background: #fdba74; color: #7c2d12; }
+.note-gross.n5, .note-gross.n6, .note-kreis.n5, .note-kreis.n6 { background: #fca5a5; color: #7f1d1d; }
+.note-tipp { display: flex; align-items: flex-start; margin: .9rem 0 0; font-size: .92rem; }
+.note-tipp .icon { color: var(--accent); margin-top: .15em; }
+@media (max-width: 520px) { .meine-note-kopf { gap: .8rem; } .note-gross { font-size: 1.9rem; min-width: 4.4rem; } }
 @media (max-width: 420px) { .spiele-raster { grid-template-columns: 1fr 1fr; } }
 .spiel-karte {
   display: flex; flex-direction: column; gap: .45rem; color: inherit; text-decoration: none;

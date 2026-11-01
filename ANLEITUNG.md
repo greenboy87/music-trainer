@@ -79,6 +79,22 @@ Beispiel der Bayerische Landesbeauftragte für den Datenschutz.
 6. **Am Schuljahresende: „Vom Server löschen“.** Die Datenschutzhinweise
    versprechen das.
 
+### Noten und „Meine Note“ (seit 01.11.2026)
+
+- Reiter music-trainer → **Noten**: oben auswählen, welche Spiele und Stufen
+  zählen. Die Tabelle zeigt je Kind die Note jeder Aufgabe (Ampelfarben,
+  gestrichelt = noch offen) und rechts die Gesamtnote.
+- **Für die Klasse am Beamer**: Notenschlüssel, welche Aufgaben zählen und der
+  Notenspiegel – ohne Namen. Den Notenspiegel kann man unten ausblenden.
+- Die Auswahl geht beim Öffnen des Reiters an den Worker (nur Spiel und Stufe,
+  keine Namen). Jedes angemeldete Kind sieht dann im music-trainer unter
+  **Meine Note** seine eigene Note, aus den besten Runden insgesamt.
+- Dafür braucht es den Worker vom 01.11.2026: einmal `cloudflare/worker.js`
+  neu einfügen. Die neue Spalte `klassen.benotung` legt er in der Datenbank
+  selbst an; in der D1-Konsole ist nichts zu tun.
+- **Alle Spiele**: jede Stufe, die in der Klasse schon jemand gespielt hat –
+  wer hat was geübt.
+
 Eigene Zugänge (z. B. für die eigenen Kinder): School-Tool → Extras →
 „music-trainer: eigene Zugänge“. Gruppe mit Passwort anlegen, Benutzernamen
 frei wählen.

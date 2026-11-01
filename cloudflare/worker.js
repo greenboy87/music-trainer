@@ -4,7 +4,9 @@
 // Pseudonym wie PandaGeige42, das das School-Tool der Lehrkraft vergibt; nur
 // dort steht, wer dahintersteckt. Kinder melden sich mit Pseudonym und dem
 // Passwort ihrer Klasse an. Gespeichert werden Pseudonym, Klasse, beste
-// Ergebnisse und ein Verlauf der Runden (nach VERLAUF_TAGE gelöscht).
+// Ergebnisse und ein Verlauf der Runden (nach VERLAUF_TAGE gelöscht). Je
+// Klasse dazu die Auswahl der Lehrkraft, welche Spiele und Stufen für die Note
+// zählen – daraus zeigt der music-trainer jedem Kind seine eigene Note.
 // IP-Adressen werden nur als gekürzter Prüfwert für die Sperre nach
 // Fehlversuchen gespeichert und nach 10 Minuten gelöscht.
 //
@@ -139,6 +141,43 @@ async function fehlversuch(env, schluessel) {
   ).bind(schluessel, t + SPERRE, t).run();
 }
 
+/* Auswahl für die Note, je Klasse als JSON: { liste: ['stamm-lesen|0', …], fehltAls6 }.
+   Die Spalte kam am 01.11.2026 dazu; ältere Datenbanken bekommen sie beim
+   ersten Bedarf, danach merkt sich der Worker, dass sie da ist. */
+let benotungSpalteDa = false;
+
+async function benotungSpalte(env) {
+  if (benotungSpalteDa) return;
+  try {
+    await env.DB.prepare('SELECT benotung FROM klassen LIMIT 0').all();
+  } catch {
+    try { await env.DB.prepare('ALTER TABLE klassen ADD COLUMN benotung TEXT').run(); }
+    catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }   // gleichzeitig schon angelegt
+  }
+  benotungSpalteDa = true;
+}
+
+function pruefeBenotung(b) {
+  if (!b || !Array.isArray(b.liste)) throw new Fehler(400, 'Benotung: Liste fehlt');
+  const liste = [...new Set(b.liste.map(String))].filter(w => /^[a-z-]{1,30}\|\d$/.test(w)).slice(0, 200);
+  return { liste, fehltAls6: b.fehltAls6 === true };
+}
+
+function leseBenotung(json) {
+  try {
+    const b = JSON.parse(json);
+    return b && Array.isArray(b.liste) ? b : null;
+  } catch { return null; }
+}
+
+async function benotungVonKind(env, schuelerId) {
+  await benotungSpalte(env);
+  const k = await env.DB.prepare(
+    'SELECT k.benotung FROM klassen k JOIN schueler s ON s.klasse_id = k.id WHERE s.id = ?'
+  ).bind(schuelerId).first();
+  return leseBenotung(k?.benotung);
+}
+
 async function fortschrittVon(env, schuelerId) {
   const { results } = await env.DB.prepare(
     'SELECT spiel, stufe, sterne, punkte FROM fortschritt WHERE schueler_id = ?'
@@ -158,8 +197,9 @@ async function anmelden(env, body, ip) {
   if (await gesperrt(env, 'kind:' + benutzer, MAX_JE_KIND) || await gesperrt(env, her, MAX_UNBEKANNT))
     throw new Fehler(429, 'Zu viele Fehlversuche. Bitte in 10 Minuten nochmal versuchen.');
 
+  await benotungSpalte(env);
   const s = await env.DB.prepare(
-    `SELECT s.id, s.anzeige, k.name AS klasse, k.passwort
+    `SELECT s.id, s.anzeige, k.name AS klasse, k.passwort, k.benotung
      FROM schueler s JOIN klassen k ON k.id = s.klasse_id WHERE s.benutzername = ?`
   ).bind(benutzer).first();
   if (!s) {
@@ -182,6 +222,7 @@ async function anmelden(env, body, ip) {
     name: s.anzeige,
     klasse: s.klasse,
     fortschritt: await fortschrittVon(env, s.id),
+    benotung: leseBenotung(s.benotung),
   };
 }
 
@@ -271,12 +312,15 @@ async function klasseAnlegen(env, body) {
 }
 
 async function klasseAendern(env, id, body) {
+  await benotungSpalte(env);
   const k = await env.DB.prepare('SELECT * FROM klassen WHERE id = ?').bind(id).first();
   if (!k) throw new Fehler(404, 'Klasse nicht gefunden');
   const name = body.name === undefined ? k.name : pruefeText(body.name, 40, 'Klassenname');
   const passwort = body.passwort === undefined ? k.passwort : pruefePasswort(body.passwort);
-  await env.DB.prepare('UPDATE klassen SET name = ?, passwort = ? WHERE id = ?').bind(name, passwort, id).run();
-  return { id, name, passwort };
+  const benotung = body.benotung === undefined ? k.benotung : JSON.stringify(pruefeBenotung(body.benotung));
+  await env.DB.prepare('UPDATE klassen SET name = ?, passwort = ?, benotung = ? WHERE id = ?')
+    .bind(name, passwort, benotung, id).run();
+  return { id, name, passwort, benotung: leseBenotung(benotung) };
 }
 
 async function klasseLoeschen(env, id) {
@@ -292,8 +336,10 @@ async function klasseLoeschen(env, id) {
 
 /* Alles zu einer Klasse: Pseudonyme, Bestwerte und der Verlauf seit „seit“ */
 async function klassenUebersicht(env, id, seit) {
-  const klasse = await env.DB.prepare('SELECT id, name, passwort FROM klassen WHERE id = ?').bind(id).first();
+  await benotungSpalte(env);
+  const klasse = await env.DB.prepare('SELECT id, name, passwort, benotung FROM klassen WHERE id = ?').bind(id).first();
   if (!klasse) throw new Fehler(404, 'Klasse nicht gefunden');
+  klasse.benotung = leseBenotung(klasse.benotung);
   const { results: kinder } = await env.DB.prepare(
     'SELECT id, anzeige AS benutzername, zuletzt FROM schueler WHERE klasse_id = ? ORDER BY anzeige'
   ).bind(id).all();
@@ -336,7 +382,7 @@ async function verteilen(request, env) {
   if (m === 'POST' && pfad === '/api/anmelden') return anmelden(env, body, ip);
   if (m === 'GET' && pfad === '/api/fortschritt') {
     const wer = await markePruefen(env, request, 'schueler');
-    return { fortschritt: await fortschrittVon(env, wer.id) };
+    return { fortschritt: await fortschrittVon(env, wer.id), benotung: await benotungVonKind(env, wer.id) };
   }
   if (m === 'POST' && pfad === '/api/ergebnisse')
     return ergebnisseSpeichern(env, await markePruefen(env, request, 'schueler'), body);
