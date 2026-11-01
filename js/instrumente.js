@@ -24,10 +24,23 @@ const INSTRUMENTE = [
 ];
 const FAMILIEN = ['Streichinstrumente', 'Holzblasinstrumente', 'Blechblasinstrumente'];
 
-/* Hörbeispiele je Instrument: Datei in klaenge/ und Länge in Sekunden */
+/* Hörbeispiele je Instrument: Datei in klaenge/ und Länge in Sekunden.
+   Jedes Instrument spielt die beiden Melodien (nur die Klangfarbe verrät es);
+   dazu echte Solo-Aufnahmen von Wikimedia Commons, Nachweis auf quellen.html. */
+const ECHTE_KLAENGE = {
+  violine: [['violine-gavotte', 9], ['violine-allemanda', 9]],
+  cello: [['cello-praeludium', 9], ['cello-praeludium2', 9]],
+  kontrabass: [['kontrabass-walzer', 9], ['kontrabass-walzer2', 9]],
+  querfloete: [['querfloete-bourree', 9], ['querfloete-syrinx', 9]],
+  oboe: [['oboe-ferling', 9]],
+  klarinette: [['klarinette-beethoven', 10]],
+  fagott: [['fagott-beethoven', 10], ['fagott-scheherazade', 10]],
+  trompete: [['trompete-mahler', 10]],
+};
 const KLAENGE = Object.fromEntries(INSTRUMENTE.map(i => [i.id, [
   { datei: `${i.id}-ode`, dauer: 6.4 },
   { datei: `${i.id}-haenschen`, dauer: 6.4 },
+  ...(ECHTE_KLAENGE[i.id] || []).map(([datei, dauer]) => ({ datei, dauer })),
 ]]));
 
 const instrumentKarte = i =>
