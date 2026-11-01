@@ -81,23 +81,28 @@ Beispiel der Bayerische Landesbeauftragte für den Datenschutz.
 
 ### Noten und „Meine Note“ (seit 01.11.2026)
 
-- Reiter music-trainer → **Noten**: oben auswählen, welche Spiele und Stufen
-  zählen. Die Tabelle zeigt je Kind die Note jeder Aufgabe (Ampelfarben,
-  gestrichelt = noch offen) und rechts die Gesamtnote.
-- **Für die Klasse am Beamer**: Notenschlüssel, welche Aufgaben zählen und der
-  Notenspiegel – ohne Namen. Den Notenspiegel kann man unten ausblenden.
-- Die Auswahl geht beim Öffnen des Reiters an den Worker (nur Spiel und Stufe,
-  keine Namen). Jedes angemeldete Kind sieht dann im music-trainer unter
-  **Meine Note** seine eigene Note, aus den besten Runden insgesamt.
-- Dafür braucht es den Worker vom 01.11.2026: einmal `cloudflare/worker.js`
-  neu einfügen. Die neue Spalte `klassen.benotung` legt er in der Datenbank
+- Reiter music-trainer: oben **Bereich, Spiel und Stufe** wählen. Die Tabelle
+  zeigt je Kind die Note jeder Aufgabe (Ampelfarben, gestrichelt = noch offen),
+  rechts die Gesamtnote, dazu Runden, Übungstage und Übungszeit.
+- **Je Aufgabe zählt der Schnitt der 3 besten Runden** (wer weniger gespielt
+  hat: der gespielten) – im School-Tool und in „Meine Note“ gleich gerechnet.
+- Regler **Noten ⟷ Score**: statt der Note die Sterne (5,3/6), Prozent richtig
+  oder der Punkte-Rekord.
+- **Scoreboard**: die Tabelle als Rangliste im Vollbild, mit Vornamen oder
+  Benutzernamen. **Notenschlüssel am Beamer**: wie die Note entsteht und der
+  Notenspiegel – ohne Namen.
+- **Noten in Klassenliste übertragen**: die Gesamtnoten als Spalte unter
+  „Projekte & Noten“. Beim nächsten Mal wird dieselbe Spalte aktualisiert,
+  außer sie ist schon als „eingetragen“ abgehakt.
+- **Meine Note**: Was die Kinder im music-trainer sehen, legt das Übertragen
+  fest (oder der Knopf „Auswahl oben für ‚Meine Note‘ übernehmen“). Bloßes
+  Umschalten der Kategorien, etwa fürs Scoreboard, ändert es nicht.
+- Tage = an wie vielen Tagen ein Kind angemeldet im music-trainer war (auch
+  ohne zu spielen). Logins selbst zu zählen bringt wenig: Die Kinder bleiben
+  bis zu 180 Tage angemeldet.
+- Prozent richtig und Übungszeit gibt es nur für Runden ab den Worker-Updates
+  vom 01.11.2026. Neue Spalten und die Tabelle `besuche` legt der Worker
   selbst an; in der D1-Konsole ist nichts zu tun.
-- **Alle Spiele**: jede Stufe, die in der Klasse schon jemand gespielt hat –
-  wer hat was geübt.
-- Regler **Noten ⟷ Score**: statt der Note die Sterne (5/6), Prozent richtig
-  oder die Punkte der besten Runde. Prozent gibt es nur für Runden, die nach
-  dem zweiten Worker-Update vom 01.11.2026 gespielt wurden (Spalten
-  `richtig`/`von`, legt der Worker ebenfalls selbst an).
 
 Eigene Zugänge (z. B. für die eigenen Kinder): School-Tool → Extras →
 „music-trainer: eigene Zugänge“. Gruppe mit Passwort anlegen, Benutzernamen

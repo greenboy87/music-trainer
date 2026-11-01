@@ -115,9 +115,11 @@ const Konto = {
   async abgleichen() {
     if (!this.angemeldet()) return;
     try {
-      this.senden();
-      const { fortschritt, benotung } = await this.api('/api/fortschritt');
+      // Erst Wartendes senden, damit die besten Runden vom Server vollständig sind
+      await this.senden();
+      const { fortschritt, benotung, beste3 } = await this.api('/api/fortschritt');
       Fortschritt.zusammenfuehren(fortschritt);
+      Fortschritt.besteSetzen(beste3);
       if (benotung !== undefined && this.angemeldet()) {
         this.daten.benotung = benotung;
         this.merken();

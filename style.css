@@ -199,6 +199,7 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .note-kreis { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
   width: 2.2rem; height: 2.2rem; border-radius: 50%; font-weight: 800; font-size: 1.05rem; }
 .note-kreis.offen { border: 2px dashed var(--muted); color: var(--muted); font-size: .64rem; font-weight: 700; }
+.note-kreis.dezimal { font-size: .85rem; }
 .note-gross.n1, .note-gross.n2, .note-kreis.n1, .note-kreis.n2 { background: #86efac; color: #14532d; }
 .note-gross.n3, .note-kreis.n3 { background: #fde047; color: #713f12; }
 .note-gross.n4, .note-kreis.n4 { background: #fdba74; color: #7c2d12; }

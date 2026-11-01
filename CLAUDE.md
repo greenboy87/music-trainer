@@ -19,6 +19,13 @@ Stufen nur hinten anhängen: gespeicherte Ergebnisse hängen an der Stufennummer
 – auch die Auswahl für die Note (`klassen.benotung` im Worker, „Meine Note“ auf
 der Startseite) besteht aus `spiel|stufe`.
 
+## Noten: Schnitt der 3 besten Runden
+
+Je Spiel und Stufe zählt der Schnitt der drei besten Runden (Note = 7 − Sterne).
+Gerechnet wird das zweimal und muss gleich bleiben: `meineNote()` in
+`js/app.js` (die Kinder, mit `beste3` vom Worker) und `werte()` in
+`school-tool/js/musiktrainer.js` (die Lehrkraft, aus dem Verlauf).
+
 ## Aufnahmen
 
 Instrumente, Stilrichtungen und Spielweisen nutzen echte Aufnahmen

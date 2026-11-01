@@ -4,8 +4,8 @@
 -- (z. B. PandaGeige42); wer dahintersteckt, weiß allein das School-Tool der
 -- Lehrkraft. Gespeichert werden Klassenname, Klassenpasswort, Pseudonym,
 -- beste Ergebnisse und ein Verlauf der Runden, der nach 365 Tagen gelöscht wird.
--- Später dazugekommene Spalten (klassen.benotung, richtig/von) legt der Worker
--- in älteren Datenbanken selbst an.
+-- Später dazugekommene Spalten (klassen.benotung, richtig/von, dauer) und die
+-- Tabelle besuche legt der Worker in älteren Datenbanken selbst an.
 
 CREATE TABLE IF NOT EXISTS klassen (
   id       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,10 +49,19 @@ CREATE TABLE IF NOT EXISTS verlauf (
   punkte      INTEGER NOT NULL,
   zeit        INTEGER NOT NULL,
   richtig     INTEGER,
-  von         INTEGER
+  von         INTEGER,
+  dauer       INTEGER                     -- Sekunden
 );
 CREATE INDEX IF NOT EXISTS verlauf_kind ON verlauf (schueler_id, zeit);
 CREATE INDEX IF NOT EXISTS verlauf_zeit ON verlauf (zeit);
+
+-- Tage, an denen ein Kind angemeldet im music-trainer war (Tag = Tage seit 1970,
+-- grob deutsche Zeit). Der Worker löscht Einträge, die älter als 365 Tage sind.
+CREATE TABLE IF NOT EXISTS besuche (
+  schueler_id INTEGER NOT NULL,
+  tag         INTEGER NOT NULL,
+  PRIMARY KEY (schueler_id, tag)
+);
 
 -- Fehlversuche, gegen Durchprobieren. Einträge laufen nach 10 Minuten ab.
 CREATE TABLE IF NOT EXISTS sperren (

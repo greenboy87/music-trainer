@@ -30,15 +30,39 @@ const Fortschritt = {
     return (this.daten[spielId] || {})[stufe] || { sterne: 0, punkte: 0 };
   },
 
+  /* Die drei besten Runden je Stufe („top“, Sterne) – daraus rechnet „Meine Note“
+     wie das School-Tool den Schnitt der besten drei. Vom Server kommen die Runden,
+     die er kennt; dazu die, die noch auf dem Gerät warten. */
+  besteSetzen(beste3) {
+    if (!beste3) return;
+    const offen = Konto.offene();
+    Object.entries(beste3).forEach(([spiel, stufen]) => Object.entries(stufen).forEach(([stufe, liste]) => {
+      const dazu = offen.filter(o => o.spiel === spiel && String(o.stufe) === stufe).map(o => o.sterne);
+      const w = (this.daten[spiel] ||= {})[stufe] ||= { sterne: 0, punkte: 0 };
+      w.top = [...liste, ...dazu].sort((a, b) => b - a).slice(0, 3);
+    }));
+    this.speichern();
+  },
+
+  /* Schnitt der besten drei Runden in Sternen (weniger gespielt: der gespielten), null = noch nicht */
+  schnitt3(spielId, stufe) {
+    const w = this.bester(spielId, stufe);
+    const top = w.top || (w.sterne ? [w.sterne] : []);
+    return top.length ? top.reduce((a, n) => a + n, 0) / top.length : null;
+  },
+
   /* Merkt sich nur Verbesserungen. Gibt zurück, ob es ein neuer Rekord war.
-     richtig/von (richtige Antworten von so vielen Aufgaben) gehen nur an den
-     Server – fürs School-Tool („Prozent richtig“). */
-  eintragen(spielId, stufe, sterne, punkte, richtig, von) {
+     richtig/von (richtige Antworten von so vielen Aufgaben) und die Dauer in
+     Sekunden gehen nur an den Server – fürs School-Tool. */
+  eintragen(spielId, stufe, sterne, punkte, richtig, von, dauer) {
     const alt = this.bester(spielId, stufe);
-    const neu = { sterne: Math.max(alt.sterne, sterne), punkte: Math.max(alt.punkte, punkte) };
+    const neu = {
+      sterne: Math.max(alt.sterne, sterne), punkte: Math.max(alt.punkte, punkte),
+      top: [...(alt.top || (alt.sterne ? [alt.sterne] : [])), sterne].sort((a, b) => b - a).slice(0, 3),
+    };
     this.daten[spielId] = { ...(this.daten[spielId] || {}), [stufe]: neu };
     this.speichern();
-    Konto.melden({ spiel: spielId, stufe, sterne, punkte, richtig, von });
+    Konto.melden({ spiel: spielId, stufe, sterne, punkte, richtig, von, dauer });
     return punkte > alt.punkte;
   },
 
@@ -326,6 +350,7 @@ const App = {
         const d = await Konto.anmelden(document.getElementById('a-name').value, document.getElementById('a-pw').value);
         Fortschritt.laden();
         Fortschritt.zusammenfuehren(d.fortschritt);
+        Fortschritt.besteSetzen(d.beste3);
         this.kontoLeiste();
         this.willkommen = Object.keys(d.fortschritt).length ? 'zurueck' : 'neu';
         if (location.hash === '#/') this.route();
@@ -387,28 +412,35 @@ const App = {
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });
   },
 
-  /* „Meine Note“: die Aufgaben, die die Lehrkraft für die Note ausgewählt hat,
-     mit der eigenen besten Runde. Dieselbe Rechnung wie im School-Tool: Note je
-     Aufgabe = 7 − beste Sterne, davon der Schnitt; nicht Gespieltes zählt nur
+  /* „Meine Note“: die Aufgaben, die die Lehrkraft für die Note ausgewählt hat.
+     Dieselbe Rechnung wie im School-Tool: Note je Aufgabe = 7 − Schnitt der Sterne
+     der drei besten Runden, davon der Durchschnitt; nicht Gespieltes zählt nur
      mit, wenn die Lehrkraft „zählt als 6“ gewählt hat. */
   meineNote() {
     const b = Konto.daten?.benotung;
     const aufgaben = (b?.liste || []).map(w => {
       const [id, i] = w.split('|');
       const spiel = SPIELE.find(s => s.id === id);
-      return spiel?.stufen[+i] ? { spiel, stufe: +i, note: Bewertung.note(Fortschritt.bester(id, +i).sterne) } : null;
+      const sterne = Fortschritt.schnitt3(id, +i);
+      return spiel?.stufen[+i] ? { spiel, stufe: +i, top: Fortschritt.bester(id, +i).top, note: sterne ? 7 - sterne : null } : null;
     }).filter(Boolean).sort((x, y) => SPIELE.indexOf(x.spiel) - SPIELE.indexOf(y.spiel) || x.stufe - y.stufe);
     if (!aufgaben.length) return '';
     const zaehlen = aufgaben.map(a => a.note ?? (b.fehltAls6 ? 6 : null)).filter(n => n !== null);
     const schnitt = zaehlen.length ? zaehlen.reduce((s, n) => s + n, 0) / zaehlen.length : null;
     const komma = x => x.toFixed(1).replace('.', ',');
+    const kurz = x => komma(x).replace(',0', '');
     const offen = aufgaben.filter(a => !a.note);
     const schlechteste = aufgaben.reduce((x, a) => (a.note > (x?.note ?? 1) ? a : x), null);
     const name = a => `„${a.spiel.titel} (${a.spiel.bereich}) – ${a.spiel.stufen[a.stufe].name}“`;
+    // Was eine Runde mit 6 Sternen aus der schlechtesten Aufgabe machen würde
+    const mitSechs = a => {
+      const top = [...(a.top || [7 - a.note]), 6].sort((x, y) => y - x).slice(0, 3);
+      return 7 - top.reduce((s, n) => s + n, 0) / top.length;
+    };
     const tipp = offen.length
       ? `Noch ${offen.length === 1 ? 'eine Aufgabe' : `${offen.length} Aufgaben`} offen${b.fehltAls6 ? ' – was du nicht spielst, zählt als 6' : ''}. Tipp drauf und spiel los!`
       : schlechteste
-        ? `Am meisten bringt dir ${name(schlechteste)}: Mit ${8 - schlechteste.note} Sternen wird daraus eine ${schlechteste.note - 1}.`
+        ? `Am meisten bringt dir ${name(schlechteste)}: Mit einer Runde mit 6 Sternen wird aus ${kurz(schlechteste.note)} eine ${kurz(mitSechs(schlechteste))}.`
         : 'Überall eine 1 – stark!';
     return `
       <section class="card meine-note">
@@ -416,7 +448,7 @@ const App = {
           <div>
             <h2>${Icons.raw('star')}Meine Note</h2>
             <p class="hint">Diese ${aufgaben.length === 1 ? 'Aufgabe zählt' : `${aufgaben.length} Aufgaben zählen`} für deine Note.
-              Es zählt immer deine beste Runde – du kannst so oft üben, wie du willst.</p>
+              Je Aufgabe zählt der Schnitt deiner drei besten Runden – du kannst so oft üben, wie du willst.</p>
           </div>
           <div class="note-gross${schnitt ? ` n${Math.round(schnitt)}` : ''}" title="Durchschnitt deiner Aufgaben">${schnitt ? komma(schnitt) : '–'}</div>
         </div>
@@ -424,7 +456,8 @@ const App = {
           ${aufgaben.map(a => `
             <li><a href="#/spiel/${a.spiel.id}">
               <span class="note-aufgabe">${esc(a.spiel.titel)}<span class="hint">${esc(a.spiel.bereich)} · ${esc(a.spiel.stufen[a.stufe].name)}</span></span>
-              ${a.note ? `<span class="note-kreis n${a.note}" title="Beste Runde: ${7 - a.note} Sterne">${a.note}</span>`
+              ${a.note ? `<span class="note-kreis n${Math.round(a.note)}${Number.isInteger(a.note) ? '' : ' dezimal'}"
+                  title="Deine besten Runden: ${(a.top || [7 - a.note]).join(', ')} Sterne">${kurz(a.note)}</span>`
                 : '<span class="note-kreis offen">offen</span>'}
             </a></li>`).join('')}
         </ul>
@@ -478,7 +511,7 @@ const App = {
           <button type="button" class="primary weiter-btn" id="r-weiter" hidden>Weiter${Icons.raw('next')}</button>
         </section>
       </div>`;
-    this.runde = { spiel, stufeIdx, st, nr: 0, richtig: 0, punkte: 0, serie: 0, aufgabe: null, offen: false, daneben: {} };
+    this.runde = { spiel, stufeIdx, st, nr: 0, richtig: 0, punkte: 0, serie: 0, aufgabe: null, offen: false, daneben: {}, start: Date.now() };
     document.getElementById('r-abbruch').addEventListener('click', () => this.route());
     document.getElementById('r-hoeren').addEventListener('click', () => this.hoeren());
     document.getElementById('r-weiter').addEventListener('click', () => this.naechste());
@@ -617,7 +650,9 @@ const App = {
     const vorher = Fortschritt.bester(spiel.id, stufeIdx);
     // Bei Zeitspielen zählt als „von“ das Ziel für die Note 1 – mehr Richtige gehen also über 100 %
     const von = spiel.zeit ? st.ziel?.[2] : Bewertung.anzahl(spiel);
-    const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte, r.richtig, von);
+    // Übungszeit fürs School-Tool; höchstens 15 Minuten, falls das iPad offen liegen bleibt
+    const dauer = Math.min(900, Math.round((Date.now() - r.start) / 1000));
+    const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte, r.richtig, von, dauer);
     this.aufraeumen();
     const lob = ['', 'Nicht aufgeben – nochmal!', 'Weiter üben!', 'Da geht noch mehr!', 'Gut gemacht!', 'Super!', 'Perfekt!'][sterne];
     const naechste = stufeIdx + 1 < spiel.stufen.length && sterne >= 4;
