@@ -88,11 +88,18 @@ function tonVorrat(st) {
   return vorrat;
 }
 
+/* Töne werden ohne Zurücklegen aus einem gemischten Beutel je Stufe gezogen:
+   Erst wenn alle Töne einmal dran waren, wird neu gemischt. So kommen alle
+   gleich oft dran, und derselbe Ton nie zweimal direkt hintereinander. */
+const TON_BEUTEL = new Map();
+
 function neuerTon(st, vorher) {
-  const vorrat = tonVorrat(st);
-  let t;
-  do { t = zufall(vorrat); } while (vorher && vorrat.length > 1 && t.stufe === vorher.stufe && t.vz === vorher.vz);
-  return t;
+  const gleich = t => vorher && t.stufe === vorher.stufe && t.vz === vorher.vz;
+  let beutel = TON_BEUTEL.get(st);
+  if (!beutel?.length) TON_BEUTEL.set(st, beutel = mischen(tonVorrat(st)));
+  let i = beutel.findIndex(t => !gleich(t));
+  if (i < 0) { beutel.push(...mischen(tonVorrat(st))); i = Math.max(0, beutel.findIndex(t => !gleich(t))); }
+  return beutel.splice(i, 1)[0];
 }
 
 /* Klaviatur passend zur Stufe; mindestens c'–c'', damit die Lage nicht verrät */
@@ -330,7 +337,7 @@ function notenSpiele(art) {
         };
       },
     },
-  ];
+  ].map(spiel => spiel.zeit ? spiel : { ...spiel, anzahl: 15 });   // 15 statt 10 Aufgaben je Runde
 }
 
 /* Notenspiele stehen auf der Startseite vorne */

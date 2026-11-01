@@ -49,13 +49,15 @@ const Fortschritt = {
 };
 
 /* Bewertung wie eine Schulnote: 6 Sterne = Note 1 … 1 Stern = Note 6.
-   0 heißt „noch nicht gespielt“. Schlüssel für 10 Aufgaben:
-   10 → 1 · 9 → 2 · 7–8 → 3 · 5–6 → 4 · 3–4 → 5 · 0–2 → 6. */
+   0 heißt „noch nicht gespielt“. Schlüssel nach Anteil richtiger Aufgaben:
+   alle → 1 · ab 90 % → 2 · ab 70 % → 3 · ab 50 % → 4 · ab 30 % → 5 · darunter → 6.
+   Bei 10 Aufgaben: 10 · 9 · 7–8 · 5–6 · 3–4 · 0–2; bei 15: 15 · 14 · 11–13 · 8–10 · 5–7 · 0–4. */
 const Bewertung = {
   MAX: 6,
   NOTEN: ['', 'sehr gut', 'gut', 'befriedigend', 'ausreichend', 'mangelhaft', 'ungenügend'],
 
-  ausRichtig(r) { return r >= 10 ? 6 : r === 9 ? 5 : r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : 1; },
+  ausRichtig(r, n = 10) { return r >= n ? 6 : 10 * r >= 9 * n ? 5 : 10 * r >= 7 * n ? 4 : 10 * r >= 5 * n ? 3 : 10 * r >= 3 * n ? 2 : 1; },
+  anzahl(spiel) { return spiel.anzahl || 10; },
 
   /* Zeitspiele (Blitzlesen): ziel[2] richtige Noten in 60 s sind die 1,
      die übrigen Stufen anteilig darunter. Gibt die Schwellen für 2 … 6 Sterne. */
@@ -397,7 +399,7 @@ const App = {
               <span class="stufe-nr">${st.info ? st.name : `Stufe ${i + 1}`}</span>
               <span class="stufe-name">${st.info || st.name}</span>
               <span class="stufe-sterne">${sterneHtml(b.sterne)}</span>
-              <span class="hint">${b.sterne ? `Beste Note ${Bewertung.note(b.sterne)} · ${b.punkte} Punkte` : spiel.zeit ? `${spiel.zeit} Sekunden` : '10 Aufgaben'}</span>
+              <span class="hint">${b.sterne ? `Beste Note ${Bewertung.note(b.sterne)} · ${b.punkte} Punkte` : spiel.zeit ? `${spiel.zeit} Sekunden` : `${Bewertung.anzahl(spiel)} Aufgaben`}</span>
             </button>`;
           }).join('')}
         </div>
@@ -463,15 +465,15 @@ const App = {
   naechste() {
     const r = this.runde;
     if (!r) return;
-    if (!r.spiel.zeit && r.nr >= 10) return this.zeigeErgebnis();
+    if (!r.spiel.zeit && r.nr >= Bewertung.anzahl(r.spiel)) return this.zeigeErgebnis();
     Ton.stopp();
     r.nr++;
     const a = r.spiel.aufgabe(r.st, r.aufgabe);
     r.aufgabe = a;
     r.offen = true;
     if (!r.spiel.zeit) {
-      document.getElementById('r-stand').textContent = `${r.nr} / 10`;
-      document.getElementById('r-balken').style.width = `${(r.nr - 1) * 10}%`;
+      document.getElementById('r-stand').textContent = `${r.nr} / ${Bewertung.anzahl(r.spiel)}`;
+      document.getElementById('r-balken').style.width = `${(r.nr - 1) * 100 / Bewertung.anzahl(r.spiel)}%`;
     }
     document.getElementById('r-frage').textContent = a.frage;
     document.getElementById('r-bild').innerHTML = a.bild || '';
@@ -558,7 +560,7 @@ const App = {
     const r = this.runde;
     if (!r) return;
     const { spiel, stufeIdx, st } = r;
-    const sterne = spiel.zeit ? Bewertung.ausZeit(r.richtig, st.ziel) : Bewertung.ausRichtig(r.richtig);
+    const sterne = spiel.zeit ? Bewertung.ausZeit(r.richtig, st.ziel) : Bewertung.ausRichtig(r.richtig, Bewertung.anzahl(spiel));
     const note = Bewertung.note(sterne);
     const vorher = Fortschritt.bester(spiel.id, stufeIdx);
     const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte);
@@ -572,7 +574,7 @@ const App = {
         <div class="ergebnis-text">
           <p class="ergebnis-note">Note ${note} <span>${Bewertung.NOTEN[note]}</span></p>
           <h2>${lob}</h2>
-          <p class="ergebnis-zahl">${spiel.zeit ? `${r.richtig} Noten richtig` : `${r.richtig} von 10 richtig`} · ${r.punkte} Punkte</p>
+          <p class="ergebnis-zahl">${spiel.zeit ? `${r.richtig} Noten richtig` : `${r.richtig} von ${Bewertung.anzahl(spiel)} richtig`} · ${r.punkte} Punkte</p>
           ${rekord && vorher.punkte ? '<p class="rekord">Neuer Bestwert!</p>' : ''}
           ${schwellen && sterne < Bewertung.MAX ? `<p class="hint">Für ${sterne + 1} Sterne brauchst du ${schwellen[sterne - 1]} richtige Noten.</p>` : ''}
           <div class="btn-row mitte">
