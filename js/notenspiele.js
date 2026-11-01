@@ -337,7 +337,7 @@ function notenSpiele(art) {
         };
       },
     },
-  ].map(spiel => spiel.zeit ? spiel : { ...spiel, anzahl: 15 });   // 15 statt 10 Aufgaben je Runde
+  ];
 }
 
 /* Notenspiele stehen auf der Startseite vorne */
