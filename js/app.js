@@ -530,7 +530,7 @@ const App = {
       this.spaeter(() => this.naechste(), ok ? 250 : 1100);
       return;
     }
-    if (ok) this.spaeter(() => this.naechste(), a.eigen ? 2200 : 1000);
+    if (ok) this.spaeter(() => this.naechste(), a.wartezeit || (a.eigen ? 2200 : 1000));
     else {
       const w = document.getElementById('r-weiter');
       w.hidden = false;

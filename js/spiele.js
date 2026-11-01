@@ -144,11 +144,13 @@ const SPIELE = [
     icon: 'pen',
     farbe: '#a5b4fc',
     /* Wie auf der Folie „Tonwiederholung, Tonschritt, Tonsprung“: erst nur
-       Schritte, dann Terzen, dann Sprünge bis zur Quinte. Nur Stammtöne c'–c''. */
+       Schritte, dann Terzen, dann Sprünge bis zur Quinte. Nur Stammtöne c'–c''.
+       Bis Fortgeschritten erklingt jede gesetzte Note, bei Profi nicht mehr. */
     stufen: [
-      { name: 'Drei Töne, Schritte', laenge: 3, abstaende: [0, 1] },
-      { name: 'Vier Töne, dazu Terzen', laenge: 4, abstaende: [0, 1, 2] },
-      { name: 'Fünf Töne, auch Sprünge', laenge: 5, abstaende: [1, 2, 3, 4] },
+      { name: 'Junior', info: 'Drei Töne, nur Schritte', laenge: 3, abstaende: [0, 1] },
+      { name: 'Anfänger', info: 'Vier Töne, dazu Terzen', laenge: 4, abstaende: [0, 1, 2] },
+      { name: 'Fortgeschritten', info: 'Fünf Töne, Sprünge bis zur Quinte', laenge: 5, abstaende: [1, 2, 3, 4] },
+      { name: 'Profi', info: 'Sechs Töne, Noten klingen beim Setzen nicht mit', laenge: 6, abstaende: [1, 2, 3, 4], stumm: true },
     ],
     aufgabe(st) {
       // Melodie aus Stufen (c' = 0 … c'' = 7), jeder Schritt aus den erlaubten Abständen
@@ -164,15 +166,14 @@ const SPIELE = [
           toene.push(zufall(moeglich));
         }
       } while (new Set(toene).size < 2);   // nicht nur ein einziger Ton
-      const abstand = 0.65;
       return {
-        frage: 'Hör zu und schreibe die Melodie auf. Der erste Ton ist vorgegeben.',
+        frage: 'Hör zu und schreibe die Melodie auf. Der erste Ton ist vorgegeben – er leuchtet beim Abspielen.',
         hoeren() {
-          toene.forEach((t, i) => Ton.klavier(Stufe.midi(t), i * abstand, 0.6, 0.28));
-          return toene.length * abstand + 0.4;
+          Diktat.spielen(toene, [0]);   // nur der vorgegebene erste Ton leuchtet mit
+          return toene.length * Diktat.ABSTAND + 0.4;
         },
         loesung: `Richtig wäre: ${toene.map(t => Stufe.vollerName(t)).join(' – ')}.`,
-        eigen(el, antwort) { Diktat.starte(el, toene, antwort); },
+        eigen(el, antwort, aufgabe) { Diktat.starte(el, toene, antwort, aufgabe, st); },
       };
     },
   },
@@ -272,32 +273,59 @@ const SPIELE = [
 
 /* Eingabe fürs Hördiktat: ein Notensystem mit einer Spalte je Ton. Tippen
    setzt die Note in die Spalte, auf die getippt wurde (verschieben durch
-   Ziehen oder erneutes Tippen). Die erste Spalte ist vorgegeben. */
+   Ziehen oder erneutes Tippen). Die erste Spalte ist vorgegeben. Nach dem
+   Prüfen erklingt erst das Original, dann die eigene Version; die klingende
+   Spalte leuchtet dabei. */
 const Diktat = {
   SPALTE: 50, X0: 85, VON: -3, BIS: 15,
+  ABSTAND: 0.65,          // Sekunden zwischen zwei Tönen
+  el: null,
 
-  starte(el, soll, antwort) {
+  /* Spielt eine Tonfolge; die Spalten in „leuchten“ (Standard: alle) leuchten mit */
+  spielen(toene, leuchten, start = 0) {
+    toene.forEach((t, i) => {
+      const ab = start + i * this.ABSTAND;
+      Ton.klavier(Stufe.midi(t), ab, 0.6, 0.28);
+      if (!leuchten || leuchten.includes(i)) {
+        App.spaeter(() => this.leuchte(i, true), ab * 1000 + 20);
+        App.spaeter(() => this.leuchte(i, false), (ab + this.ABSTAND * 0.9) * 1000);
+      }
+    });
+    return toene.length * this.ABSTAND;
+  },
+
+  leuchte(i, an) {
+    this.el?.querySelector(`.diktat-spalte[data-i="${i}"]`)?.classList.toggle('klingt', an);
+  },
+
+  starte(el, soll, antwort, aufgabe, st) {
     const n = soll.length;
     const breite = this.X0 + n * this.SPALTE;
     const ist = [soll[0], ...Array(n - 1).fill(null)];
+    const mitKlang = !st.stumm;
     let fertig = false;
+    this.el = el;
     el.innerHTML = `
       <div class="diktat">
         <svg class="notenbild diktat-system" viewBox="0 0 ${breite} 120" style="max-width:${170 + n * 80}px" role="img" aria-label="Notensystem zum Antippen">
           ${Notenbild.linien(4, breite - 6)}${Notenbild.schluessel('violin')}
           <g class="diktat-spalten"></g><g class="diktat-noten"></g>
         </svg>
-        <p class="hint">Tippe für jeden Ton in seine Spalte. Daneben tippen oder ziehen verschiebt ihn.</p>
+        <p class="hint diktat-phase">Tippe für jeden Ton in seine Spalte. Daneben tippen oder ziehen verschiebt ihn.
+          ${mitKlang ? '' : '<strong>Profi: Die Noten klingen beim Setzen nicht mit.</strong>'}</p>
         <button type="button" class="primary diktat-pruefen" disabled>${Icons.raw('check')}Prüfen</button>
       </div>`;
     const svg = el.querySelector('svg');
     const knopf = el.querySelector('.diktat-pruefen');
+    const phase = el.querySelector('.diktat-phase');
     const x = i => this.X0 - 10 + i * this.SPALTE;
 
     const zeichnen = (ergebnis) => {
       const naechste = ist.indexOf(null);
-      el.querySelector('.diktat-spalten').innerHTML = soll.map((_, i) => i === 0 ? '' :
-        `<rect x="${x(i) - 20}" y="4" width="40" height="112" rx="6" class="diktat-spalte${i === naechste && !ergebnis ? ' dran' : ''}"/>`).join('');
+      // Auch die vorgegebene Spalte hat ein (unsichtbares) Feld, damit sie beim Abspielen leuchten kann
+      el.querySelector('.diktat-spalten').innerHTML = soll.map((_, i) =>
+        `<rect x="${x(i) - 20}" y="4" width="40" height="112" rx="6" data-i="${i}"
+           class="diktat-spalte${i === 0 ? ' vorgabe' : ''}${i === naechste && !ergebnis ? ' dran' : ''}"/>`).join('');
       el.querySelector('.diktat-noten').innerHTML = ist.map((st, i) => {
         if (st === null) return '';
         const y = Notenbild.yVon(st, 'violin');
@@ -322,12 +350,12 @@ const Diktat = {
     };
 
     let gezogen = null;
-    const setzen = (e, klingen) => {
+    const setzen = (e, neu) => {
       const o = ort(e);
       const spalte = gezogen ?? o.spalte;
-      if (ist[spalte] === o.stufe && !klingen) return;
+      if (ist[spalte] === o.stufe && !neu) return;
       ist[spalte] = o.stufe;
-      if (klingen || gezogen !== null) Ton.klavier(Stufe.midi(o.stufe), 0, 0.45, 0.22);
+      if (mitKlang) Ton.klavier(Stufe.midi(o.stufe), 0, 0.45, 0.22);
       zeichnen();
     };
     svg.addEventListener('pointerdown', e => {
@@ -344,9 +372,21 @@ const Diktat = {
       if (fertig || ist.includes(null)) return;
       fertig = true;
       const ergebnis = soll.map((t, i) => ist[i] === t);
+      const ok = ergebnis.every(Boolean);
       zeichnen(ergebnis);
       el.classList.add('gesperrt');
-      antwort(ergebnis.every(Boolean));
+      // Erst das Original, nach einer Pause die eigene Version
+      Ton.stopp();
+      const pause = 0.9;
+      const dauer = this.ABSTAND * n;
+      phase.innerHTML = `${Icons.raw('volume')}<strong>Original</strong>`;
+      this.spielen(soll, null, 0.2);
+      App.spaeter(() => { phase.innerHTML = `${Icons.raw('volume')}<strong>Deine Version</strong>`; }, (0.2 + dauer + pause / 2) * 1000);
+      this.spielen(ist, null, 0.2 + dauer + pause);
+      App.spaeter(() => { phase.textContent = ok ? 'Beide klingen gleich.' : 'Hörst du den Unterschied?'; }, (0.4 + 2 * dauer + pause) * 1000);
+      // Erst weiter, wenn beide Versionen erklungen sind
+      aufgabe.wartezeit = (0.2 + 2 * dauer + pause) * 1000 + 1500;
+      antwort(ok);
     });
     zeichnen();
   },

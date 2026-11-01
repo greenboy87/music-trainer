@@ -500,7 +500,11 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .diktat { display: flex; flex-direction: column; align-items: center; gap: .7rem; }
 .diktat-system { width: 100%; touch-action: none; cursor: crosshair; }
 .diktat-spalte { fill: var(--panel); }
+.diktat-spalte.vorgabe { fill: transparent; }
 .diktat-spalte.dran { fill: color-mix(in srgb, var(--farbe) 18%, transparent); }
+/* Die gerade klingende Spalte leuchtet – beim Vorspielen nur die vorgegebene erste Note */
+.diktat-spalte.klingt { fill: color-mix(in srgb, var(--yellow) 45%, transparent); transition: fill .08s; }
+.diktat-phase { display: flex; align-items: center; justify-content: center; gap: .3rem; flex-wrap: wrap; text-align: center; }
 .diktat-vorgabe .nk-hohl { stroke: var(--text); }
 .diktat-eigen .nk-hohl { stroke: var(--accent-soft); }
 .diktat-gut .nk-hohl, .diktat-gut .nl { stroke: var(--green); }
