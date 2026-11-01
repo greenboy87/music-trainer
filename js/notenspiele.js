@@ -96,10 +96,18 @@ const TON_BEUTEL = new Map();
 function neuerTon(st, vorher) {
   const gleich = t => vorher && t.stufe === vorher.stufe && t.vz === vorher.vz;
   let beutel = TON_BEUTEL.get(st);
-  if (!beutel?.length) TON_BEUTEL.set(st, beutel = mischen(tonVorrat(st)));
+  if (!beutel?.length) TON_BEUTEL.set(st, beutel = mische(tonVorrat(st)));
   let i = beutel.findIndex(t => !gleich(t));
-  if (i < 0) { beutel.push(...mischen(tonVorrat(st))); i = Math.max(0, beutel.findIndex(t => !gleich(t))); }
+  if (i < 0) { beutel.push(...mische(tonVorrat(st))); i = Math.max(0, beutel.findIndex(t => !gleich(t))); }
   return beutel.splice(i, 1)[0];
+}
+
+/* Falsch gelesener Ton: zweimal zurück in den Beutel, bald wieder dran (nicht
+   sofort, sondern nach ein bis drei und nach vier bis sieben anderen Tönen) */
+function nochmalUeben(st, t) {
+  let beutel = TON_BEUTEL.get(st);
+  if (!beutel) TON_BEUTEL.set(st, beutel = []);
+  [zahl(1, 3), zahl(4, 7)].forEach(pos => beutel.splice(Math.min(pos, beutel.length), 0, { ...t }));
 }
 
 /* Klaviatur passend zur Stufe; mindestens c'–c'', damit die Lage nicht verrät */
@@ -211,6 +219,7 @@ function notenSpiele(art) {
       richtig: optionen.indexOf(richtig),
       loesung: `Das ist ein ${richtig}.`,
       nachher() { Ton.klavier(Tonname.midi(t), 0, 0.5, 0.2); },
+      beiFehler() { nochmalUeben(st, t); return [richtig]; },
     };
   };
 
@@ -240,6 +249,7 @@ function notenSpiele(art) {
           frage: 'Welche Taste ist diese Note?',
           bild: Notenbild.noten([t]),
           loesung: `Gesucht war ${Tonname.vonTon(t)} – jetzt grün markiert.`,
+          beiFehler() { nochmalUeben(st, t); return [Tonname.vonTon(t)]; },
           eigen(el, antwort) {
             const klavier = Klavier.erzeuge(von, bis, m => {
               Ton.klavier(m, 0, 0.6);
@@ -264,6 +274,7 @@ function notenSpiele(art) {
           ton: t,
           frage: `Schreibe ein ${name}!`,
           loesung: `So sieht ${name} aus – grün daneben.`,
+          beiFehler() { nochmalUeben(st, t); return [name]; },
           eigen(el, antwort) {
             const setzer = Notensetzer.erzeuge({
               vorzeichen: vz,
@@ -290,12 +301,18 @@ function notenSpiele(art) {
         const toene = [];
         while (toene.length < st.kette) toene.push(neuerTon(st, toene[toene.length - 1]));
         const soll = toene.map(t => Tonname.vonTon(t));
+        const falscheStellen = new Set();
         // Stammtöne: nur die Buchstaben der Stufe; Vorzeichen: alle sieben plus ♯/♭
         const buchstaben = vz ? STAMM : STAMM.filter(n => soll.includes(n) || tonVorrat(st).some(t => Tonname.vonTon(t) === n));
         return {
           frage: 'Wie heißen die Noten? Tippe sie der Reihe nach.',
           bild: Notenbild.noten(toene),
           loesung: `Richtig wäre: ${soll.join(' – ')}.`,
+          beiFehler() {
+            const falsch = toene.filter((t, i) => falscheStellen.has(i));
+            falsch.forEach(t => nochmalUeben(st, t));
+            return falsch.map(t => Tonname.vonTon(t));
+          },
           eigen(el, antwort) {
             el.innerHTML = `
               <div class="kette-felder">${soll.map((_, i) => `<span class="kette-feld${i ? '' : ' dran'}"></span>`).join('')}</div>
@@ -316,7 +333,7 @@ function notenSpiele(art) {
               const ok = name === soll[pos];
               felder[pos].className = 'kette-feld ' + (ok ? 'gut' : 'schlecht');
               felder[pos].innerHTML = ok ? name : `<s>${name}</s> ${soll[pos]}`;
-              if (!ok) fehler++;
+              if (!ok) { fehler++; falscheStellen.add(pos); }
               vzKnopf(0);
               pos++;
               if (pos < soll.length) felder[pos].classList.add('dran');

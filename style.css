@@ -316,6 +316,8 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .ergebnis h2 { font-size: 1.6rem; }
 .ergebnis-zahl { font-size: 1.1rem; font-weight: 600; }
 .rekord { color: var(--yellow); font-weight: 700; }
+.daneben { margin-top: .4rem; }
+.daneben strong { color: var(--danger); }
 
 /* Zwei oder drei Antworten immer nebeneinander, auch am Handy */
 .optionen.wenige { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }

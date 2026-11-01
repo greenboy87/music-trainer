@@ -430,7 +430,7 @@ const App = {
           <button type="button" class="primary weiter-btn" id="r-weiter" hidden>Weiter${Icons.raw('next')}</button>
         </section>
       </div>`;
-    this.runde = { spiel, stufeIdx, st, nr: 0, richtig: 0, punkte: 0, serie: 0, aufgabe: null, offen: false };
+    this.runde = { spiel, stufeIdx, st, nr: 0, richtig: 0, punkte: 0, serie: 0, aufgabe: null, offen: false, daneben: {} };
     document.getElementById('r-abbruch').addEventListener('click', () => this.route());
     document.getElementById('r-hoeren').addEventListener('click', () => this.hoeren());
     document.getElementById('r-weiter').addEventListener('click', () => this.naechste());
@@ -517,7 +517,11 @@ const App = {
       r.richtig++;
       r.serie++;
       r.punkte += 10 + (r.spiel.zeit ? 0 : Math.min(r.serie - 1, 5) * 2);
-    } else r.serie = 0;
+    } else {
+      r.serie = 0;
+      // Notenspiele: falsche Töne kommen öfter wieder und stehen am Ende in der Übersicht
+      (a.beiFehler?.() || []).forEach(n => { r.daneben[n] = (r.daneben[n] || 0) + 1; });
+    }
     document.getElementById('r-punkte').textContent = r.punkte;
 
     const rueck = document.getElementById('r-rueck');
@@ -568,6 +572,7 @@ const App = {
     const lob = ['', 'Nicht aufgeben – nochmal!', 'Weiter üben!', 'Da geht noch mehr!', 'Gut gemacht!', 'Super!', 'Perfekt!'][sterne];
     const naechste = stufeIdx + 1 < spiel.stufen.length && sterne >= 4;
     const schwellen = spiel.zeit ? Bewertung.zeitSchwellen(st.ziel) : null;
+    const daneben = Object.entries(r.daneben).sort((x, y) => y[1] - x[1]);
     this.el.innerHTML = `
       <section class="card ergebnis" style="--farbe:${spiel.farbe}">
         <div class="ergebnis-sterne">${sterneHtml(0)}</div>
@@ -576,6 +581,8 @@ const App = {
           <h2>${lob}</h2>
           <p class="ergebnis-zahl">${spiel.zeit ? `${r.richtig} Noten richtig` : `${r.richtig} von ${Bewertung.anzahl(spiel)} richtig`} · ${r.punkte} Punkte</p>
           ${rekord && vorher.punkte ? '<p class="rekord">Neuer Bestwert!</p>' : ''}
+          ${daneben.length ? `<p class="daneben">Daneben: ${daneben.map(([n, k]) => `<strong>${n}</strong>${k > 1 ? ` ${k}×` : ''}`).join(', ')}
+            <span class="hint">– ${daneben.length === 1 ? 'diese Note kommt' : 'diese Noten kommen'} beim Üben jetzt öfter dran.</span></p>` : ''}
           ${schwellen && sterne < Bewertung.MAX ? `<p class="hint">Für ${sterne + 1} Sterne brauchst du ${schwellen[sterne - 1]} richtige Noten.</p>` : ''}
           <div class="btn-row mitte">
             <button type="button" id="e-nochmal" class="${naechste ? '' : 'primary'}">${Icons.raw('reset')}Nochmal</button>
