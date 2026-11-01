@@ -1,0 +1,4 @@
+noto-music-noten.woff2: Teilmenge von „Noto Music“ (Google) mit nur den Zeichen
+Violinschlüssel, Bassschlüssel, ♭, ♮, ♯. Lizenz: SIL Open Font License 1.1
+(https://openfontlicense.org). Liegt hier, damit die Seite nichts von Google
+nachlädt – sonst ginge die IP-Adresse jedes Kindes an Google.
