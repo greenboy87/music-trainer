@@ -59,9 +59,10 @@ HTML-Dateien), committen und pushen.
 
 ## 5. Datenschutzhinweise ausfüllen
 
-In `datenschutz.html` sind alle offenen Angaben rot markiert: Schule,
-Nachname, dienstliche E-Mail, Datenschutzbeauftragte/r, Rechtsgrundlage des
-Landes, Aufsichtsbehörde. Siehe auch die Checkliste unten.
+Erledigt (01.11.2026): Verantwortlich ist Thomas Grünig selbst
+(tom.gruenig@rs-abensberg.de). Schule und Datenschutzbeauftragte/r stehen
+bewusst nicht drin. Rechtsgrundlage Art. 85 BayEUG, Aufsichtsbehörde als
+Beispiel der Bayerische Landesbeauftragte für den Datenschutz.
 
 ## 6. Erste Klasse
 
@@ -107,24 +108,18 @@ Technisch umgesetzt:
 - Zu Hause alle Spiele auch ohne Anmeldung.
 - Löschen einzelner Kinder und ganzer Klassen jederzeit im School-Tool.
 
-Offen – das kann die Technik nicht lösen, das klärst du mit der Schule:
+Offen – das kann die Technik nicht lösen:
 
-1. **Genehmigung der Schulleitung** für den Einsatz im Unterricht.
-2. **Datenschutzbeauftragte/r der Schule** prüft die Datenschutzhinweise und
-   trägt die Verarbeitung ins Verzeichnis der Verarbeitungstätigkeiten ein.
-3. **Auftragsverarbeitung:** Cloudflare (und GitHub) laufen über dein privates
-   Konto. Der Vertrag zur Auftragsverarbeitung von Cloudflare gilt damit für
-   dich, nicht für die Schule. Mit dem/der DSB klären, ob das so in Ordnung
-   ist oder die Schule Vertragspartner sein muss.
-4. **Eltern informieren**, z. B. mit einem kurzen Elternbrief.
-5. **Impressum:** Für ein kostenloses Schulangebot ohne Gewinnabsicht in der
-   Regel nicht nötig – auch das mit der Schule abstimmen.
-6. **Mitarbeitsnote:** Die Ergebnisse fließen in die Mitarbeitsnote ein (School-Tool →
-   music-trainer → Benotung). Das steht so in den Datenschutzhinweisen und muss
-   mit Schulleitung und DSB abgestimmt sein. Weil sich die Kinder mit
-   Klassenpasswort und Pseudonym anmelden, könnte ein Kind theoretisch für ein
-   anderes spielen – für die Note am besten nur Runden werten, die im Unterricht
-   gespielt wurden (Zeitraum entsprechend wählen).
+1. **Eltern informieren**, z. B. mit einem kurzen Elternbrief.
+2. **Auftragsverarbeitung:** Cloudflare und GitHub laufen über dein privates
+   Konto; der Vertrag zur Auftragsverarbeitung von Cloudflare gilt für dich als
+   Verantwortlichen. Schule und DSB sind nach deiner Entscheidung nicht
+   beteiligt.
+3. **Mitarbeitsnote:** Die Ergebnisse fließen in die Mitarbeitsnote ein (School-Tool →
+   music-trainer → Benotung). Weil sich die Kinder mit Klassenpasswort und
+   Pseudonym anmelden, könnte ein Kind theoretisch für ein anderes spielen –
+   für die Note am besten nur Runden werten, die im Unterricht gespielt wurden
+   (Zeitraum entsprechend wählen).
 
 ## Kosten
 
