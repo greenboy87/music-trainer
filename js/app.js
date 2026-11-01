@@ -486,14 +486,14 @@ const App = {
     if (a.eigen) {
       a.eigen(eingabe, ok => this.beantworte(ok, null), a);
     } else {
-      eingabe.className = 'optionen' + (a.breit ? ' breit' : a.optionen.length > 4 ? ' viele' : a.optionen.length <= 3 ? ' wenige' : '');
+      eingabe.className = 'optionen' + (a.bilder ? ' bilder' : a.breit ? ' breit' : a.optionen.length > 4 ? ' viele' : a.optionen.length <= 3 ? ' wenige' : '');
       a.optionen.forEach((o, i) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'option';
         b.innerHTML = o;
         const kuerzel = a.tasten ? a.tasten[i].toUpperCase() : (i < 9 ? i + 1 : '');
-        if (kuerzel && !a.breit) b.insertAdjacentHTML('beforeend', `<kbd>${kuerzel}</kbd>`);
+        if (kuerzel && !a.breit && !a.bilder) b.insertAdjacentHTML('beforeend', `<kbd>${kuerzel}</kbd>`);
         b.addEventListener('click', () => this.beantworte(i === a.richtig, b));
         eingabe.appendChild(b);
       });

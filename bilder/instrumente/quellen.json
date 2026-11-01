@@ -1,0 +1,98 @@
+{
+ "violine": {
+  "datei": "Violin VL100.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:Violin_VL100.png",
+  "urheber": "Just plain Bill",
+  "lizenz": "CC0",
+  "lizenzlink": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "bild": "violine.jpg"
+ },
+ "viola": {
+  "datei": "Bratsche.jpg",
+  "seite": "https://commons.wikimedia.org/wiki/File:Bratsche.jpg",
+  "urheber": "Just plain Bill",
+  "lizenz": "Public domain",
+  "lizenzlink": "",
+  "bild": "viola.jpg"
+ },
+ "cello": {
+  "datei": "Cello front side.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:Cello_front_side.png",
+  "urheber": "Georg Feitscher",
+  "lizenz": "CC BY 3.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by/3.0",
+  "bild": "cello.jpg"
+ },
+ "kontrabass": {
+  "datei": "AGK bass1 full.jpg",
+  "seite": "https://commons.wikimedia.org/wiki/File:AGK_bass1_full.jpg",
+  "urheber": "User:AndrewKepert",
+  "lizenz": "CC BY-SA 3.0",
+  "lizenzlink": "http://creativecommons.org/licenses/by-sa/3.0/",
+  "bild": "kontrabass.jpg"
+ },
+ "querfloete": {
+  "datei": "Yamaha Flute YFL-874W.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:Yamaha_Flute_YFL-874W.png",
+  "urheber": "Yamaha Corporation",
+  "lizenz": "CC BY-SA 4.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by-sa/4.0",
+  "bild": "querfloete.jpg"
+ },
+ "oboe": {
+  "datei": "Oboe Patricola Artista PT1.jpg",
+  "seite": "https://commons.wikimedia.org/wiki/File:Oboe_Patricola_Artista_PT1.jpg",
+  "urheber": "Fratelli Patricola, Editor/Bearbeiter User:Gisbert K",
+  "lizenz": "CC BY-SA 4.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by-sa/4.0",
+  "bild": "oboe.jpg"
+ },
+ "klarinette": {
+  "datei": "Yamaha Clarinet YCL-457II-22.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:Yamaha_Clarinet_YCL-457II-22.png",
+  "urheber": "Yamaha Corporation; remove backround: Habitator terrae",
+  "lizenz": "CC BY-SA 4.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by-sa/4.0",
+  "bild": "klarinette.jpg"
+ },
+ "fagott": {
+  "datei": "FoxBassoon.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:FoxBassoon.png",
+  "urheber": "Gregory F. Maxwell",
+  "lizenz": "GFDL 1.2",
+  "lizenzlink": "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html",
+  "bild": "fagott.jpg"
+ },
+ "horn": {
+  "datei": "Yamaha Horn YHR-667V.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:Yamaha_Horn_YHR-667V.png",
+  "urheber": "Yamaha Corporation; remove backround: Habitator terrae",
+  "lizenz": "CC BY-SA 4.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by-sa/4.0",
+  "bild": "horn.jpg"
+ },
+ "trompete": {
+  "datei": "Yamaha Trumpet YTR-8335LA crop.jpg",
+  "seite": "https://commons.wikimedia.org/wiki/File:Yamaha_Trumpet_YTR-8335LA_crop.jpg",
+  "urheber": "Yamaha Corporation",
+  "lizenz": "CC BY-SA 4.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by-sa/4.0",
+  "bild": "trompete.jpg"
+ },
+ "posaune": {
+  "datei": "Yamaha tenor trombone YSL-882V.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:Yamaha_tenor_trombone_YSL-882V.png",
+  "urheber": "Yamaha Corporation",
+  "lizenz": "CC BY-SA 4.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by-sa/4.0",
+  "bild": "posaune.jpg"
+ },
+ "tuba": {
+  "datei": "MIMEd 2925. French C tuba with 6 valves by Couesnon.png",
+  "seite": "https://commons.wikimedia.org/wiki/File:MIMEd_2925._French_C_tuba_with_6_valves_by_Couesnon.png",
+  "urheber": "Musical Instruments Museums Edinburgh; photograph by Antonia Reeve, University of Edinburgh.",
+  "lizenz": "CC BY 3.0",
+  "lizenzlink": "https://creativecommons.org/licenses/by/3.0",
+  "bild": "tuba.jpg"
+ }
+}

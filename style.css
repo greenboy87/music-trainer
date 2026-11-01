@@ -510,3 +510,17 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .diktat-gut .nk-hohl, .diktat-gut .nl { stroke: var(--green); }
 .diktat-falsch .nk-hohl, .diktat-falsch .nl { stroke: var(--danger); }
 .gesperrt .diktat-system { cursor: default; }
+
+/* ---------- Instrumente: Bildkarten als Antworten ---------- */
+.optionen.bilder { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+.optionen.bilder .option { flex-direction: column; gap: .4rem; padding: .6rem; }
+.instrument-bild { display: flex; align-items: center; justify-content: center; width: 100%; height: 140px;
+  background: #fff; border-radius: var(--radius-sm); overflow: hidden; }
+.instrument-bild img { max-width: 92%; max-height: 92%; object-fit: contain; }
+.instrument-name { font-size: 1rem; }
+@media (max-width: 520px) { .instrument-bild { height: 100px; } }
+.quellen-rahmen { overflow-x: auto; }
+.quellen { border-collapse: collapse; width: 100%; font-size: .85rem; }
+.quellen th, .quellen td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.quellen img { width: 48px; height: 48px; object-fit: contain; background: #fff; border-radius: 6px; }
+.quellen a, .rechtstext a { color: var(--accent-soft); }

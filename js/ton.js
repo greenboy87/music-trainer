@@ -30,7 +30,20 @@ const Ton = {
     return (c.outputLatency || 0) + (c.baseLatency || 0);
   },
 
+  /* Klangdateien (Instrumente): laufen als Audio-Element, stopp() hält sie mit an */
+  medien: new Set(),
+  datei(url) {
+    this.audio();   // im Klick entsperren, wie bei den erzeugten Tönen
+    const a = new Audio(url);
+    this.medien.add(a);
+    a.addEventListener('ended', () => this.medien.delete(a));
+    a.play().catch(() => {});
+    return a;
+  },
+
   stopp() {
+    this.medien.forEach(a => a.pause());
+    this.medien.clear();
     if (!this.ctx || !this.ausgang) return;
     const alt = this.ausgang;
     alt.gain.setTargetAtTime(0, this.ctx.currentTime, 0.02);
