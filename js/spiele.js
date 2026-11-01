@@ -37,6 +37,44 @@ const INTERVALLE = [
   { name: 'Oktave', h: 12 },
 ];
 
+/* Intervall hören, dann aus drei Notenbildern das passende wählen. Nur Stammtöne,
+   gezählt in Stufen (Terz = zwei Stufen weiter), damit kein Vorzeichen nötig ist.
+   Alle drei Bilder beginnen mit demselben Ton. */
+const INTERVALL_NAMEN = ['Prime', 'Sekunde', 'Terz', 'Quarte', 'Quinte', 'Sexte', 'Septime', 'Oktave'];
+function intervallInNoten(st) {
+  const weite = zufall(st.noten);
+  // Ablenker: bei „knapp“ die Nachbarintervalle, sonst beliebige aus der Stufe
+  const andere = st.noten.filter(w => w !== weite)
+    .sort((x, y) => st.knapp ? Math.abs(x - weite) - Math.abs(y - weite) || Math.random() - 0.5 : Math.random() - 0.5)
+    .slice(0, 2);
+  const reihe = mische([weite, ...andere]);
+  const start = zahl(0, 9 - Math.max(...reihe));          // höchstens bis e''
+  const unten = { stufe: start, vz: 0 };
+  const oben = w => ({ stufe: start + w, vz: 0 });
+  return {
+    frage: 'Welches Notenbild passt zu dem, was du hörst?',
+    hoeren() {
+      Ton.klavier(Tonname.midi(unten), 0, 0.8);
+      Ton.klavier(Tonname.midi(oben(weite)), 0.85, 1);
+      return 1.9;
+    },
+    optionen: reihe.map(w => Notenbild.noten([unten, oben(w)])),
+    notenwahl: true,
+    richtig: reihe.indexOf(weite),
+    loesung: `Das war eine ${INTERVALL_NAMEN[weite]}: von ${Stufe.vollerName(start)} nach ${Stufe.vollerName(start + weite)}.`,
+  };
+}
+
+/* Akkorde: Aufbau in Halbtönen über dem Grundton */
+const AKKORDE = {
+  dur: { name: 'Dur', satz: 'Dur', h: [0, 4, 7], bau: 'große Terz + kleine Terz' },
+  moll: { name: 'Moll', satz: 'Moll', h: [0, 3, 7], bau: 'kleine Terz + große Terz' },
+  ueb: { name: 'übermäßig', satz: 'ein übermäßiger Akkord', h: [0, 4, 8], bau: 'zwei große Terzen' },
+  verm: { name: 'vermindert', satz: 'ein verminderter Akkord', h: [0, 3, 6], bau: 'zwei kleine Terzen' },
+  d7: { name: 'Dominantseptakkord', knopf: 'Dominant&shy;septakkord', satz: 'ein Dominantseptakkord', h: [0, 4, 7, 10], bau: 'Dur-Dreiklang + kleine Septime' },
+  m7: { name: 'kleiner Moll-Septakkord', satz: 'ein kleiner Moll-Septakkord', h: [0, 3, 7, 10], bau: 'Moll-Dreiklang + kleine Septime' },
+};
+
 const SPIELE = [
   /* ---------------- Hören ---------------- */
   {
@@ -79,8 +117,11 @@ const SPIELE = [
       { name: 'Prime, Quinte, Oktave', liste: ['Prime', 'Quinte', 'Oktave'] },
       { name: 'Dazu Terz und Quarte', liste: ['Prime', 'große Terz', 'Quarte', 'Quinte', 'Oktave'] },
       { name: 'Alle Intervalle', liste: INTERVALLE.slice(1).map(i => i.name), harmonisch: true },
+      { name: 'In Noten: Sekunde bis Quinte', noten: [1, 2, 3, 4] },
+      { name: 'In Noten: bis zur Oktave', noten: [1, 2, 3, 4, 5, 6, 7], knapp: true },
     ],
     aufgabe(st) {
+      if (st.noten) return intervallInNoten(st);
       const name = zufall(st.liste);
       const h = INTERVALLE.find(i => i.name === name).h;
       const grund = zahl(55, 67);
@@ -102,36 +143,52 @@ const SPIELE = [
   {
     id: 'dur-moll',
     bereich: 'Hören',
-    titel: 'Dur oder Moll?',
-    text: 'Klingt es eher hell und fröhlich (Dur) oder eher dunkel und traurig (Moll)?',
+    titel: 'Akkorde hören',
+    text: 'Dur klingt hell, Moll dunkel. In den höheren Stufen kommen übermäßig, vermindert und Septakkorde dazu.',
     icon: 'sun',
     farbe: '#fcd34d',
+    // Die ersten drei Stufen hießen früher nur „Akkord zusammen“ usw.; Reihenfolge nicht ändern (gespeicherte Ergebnisse)
     stufen: [
-      { name: 'Akkord zusammen', art: 'akkord' },
-      { name: 'Akkord gebrochen', art: 'gebrochen' },
-      { name: 'Kurze Melodie', art: 'melodie' },
+      { name: 'Junior', info: 'Dur oder Moll – Akkord zusammen', art: 'akkord' },
+      { name: 'Anfänger', info: 'Dur oder Moll – Akkord gebrochen', art: 'gebrochen' },
+      { name: 'Fortgeschritten', info: 'Dur oder Moll – kurze Melodie', art: 'melodie' },
+      { name: 'Profi', info: 'Dur, Moll, übermäßig, vermindert', art: 'gebrochen', typen: ['dur', 'moll', 'ueb', 'verm'] },
+      { name: 'Profi 2', info: 'Dazu Dominantseptakkord und kleiner Moll-Septakkord', art: 'gebrochen', typen: Object.keys(AKKORDE) },
+      { name: 'Profi 3', info: 'Alle sechs, nur zusammen und in wechselnder Lage', art: 'akkord', umkehrung: true, typen: Object.keys(AKKORDE) },
     ],
-    aufgabe(st) {
-      const dur = Math.random() < 0.5;
-      const g = zahl(55, 64);
-      const terz = dur ? 4 : 3;
+    aufgabe(st, vorher) {
+      const typen = st.typen || ['dur', 'moll'];
+      let typ;
+      do { typ = zufall(typen); } while (typen.length > 2 && typ === vorher?.typ && Math.random() < 0.7);
+      const akk = AKKORDE[typ];
+      const g = zahl(53, 62);
+      let toene = akk.h.map(h => g + h);
+      // Profi 3: unterster Ton eine Oktave nach oben (Umkehrung), manchmal zweimal
+      if (st.umkehrung) for (let k = zahl(0, 2); k > 0; k--) toene = [...toene.slice(1), toene[0] + 12];
+      const optionen = typen.map(t => AKKORDE[t].knopf || AKKORDE[t].name);
       return {
-        frage: st.art === 'melodie' ? 'Steht die Melodie in Dur oder in Moll?' : 'Ist der Akkord Dur oder Moll?',
+        typ,
+        frage: st.art === 'melodie' ? 'Steht die Melodie in Dur oder in Moll?'
+             : typen.length > 2 ? 'Welcher Akkord ist das?' : 'Ist der Akkord Dur oder Moll?',
         hoeren() {
-          if (st.art === 'akkord') { Ton.akkord([g, g + terz, g + 7], 0, 1.8); return 2; }
+          if (st.art === 'akkord') { Ton.akkord(toene, 0, 1.8); return 2; }
           if (st.art === 'gebrochen') {
-            // Grundton, Terz, Quinte nacheinander, dann der Akkord zusammen
-            [0, terz, 7].forEach((h, i) => Ton.klavier(g + h, i * 0.45, 0.6));
-            Ton.akkord([g, g + terz, g + 7], 1.5, 1.4, 0.15);
-            return 3.0;
+            // Töne von unten nach oben nacheinander, dann der Akkord zusammen
+            toene.forEach((m, i) => Ton.klavier(m, i * 0.45, 0.6));
+            const t = toene.length * 0.45 + 0.15;
+            Ton.akkord(toene, t, 1.4, 0.15);
+            return t + 1.5;
           }
+          const dur = typ === 'dur';
           const tonleiter = dur ? [0, 2, 4, 5, 7, 5, 4, 2, 0] : [0, 2, 3, 5, 7, 5, 3, 2, 0];
           tonleiter.forEach((h, i) => Ton.klavier(g + h, i * 0.35, 0.45));
           return tonleiter.length * 0.35 + 0.4;
         },
-        optionen: ['Dur', 'Moll'],
-        richtig: dur ? 0 : 1,
-        loesung: dur ? 'Das war Dur: große Terz unten.' : 'Das war Moll: kleine Terz unten.',
+        optionen,
+        drei: optionen.length > 4,
+        richtig: typen.indexOf(typ),
+        loesung: typen.length > 2 ? `Das war ${akk.satz}: ${akk.bau}.`
+               : typ === 'dur' ? 'Das war Dur: große Terz unten.' : 'Das war Moll: kleine Terz unten.',
       };
     },
   },

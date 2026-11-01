@@ -255,6 +255,13 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .notenbild { width: 100%; max-width: 260px; height: auto; color: var(--text); overflow: visible; }
 .rhythmusbild { max-width: 360px; }
 .optionen.breit .notenbild { width: 100%; max-width: 400px; }
+.optionen.notenwahl { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 640px; }
+.optionen.notenwahl .option { padding: .4rem; }
+.optionen.drei { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 640px; }
+.optionen.drei .option { hyphens: manual; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .optionen.drei { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.optionen.notenwahl .notenbild { width: 100%; }
+@media (max-width: 520px) { .optionen.notenwahl { grid-template-columns: 1fr; } }
 .nl { stroke: currentColor; stroke-width: 1.2; opacity: .75; }
 .nh { stroke: currentColor; stroke-width: 1.6; }
 .nk, .nb, .np { fill: currentColor; }
