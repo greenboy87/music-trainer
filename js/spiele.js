@@ -136,6 +136,47 @@ const SPIELE = [
     },
   },
 
+  {
+    id: 'hoerdiktat',
+    bereich: 'Hören',
+    titel: 'Hördiktat',
+    text: 'Eine kurze Melodie erklingt, der erste Ton steht schon da. Setze die anderen Noten ins Notensystem.',
+    icon: 'pen',
+    farbe: '#a5b4fc',
+    /* Wie auf der Folie „Tonwiederholung, Tonschritt, Tonsprung“: erst nur
+       Schritte, dann Terzen, dann Sprünge bis zur Quinte. Nur Stammtöne c'–c''. */
+    stufen: [
+      { name: 'Drei Töne, Schritte', laenge: 3, abstaende: [0, 1] },
+      { name: 'Vier Töne, dazu Terzen', laenge: 4, abstaende: [0, 1, 2] },
+      { name: 'Fünf Töne, auch Sprünge', laenge: 5, abstaende: [1, 2, 3, 4] },
+    ],
+    aufgabe(st) {
+      // Melodie aus Stufen (c' = 0 … c'' = 7), jeder Schritt aus den erlaubten Abständen
+      let toene;
+      do {
+        toene = [zahl(0, 7)];
+        while (toene.length < st.laenge) {
+          const moeglich = [];
+          st.abstaende.forEach(a => [a, -a].forEach(d => {
+            const n = toene[toene.length - 1] + d;
+            if (n >= 0 && n <= 7 && !moeglich.includes(n)) moeglich.push(n);
+          }));
+          toene.push(zufall(moeglich));
+        }
+      } while (new Set(toene).size < 2);   // nicht nur ein einziger Ton
+      const abstand = 0.65;
+      return {
+        frage: 'Hör zu und schreibe die Melodie auf. Der erste Ton ist vorgegeben.',
+        hoeren() {
+          toene.forEach((t, i) => Ton.klavier(Stufe.midi(t), i * abstand, 0.6, 0.28));
+          return toene.length * abstand + 0.4;
+        },
+        loesung: `Richtig wäre: ${toene.map(t => Stufe.vollerName(t)).join(' – ')}.`,
+        eigen(el, antwort) { Diktat.starte(el, toene, antwort); },
+      };
+    },
+  },
+
   /* ---------------- Rhythmus ---------------- */
   {
     id: 'rhythmus-detektiv',
@@ -228,3 +269,85 @@ const SPIELE = [
     },
   },
 ];
+
+/* Eingabe fürs Hördiktat: ein Notensystem mit einer Spalte je Ton. Tippen
+   setzt die Note in die Spalte, auf die getippt wurde (verschieben durch
+   Ziehen oder erneutes Tippen). Die erste Spalte ist vorgegeben. */
+const Diktat = {
+  SPALTE: 50, X0: 85, VON: -3, BIS: 15,
+
+  starte(el, soll, antwort) {
+    const n = soll.length;
+    const breite = this.X0 + n * this.SPALTE;
+    const ist = [soll[0], ...Array(n - 1).fill(null)];
+    let fertig = false;
+    el.innerHTML = `
+      <div class="diktat">
+        <svg class="notenbild diktat-system" viewBox="0 0 ${breite} 120" style="max-width:${170 + n * 80}px" role="img" aria-label="Notensystem zum Antippen">
+          ${Notenbild.linien(4, breite - 6)}${Notenbild.schluessel('violin')}
+          <g class="diktat-spalten"></g><g class="diktat-noten"></g>
+        </svg>
+        <p class="hint">Tippe für jeden Ton in seine Spalte. Daneben tippen oder ziehen verschiebt ihn.</p>
+        <button type="button" class="primary diktat-pruefen" disabled>${Icons.raw('check')}Prüfen</button>
+      </div>`;
+    const svg = el.querySelector('svg');
+    const knopf = el.querySelector('.diktat-pruefen');
+    const x = i => this.X0 - 10 + i * this.SPALTE;
+
+    const zeichnen = (ergebnis) => {
+      const naechste = ist.indexOf(null);
+      el.querySelector('.diktat-spalten').innerHTML = soll.map((_, i) => i === 0 ? '' :
+        `<rect x="${x(i) - 20}" y="4" width="40" height="112" rx="6" class="diktat-spalte${i === naechste && !ergebnis ? ' dran' : ''}"/>`).join('');
+      el.querySelector('.diktat-noten').innerHTML = ist.map((st, i) => {
+        if (st === null) return '';
+        const y = Notenbild.yVon(st, 'violin');
+        const klasse = i === 0 ? 'diktat-vorgabe' : ergebnis ? (ergebnis[i] ? 'diktat-gut' : 'diktat-falsch') : 'diktat-eigen';
+        let s = `<g class="${klasse}">${Notenbild.hilfslinien(x(i), y)}${Notenbild.kopf(x(i), y, true)}</g>`;
+        if (ergebnis && !ergebnis[i]) {
+          const ry = Notenbild.yVon(soll[i], 'violin');
+          s += `<g class="diktat-gut">${Notenbild.hilfslinien(x(i) + 14, ry)}${Notenbild.kopf(x(i) + 14, ry, true)}</g>`;
+        }
+        return s;
+      }).join('');
+      knopf.disabled = fertig || ist.includes(null);
+    };
+
+    const ort = e => {
+      const p = svg.createSVGPoint();
+      p.x = e.clientX; p.y = e.clientY;
+      const q = p.matrixTransform(svg.getScreenCTM().inverse());
+      const spalte = Math.round((q.x - (this.X0 - 10)) / this.SPALTE);
+      const stufe = Math.round((Notenbild.UNTEN - q.y) / (Notenbild.ABSTAND / 2)) + Notenbild.UNTERSTE.violin;
+      return { spalte: Math.max(1, Math.min(n - 1, spalte)), stufe: Math.max(this.VON, Math.min(this.BIS, stufe)) };
+    };
+
+    let gezogen = null;
+    const setzen = (e, klingen) => {
+      const o = ort(e);
+      const spalte = gezogen ?? o.spalte;
+      if (ist[spalte] === o.stufe && !klingen) return;
+      ist[spalte] = o.stufe;
+      if (klingen || gezogen !== null) Ton.klavier(Stufe.midi(o.stufe), 0, 0.45, 0.22);
+      zeichnen();
+    };
+    svg.addEventListener('pointerdown', e => {
+      if (fertig) return;
+      e.preventDefault();
+      svg.setPointerCapture(e.pointerId);
+      setzen(e, true);
+      gezogen = ort(e).spalte;
+    });
+    svg.addEventListener('pointermove', e => { if (gezogen !== null && !fertig) setzen(e, false); });
+    svg.addEventListener('pointerup', () => { gezogen = null; });
+
+    knopf.addEventListener('click', () => {
+      if (fertig || ist.includes(null)) return;
+      fertig = true;
+      const ergebnis = soll.map((t, i) => ist[i] === t);
+      zeichnen(ergebnis);
+      el.classList.add('gesperrt');
+      antwort(ergebnis.every(Boolean));
+    });
+    zeichnen();
+  },
+};

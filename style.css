@@ -176,7 +176,11 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .gesamt .bahn { margin-top: .5rem; }
 
 .bereich-titel { margin: 1.8rem 0 .7rem; color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; }
-.spiele-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+/* Schmal genug, dass die fünf Notenspiele eines Bereichs am Rechner und iPad quer in eine Zeile passen */
+.spiele-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .75rem; }
+.spiele-raster .spiel-karte { padding: 1rem; }
+.spiele-raster .spiel-karte .hint { font-size: .8rem; }
+@media (max-width: 420px) { .spiele-raster { grid-template-columns: 1fr 1fr; } }
 .spiel-karte {
   display: flex; flex-direction: column; gap: .45rem; color: inherit; text-decoration: none;
   transition: transform .15s ease, border-color .15s ease;
@@ -489,3 +493,14 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .kette-vz { display: flex; justify-content: center; gap: .5rem; margin-bottom: .7rem; }
 .kette-vz button { min-width: 6rem; }
 .kette-vz button.an { background: var(--active-soft); border-color: var(--accent); color: var(--accent-soft); }
+
+/* ---------- Hördiktat ---------- */
+.diktat { display: flex; flex-direction: column; align-items: center; gap: .7rem; }
+.diktat-system { width: 100%; touch-action: none; cursor: crosshair; }
+.diktat-spalte { fill: var(--panel); }
+.diktat-spalte.dran { fill: color-mix(in srgb, var(--farbe) 18%, transparent); }
+.diktat-vorgabe .nk-hohl { stroke: var(--text); }
+.diktat-eigen .nk-hohl { stroke: var(--accent-soft); }
+.diktat-gut .nk-hohl, .diktat-gut .nl { stroke: var(--green); }
+.diktat-falsch .nk-hohl, .diktat-falsch .nl { stroke: var(--danger); }
+.gesperrt .diktat-system { cursor: default; }

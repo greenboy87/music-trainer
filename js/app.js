@@ -341,7 +341,7 @@ const App = {
               <label class="name-feld">${Icons.raw('user')}
                 <input type="text" id="name" maxlength="24" placeholder="Dein Vorname" value="${esc(name)}">
               </label>
-              ${Konto.verfuegbar() ? `<a class="knopf primary" href="#/anmelden">Mit Klassencode anmelden</a>` : ''}
+              ${Konto.verfuegbar() ? `<a class="knopf primary" href="#/anmelden">Anmelden</a>` : ''}
             </div>`}
         </div>
         <div class="gesamt">
