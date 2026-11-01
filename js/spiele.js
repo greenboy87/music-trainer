@@ -120,9 +120,10 @@ const SPIELE = [
         hoeren() {
           if (st.art === 'akkord') { Ton.akkord([g, g + terz, g + 7], 0, 1.8); return 2; }
           if (st.art === 'gebrochen') {
-            [0, terz, 7, 12].forEach((h, i) => Ton.klavier(g + h, i * 0.45, 0.6));
-            Ton.akkord([g, g + terz, g + 7], 1.9, 1.4, 0.15);
-            return 3.4;
+            // Grundton, Terz, Quinte nacheinander, dann der Akkord zusammen
+            [0, terz, 7].forEach((h, i) => Ton.klavier(g + h, i * 0.45, 0.6));
+            Ton.akkord([g, g + terz, g + 7], 1.5, 1.4, 0.15);
+            return 3.0;
           }
           const tonleiter = dur ? [0, 2, 4, 5, 7, 5, 4, 2, 0] : [0, 2, 3, 5, 7, 5, 3, 2, 0];
           tonleiter.forEach((h, i) => Ton.klavier(g + h, i * 0.35, 0.45));
