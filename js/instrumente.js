@@ -1,9 +1,10 @@
 /* Instrumente erkennen (Bereich Hören).
 
    Klänge: University of Iowa Electronic Music Studios, Musical Instrument
-   Samples – „ohne Einschränkungen“ nutzbar. Aus den chromatischen Einzeltönen
-   sind je zwei kurze Motive geschnitten (Grundton bis Quinte, auf- und abwärts),
-   liegen in klaenge/<id>-auf.m4a und klaenge/<id>-ab.m4a.
+   Samples – „ohne Einschränkungen“ nutzbar. Aus den Einzeltönen sind zwei
+   bekannte Melodien zusammengesetzt (Ode an die Freude, Hänschen klein), jeder
+   Ton auf die genaue Tonhöhe nachgestimmt: klaenge/<id>-ode.m4a, <id>-haenschen.m4a.
+   Wo es eine gute freie Solo-Aufnahme gibt, steht sie zusätzlich in KLAENGE.
    Bilder: Wikimedia Commons, freie Lizenzen; Urheber und Lizenz in
    bilder/instrumente/quellen.json, angezeigt auf quellen.html. */
 
@@ -22,6 +23,12 @@ const INSTRUMENTE = [
   { id: 'tuba', artikel: 'die', name: 'Tuba', familie: 'Blechblasinstrumente' },
 ];
 const FAMILIEN = ['Streichinstrumente', 'Holzblasinstrumente', 'Blechblasinstrumente'];
+
+/* Hörbeispiele je Instrument: Datei in klaenge/ und Länge in Sekunden */
+const KLAENGE = Object.fromEntries(INSTRUMENTE.map(i => [i.id, [
+  { datei: `${i.id}-ode`, dauer: 6.4 },
+  { datei: `${i.id}-haenschen`, dauer: 6.4 },
+]]));
 
 const instrumentKarte = i =>
   `<span class="instrument-bild"><img src="bilder/instrumente/${i.id}.jpg" alt="" loading="lazy"></span><span class="instrument-name">${i.name}</span>`;
@@ -43,8 +50,8 @@ SPIELE.splice(SPIELE.findIndex(s => s.bereich === 'Rhythmus'), 0, {
     const vorrat = st.auswahl ? INSTRUMENTE.filter(i => st.auswahl.includes(i.id)) : INSTRUMENTE;
     let inst;
     do { inst = zufall(vorrat); } while (vorher && vorrat.length > 1 && inst.id === vorher.instrument);
-    const datei = `klaenge/${inst.id}-${zufall(['auf', 'ab'])}.m4a`;
-    const hoeren = () => { Ton.datei(datei); return 3.4; };
+    const klang = zufall(KLAENGE[inst.id]);
+    const hoeren = () => { Ton.datei(`klaenge/${klang.datei}.m4a`); return klang.dauer; };
     if (st.art === 'familie') {
       return {
         instrument: inst.id,
