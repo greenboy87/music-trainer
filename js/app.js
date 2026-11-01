@@ -121,7 +121,7 @@ const RhythmusEcho = {
     const tippen = () => {
       if (zustand === 'bereit') return abspielen();
       if (zustand !== 'aufnahme' && zustand !== 'gleich') return;
-      Ton.holz(0, false, 0.35);
+      Ton.snare(0, 0.8);
       tipps.push((Ton.jetzt() - Ton.verzoegerung() - beginnDu) / schlag);
       pad.classList.remove('puls'); void pad.offsetWidth; pad.classList.add('puls');
     };
@@ -469,7 +469,7 @@ const App = {
     if (a.eigen) {
       a.eigen(eingabe, ok => this.beantworte(ok, null), a);
     } else {
-      eingabe.className = 'optionen' + (a.breit ? ' breit' : '') + (a.optionen.length > 4 ? ' viele' : a.optionen.length <= 3 ? ' wenige' : '');
+      eingabe.className = 'optionen' + (a.breit ? ' breit' : a.optionen.length > 4 ? ' viele' : a.optionen.length <= 3 ? ' wenige' : '');
       a.optionen.forEach((o, i) => {
         const b = document.createElement('button');
         b.type = 'button';

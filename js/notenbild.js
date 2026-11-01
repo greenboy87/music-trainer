@@ -173,7 +173,7 @@ const Rhythmus = {
     const schlag = 60 / tempo;
     for (let i = 0; i < vorzaehler; i++) Ton.klick(i * schlag, i === 0);
     const beginn = vorzaehler * schlag;
-    this.einsaetze(takt).forEach(e => Ton.holz(beginn + e * schlag, e === 0));
+    this.einsaetze(takt).forEach(e => Ton.snare(beginn + e * schlag, e === 0 ? 1.3 : 1));
     for (let i = 0; i < 4; i++) Ton.klick(beginn + i * schlag, i === 0);
     return { beginn: Ton.jetzt() + beginn + 0.02, dauer: beginn + 4 * schlag };
   },

@@ -228,7 +228,7 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 
 .optionen { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .7rem; max-width: 640px; margin: 0 auto; }
 .optionen.viele { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); max-width: 700px; }
-.optionen.breit { grid-template-columns: 1fr; max-width: 420px; }
+.optionen.breit { grid-template-columns: 1fr; max-width: 560px; }
 .option {
   position: relative; font-size: 1.15rem; padding: 1rem .8rem; min-height: 3.6rem;
   border-radius: var(--radius); transition: transform .1s ease, background .15s ease;
@@ -250,7 +250,7 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 /* ---------- Notenbilder ---------- */
 .notenbild { width: 100%; max-width: 260px; height: auto; color: var(--text); overflow: visible; }
 .rhythmusbild { max-width: 360px; }
-.optionen.breit .notenbild { max-width: 320px; }
+.optionen.breit .notenbild { width: 100%; max-width: 400px; }
 .nl { stroke: currentColor; stroke-width: 1.2; opacity: .75; }
 .nh { stroke: currentColor; stroke-width: 1.6; }
 .nk, .nb, .np { fill: currentColor; }

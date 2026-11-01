@@ -1,7 +1,7 @@
 /* Klangerzeugung im Browser – keine Audiodateien.
 
    Ein Klavierton entsteht aus drei Obertönen mit schnellem Anschlag und
-   langsamem Ausklingen; der Rhythmus-Klang ist ein kurzer Holzblock.
+   langsamem Ausklingen; Rhythmen klingen als Snare wie in der Rhythmus-Werkstatt.
    Alles läuft über einen gemeinsamen Ausgang, damit „stopp()“ eine
    laufende Wiedergabe sofort abbrechen kann (neue Aufgabe, Seite verlassen). */
 const Ton = {
@@ -71,20 +71,54 @@ const Ton = {
     midis.forEach(m => this.klavier(m, start, dauer, laut));
   },
 
-  /* Holzblock für Rhythmen. hoch = Zählzeit 1 / Vorzähler betont */
-  holz(start = 0, hoch = false, laut = 0.5) {
+  /* Snare Drum für Rhythmen – übernommen aus der Rhythmus-Werkstatt
+     (js/audio.js, snareKlang): das Fell als zwei kurze Töne mit leichtem
+     Tonhöhenabfall, der Teppich als gefiltertes, ausklingendes Rauschen.
+     staerke: 1 = normal, Werte darüber betonen (Rhythmus-Werkstatt: 0.45 / 1.3). */
+  snare(start = 0, staerke = 1) {
     const c = this.audio();
     const t = c.currentTime + start + 0.02;
-    const o = c.createOscillator();
+    const st = 0.45 * staerke;
+    const ton = (f0, f1, laut, dauer) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(f1, t + 0.06);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(laut * st, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dauer);
+      o.connect(g).connect(this.ausgang);
+      o.start(t); o.stop(t + dauer + 0.02);
+    };
+    ton(195, 165, 0.26, 0.11);
+    ton(335, 290, 0.1, 0.07);
+
+    const quelle = c.createBufferSource();
+    quelle.buffer = this.rauschen();
+    // Teppich: Hochpass gegen Wummern, Glocke um 5 kHz für das Schnarren
+    const hoch = c.createBiquadFilter();
+    hoch.type = 'highpass'; hoch.frequency.value = 1400;
+    const glocke = c.createBiquadFilter();
+    glocke.type = 'peaking'; glocke.frequency.value = 5000; glocke.Q.value = 0.9; glocke.gain.value = 5;
     const g = c.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(hoch ? 1250 : 880, t);
-    o.frequency.exponentialRampToValueAtTime(hoch ? 900 : 620, t + 0.06);
-    g.gain.setValueAtTime(laut, t);
-    g.gain.exponentialRampToValueAtTime(0.0008, t + 0.12);
-    o.connect(g).connect(this.ausgang);
-    o.start(t);
-    o.stop(t + 0.15);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.27 * st, t + 0.0015);
+    g.gain.exponentialRampToValueAtTime(0.07 * st, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    quelle.connect(hoch).connect(glocke).connect(g).connect(this.ausgang);
+    quelle.start(t);
+    quelle.stop(t + 0.25);
+  },
+
+  /* Ein Rauschen für alle Snare-Schläge, damit nicht jeder Schlag neu rechnet */
+  rauschen() {
+    if (!this.rauschPuffer) {
+      const laenge = Math.floor(this.ctx.sampleRate * 0.24);
+      this.rauschPuffer = this.ctx.createBuffer(1, laenge, this.ctx.sampleRate);
+      const d = this.rauschPuffer.getChannelData(0);
+      for (let i = 0; i < laenge; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return this.rauschPuffer;
   },
 
   /* Leiser Metronom-Klick, damit er sich vom Rhythmus abhebt */

@@ -214,7 +214,7 @@ const SPIELE = [
         hoeren() {
           for (let i = 0; i < schlaege; i++) {
             const eins = i % takt === 0;
-            if (st.art === 'klick') Ton.holz(i * schlag, eins, eins ? 0.6 : 0.22);
+            if (st.art === 'klick') Ton.snare(i * schlag, eins ? 1.5 : 0.5);
             else if (eins) Ton.klavier(grund - 12, i * schlag, schlag * 0.9, 0.4);
             else Ton.akkord([grund + 4, grund + 7, grund + 12], i * schlag, schlag * 0.35, 0.09);
           }
