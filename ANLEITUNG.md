@@ -18,8 +18,16 @@ den Zweig `main` freigeben. Die Seite liegt dann unter
    Name `music-trainer`. **Speicherort/Jurisdiction: EU** wählen (falls nur
    ein Ort angeboten wird: „Western Europe“). Die Datenschutzhinweise sagen
    „Speicherort in der EU“ – das muss stimmen.
-2. In der Datenbank **Console** öffnen, den Inhalt von
-   `cloudflare/schema.sql` einfügen und ausführen.
+2. In der Datenbank **Console** öffnen. Das Eingabefeld ist einzeilig, und
+   die Kommentare in `schema.sql` würden alles dahinter verschlucken. Deshalb
+   ohne Kommentare als eine Zeile kopieren:
+
+   ```bash
+   sed 's/--.*$//' cloudflare/schema.sql | tr '\n' ' ' | tr -s ' ' | pbcopy
+   ```
+
+   Einfügen, **Execute**, dann zur Kontrolle `/tables` – es müssen `klassen`,
+   `schueler`, `fortschritt`, `verlauf` und `sperren` erscheinen.
 
 ## 3. Worker anlegen
 

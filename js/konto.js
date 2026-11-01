@@ -23,7 +23,7 @@ const Konto = {
   /* Adresse des Workers, nach dem Einrichten eintragen (siehe ANLEITUNG.md),
      z. B. 'https://music-trainer.DEIN-NAME.workers.dev'.
      Leer = Anmeldung ausgeblendet, alle spielen als Gast. */
-  API: '',
+  API: 'https://music-trainer.tomgruenig87.workers.dev',
   KEY: 'musiktrainer-konto',
   OFFEN_KEY: 'musiktrainer-offen',
   daten: null,          // { token, id, name, klasse }
