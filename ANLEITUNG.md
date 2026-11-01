@@ -104,7 +104,7 @@ Technisch umgesetzt:
 - IP-Adressen nur als gekürzter Prüfwert bei Fehlversuchen, nach Ablauf der
   Sperre gelöscht.
 - Verlauf der Runden nach 365 Tagen automatisch gelöscht.
-- Anmeldung freiwillig, alle Spiele auch ohne.
+- Zu Hause alle Spiele auch ohne Anmeldung.
 - Löschen einzelner Kinder und ganzer Klassen jederzeit im School-Tool.
 
 Offen – das kann die Technik nicht lösen, das klärst du mit der Schule:
@@ -119,9 +119,12 @@ Offen – das kann die Technik nicht lösen, das klärst du mit der Schule:
 4. **Eltern informieren**, z. B. mit einem kurzen Elternbrief.
 5. **Impressum:** Für ein kostenloses Schulangebot ohne Gewinnabsicht in der
    Regel nicht nötig – auch das mit der Schule abstimmen.
-6. Die Ergebnisse **nicht für Noten** verwenden – so steht es in den
-   Datenschutzhinweisen. Soll das anders sein, muss der Text geändert und
-   neu abgestimmt werden.
+6. **Mitarbeitsnote:** Die Ergebnisse fließen in die Mitarbeitsnote ein (School-Tool →
+   music-trainer → Benotung). Das steht so in den Datenschutzhinweisen und muss
+   mit Schulleitung und DSB abgestimmt sein. Weil sich die Kinder mit
+   Klassenpasswort und Pseudonym anmelden, könnte ein Kind theoretisch für ein
+   anderes spielen – für die Note am besten nur Runden werten, die im Unterricht
+   gespielt wurden (Zeitraum entsprechend wählen).
 
 ## Kosten
 

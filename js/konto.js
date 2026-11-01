@@ -38,7 +38,8 @@ const Konto = {
 
   /* Eigener Speicherplatz pro Kind – auf geteilten iPads sieht sonst das
      nächste Kind die Sterne des vorigen */
-  speicherKey() { return this.angemeldet() ? `musiktrainer-fortschritt-k${this.daten.id}` : 'musiktrainer-fortschritt'; },
+  // „6“ = Sterne 1–6 wie Schulnoten; ältere Stände mit 0–3 Sternen gelten nicht mehr
+  speicherKey() { return this.angemeldet() ? `musiktrainer-fortschritt6-k${this.daten.id}` : 'musiktrainer-fortschritt6'; },
 
   async api(pfad, { methode = 'GET', body, token = this.daten?.token } = {}) {
     const r = await fetch(this.API + pfad, {

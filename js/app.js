@@ -48,9 +48,26 @@ const Fortschritt = {
   setzeName(n) { try { localStorage.setItem('musiktrainer-name', n); } catch { /* egal */ } },
 };
 
+/* Bewertung wie eine Schulnote: 6 Sterne = Note 1 … 1 Stern = Note 6.
+   0 heißt „noch nicht gespielt“. Schlüssel für 10 Aufgaben:
+   10 → 1 · 9 → 2 · 7–8 → 3 · 5–6 → 4 · 3–4 → 5 · 0–2 → 6. */
+const Bewertung = {
+  MAX: 6,
+  NOTEN: ['', 'sehr gut', 'gut', 'befriedigend', 'ausreichend', 'mangelhaft', 'ungenügend'],
+
+  ausRichtig(r) { return r >= 10 ? 6 : r === 9 ? 5 : r >= 7 ? 4 : r >= 5 ? 3 : r >= 3 ? 2 : 1; },
+
+  /* Zeitspiele (Blitzlesen): ziel[2] richtige Noten in 60 s sind die 1,
+     die übrigen Stufen anteilig darunter. Gibt die Schwellen für 2 … 6 Sterne. */
+  zeitSchwellen(ziel) { return [0.3, 0.5, 0.7, 0.85, 1].map(f => Math.max(1, Math.round(ziel[2] * f))); },
+  ausZeit(r, ziel) { return 1 + this.zeitSchwellen(ziel).filter(z => r >= z).length; },
+
+  note(sterne) { return sterne ? 7 - sterne : null; },
+};
+
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const sterneHtml = (anzahl, von = 3) =>
+const sterneHtml = (anzahl, von = Bewertung.MAX) =>
   Array.from({ length: von }, (_, i) =>
     `<span class="stern${i < anzahl ? ' an' : ''}">${Icons.raw('star')}</span>`).join('');
 
@@ -324,7 +341,7 @@ const App = {
   /* ---------- Startseite ---------- */
   zeigeStart() {
     const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0);
-    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * 3, 0);
+    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0);
     const bereiche = [...new Set(SPIELE.map(s => s.bereich))];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();
@@ -335,7 +352,7 @@ const App = {
         <div>
           <h2>${name ? `${willkommen === 'zurueck' ? 'Willkommen zurück' : 'Hallo'} ${esc(name)}!` : 'Willkommen beim music-trainer!'}</h2>
           <p class="hint">Trainiere dein Gehör, lies Noten und klopfe Rhythmen. Jedes Spiel hat mehrere Stufen –
-             für jede Runde gibt es bis zu drei Sterne.</p>
+             für jede Runde gibt es bis zu sechs Sterne – sechs Sterne sind eine 1.</p>
           ${konto ? `<p class="konto-info">${Icons.raw('check')}Angemeldet in <strong>${esc(konto.klasse)}</strong> – deine Sterne werden gespeichert.</p>`
           : `<div class="gast-zeile">
               <label class="name-feld">${Icons.raw('user')}
@@ -358,7 +375,7 @@ const App = {
               <span class="spiel-icon">${Icons.raw(s.icon)}</span>
               <span class="spiel-titel">${s.titel}</span>
               <span class="hint">${s.text}</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Fortschritt.sterneVon(s)} / ${s.stufen.length * 3}</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Fortschritt.sterneVon(s)} / ${s.stufen.length * Bewertung.MAX}</span>
             </a>`).join('')}
         </div>`).join('')}`;
     const feld = document.getElementById('name');
@@ -380,7 +397,7 @@ const App = {
               <span class="stufe-nr">${st.info ? st.name : `Stufe ${i + 1}`}</span>
               <span class="stufe-name">${st.info || st.name}</span>
               <span class="stufe-sterne">${sterneHtml(b.sterne)}</span>
-              <span class="hint">${b.punkte ? `Bestwert ${b.punkte} Punkte` : spiel.zeit ? `${spiel.zeit} Sekunden` : '10 Aufgaben'}</span>
+              <span class="hint">${b.sterne ? `Beste Note ${Bewertung.note(b.sterne)} · ${b.punkte} Punkte` : spiel.zeit ? `${spiel.zeit} Sekunden` : '10 Aufgaben'}</span>
             </button>`;
           }).join('')}
         </div>
@@ -535,35 +552,51 @@ const App = {
   },
 
   /* ---------- Ergebnis ---------- */
+  /* Sechs leere Sterne füllen sich nacheinander bis zur erreichten Zahl, mit
+     einem aufsteigenden Ton je Stern; danach erscheint die Note. */
   zeigeErgebnis() {
     const r = this.runde;
     if (!r) return;
     const { spiel, stufeIdx, st } = r;
-    const sterne = spiel.zeit
-      ? st.ziel.filter(z => r.richtig >= z).length
-      : r.richtig === 10 ? 3 : r.richtig >= 8 ? 2 : r.richtig >= 6 ? 1 : 0;
+    const sterne = spiel.zeit ? Bewertung.ausZeit(r.richtig, st.ziel) : Bewertung.ausRichtig(r.richtig);
+    const note = Bewertung.note(sterne);
     const vorher = Fortschritt.bester(spiel.id, stufeIdx);
     const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte);
     this.aufraeumen();
-    const lob = ['Weiter üben – du schaffst das!', 'Gut gemacht!', 'Stark!', 'Perfekt!'][sterne];
-    const naechste = stufeIdx + 1 < spiel.stufen.length && sterne >= 2;
+    const lob = ['', 'Nicht aufgeben – nochmal!', 'Weiter üben!', 'Da geht noch mehr!', 'Gut gemacht!', 'Super!', 'Perfekt!'][sterne];
+    const naechste = stufeIdx + 1 < spiel.stufen.length && sterne >= 4;
+    const schwellen = spiel.zeit ? Bewertung.zeitSchwellen(st.ziel) : null;
     this.el.innerHTML = `
       <section class="card ergebnis" style="--farbe:${spiel.farbe}">
-        <div class="ergebnis-sterne">${sterneHtml(sterne)}</div>
-        <h2>${lob}</h2>
-        <p class="ergebnis-zahl">${spiel.zeit ? `${r.richtig} Noten richtig` : `${r.richtig} von 10 richtig`} · ${r.punkte} Punkte</p>
-        ${rekord && vorher.punkte ? '<p class="rekord">Neuer Bestwert!</p>' : ''}
-        ${spiel.zeit && sterne < 3 ? `<p class="hint">Für ${sterne + 1} Sterne brauchst du ${st.ziel[sterne]} richtige Noten.</p>` : ''}
-        <div class="btn-row mitte">
-          <button type="button" id="e-nochmal" class="${naechste ? '' : 'primary'}">${Icons.raw('reset')}Nochmal</button>
-          ${naechste ? `<button type="button" id="e-weiter" class="primary">${spiel.stufen[stufeIdx + 1].info ? spiel.stufen[stufeIdx + 1].name : `Stufe ${stufeIdx + 2}`}${Icons.raw('next')}</button>` : ''}
-          <a class="knopf" href="#/spiel/${spiel.id}">Stufen</a>
-          <a class="knopf" href="#/">Alle Spiele</a>
+        <div class="ergebnis-sterne">${sterneHtml(0)}</div>
+        <div class="ergebnis-text">
+          <p class="ergebnis-note">Note ${note} <span>${Bewertung.NOTEN[note]}</span></p>
+          <h2>${lob}</h2>
+          <p class="ergebnis-zahl">${spiel.zeit ? `${r.richtig} Noten richtig` : `${r.richtig} von 10 richtig`} · ${r.punkte} Punkte</p>
+          ${rekord && vorher.punkte ? '<p class="rekord">Neuer Bestwert!</p>' : ''}
+          ${schwellen && sterne < Bewertung.MAX ? `<p class="hint">Für ${sterne + 1} Sterne brauchst du ${schwellen[sterne - 1]} richtige Noten.</p>` : ''}
+          <div class="btn-row mitte">
+            <button type="button" id="e-nochmal" class="${naechste ? '' : 'primary'}">${Icons.raw('reset')}Nochmal</button>
+            ${naechste ? `<button type="button" id="e-weiter" class="primary">${spiel.stufen[stufeIdx + 1].info ? spiel.stufen[stufeIdx + 1].name : `Stufe ${stufeIdx + 2}`}${Icons.raw('next')}</button>` : ''}
+            <a class="knopf" href="#/spiel/${spiel.id}">Stufen</a>
+            <a class="knopf" href="#/">Alle Spiele</a>
+          </div>
         </div>
       </section>`;
     document.getElementById('e-nochmal').addEventListener('click', () => this.starteRunde(spiel, stufeIdx));
     document.getElementById('e-weiter')?.addEventListener('click', () => this.starteRunde(spiel, stufeIdx + 1));
-    if (sterne >= 2) { Ton.audio(); [72, 76, 79, 84].forEach((m, i) => Ton.klavier(m, i * 0.12, 0.5, 0.15)); }
+
+    Ton.audio();
+    const leiter = [72, 74, 76, 79, 81, 84];
+    const felder = [...this.el.querySelectorAll('.ergebnis-sterne .stern')];
+    const takt = 380;
+    for (let i = 0; i < sterne; i++) {
+      this.spaeter(() => { felder[i].classList.add('an'); Ton.klavier(leiter[i], 0, 0.4, 0.16); }, 400 + i * takt);
+    }
+    this.spaeter(() => {
+      this.el.querySelector('.ergebnis-text').classList.add('da');
+      if (sterne >= 5) [72, 76, 79, 84].forEach((m, i) => Ton.klavier(m, i * 0.1, 0.5, 0.13));
+    }, 500 + sterne * takt);
   },
 };
 

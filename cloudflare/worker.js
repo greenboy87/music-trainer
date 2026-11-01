@@ -196,7 +196,7 @@ async function ergebnisseSpeichern(env, wer, body) {
     const zeit = Number.isInteger(e.zeit) && e.zeit <= t && e.zeit > t - 30 * TAG ? e.zeit : t;
     if (!/^[a-z-]{1,30}$/.test(spiel)) continue;
     if (![stufe, sterne, punkte].every(Number.isInteger)) continue;
-    if (stufe < 0 || stufe > 9 || sterne < 0 || sterne > 3 || punkte < 0 || punkte > 10000) continue;
+    if (stufe < 0 || stufe > 9 || sterne < 0 || sterne > 6 || punkte < 0 || punkte > 10000) continue;   // 6 Sterne = Note 1
     anweisungen.push(env.DB.prepare(
       `INSERT INTO fortschritt (schueler_id, spiel, stufe, sterne, punkte, runden, geaendert)
        VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6)
