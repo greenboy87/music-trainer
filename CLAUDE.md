@@ -41,7 +41,9 @@ Lizenz auf `quellen.html` nachweisen.
 
 Auf dem Server liegen keine Namen, nur Pseudonyme. Keine Inhalte von
 Fremdanbietern einbinden (Schriften, CDNs, Analyse): `datenschutz.html` sagt
-das zu. Änderungen an gespeicherten Daten auch dort nachtragen.
+das zu. Änderungen an gespeicherten Daten auch dort nachtragen. Alle Seiten tragen
+`<meta name="robots" content="noindex, nofollow">`, damit Suchmaschinen den
+music-trainer nicht aufnehmen – neue HTML-Seiten auch.
 
 ## Worker und Seite gehören zusammen
 
