@@ -17,7 +17,10 @@ in `school-tool/js/musiktrainer.js`. Dessen Spielliste `MT_SPIELE` muss zu
 `js/hoerbeispiele.js` passen – neue Spiele und Stufen dort nachtragen. Neue
 Stufen nur hinten anhängen: gespeicherte Ergebnisse hängen an der Stufennummer
 – auch die Auswahl für die Note (`klassen.benotung` im Worker, „Meine Note“ auf
-der Startseite) besteht aus `spiel|stufe`.
+der Startseite) besteht aus `spiel|stufe`. Soll eine neue Stufe weiter vorne
+erscheinen, legt `reihe` im Spiel die Reihenfolge fest (Stammtöne:
+`NOTEN_REIHE`, Junior 2 und Anfänger 2 sind Nummer 4 und 5); `MT_SPIELE` im
+School-Tool braucht dieselbe `reihe`.
 
 ## Noten: Schnitt der 3 besten Runden
 

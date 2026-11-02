@@ -423,7 +423,8 @@ const App = {
       const spiel = SPIELE.find(s => s.id === id);
       const sterne = Fortschritt.schnitt3(id, +i);
       return spiel?.stufen[+i] ? { spiel, stufe: +i, top: Fortschritt.bester(id, +i).top, note: sterne ? 7 - sterne : null } : null;
-    }).filter(Boolean).sort((x, y) => SPIELE.indexOf(x.spiel) - SPIELE.indexOf(y.spiel) || x.stufe - y.stufe);
+    }).filter(Boolean).sort((x, y) => SPIELE.indexOf(x.spiel) - SPIELE.indexOf(y.spiel)
+      || stufenReihe(x.spiel).indexOf(x.stufe) - stufenReihe(y.spiel).indexOf(y.stufe));
     if (!aufgaben.length) return '';
     const zaehlen = aufgaben.map(a => a.note ?? (b.fehltAls6 ? 6 : null)).filter(n => n !== null);
     const schnitt = zaehlen.length ? zaehlen.reduce((s, n) => s + n, 0) / zaehlen.length : null;
@@ -474,10 +475,11 @@ const App = {
         <h2>${spiel.titel}</h2>
         <p class="hint">${spiel.text}</p>
         <div class="stufen">
-          ${spiel.stufen.map((st, i) => {
+          ${stufenReihe(spiel).map((i, platz) => {
+            const st = spiel.stufen[i];
             const b = Fortschritt.bester(spiel.id, i);
             return `<button type="button" class="stufe" data-stufe="${i}">
-              <span class="stufe-nr">${st.info ? st.name : `Stufe ${i + 1}`}</span>
+              <span class="stufe-nr">${st.info ? st.name : `Stufe ${platz + 1}`}</span>
               <span class="stufe-name">${st.info || st.name}</span>
               <span class="stufe-sterne">${sterneHtml(b.sterne)}</span>
               <span class="hint">${b.sterne ? `Beste Note ${Bewertung.note(b.sterne)} · ${b.punkte} Punkte` : spiel.zeit ? `${spiel.zeit} Sekunden` : `${Bewertung.anzahl(spiel)} Aufgaben`}</span>
@@ -498,7 +500,7 @@ const App = {
       <div class="runde" style="--farbe:${spiel.farbe}">
         <div class="runde-kopf">
           <button type="button" class="small" id="r-abbruch">${Icons.raw('back')}Beenden</button>
-          <div class="runde-titel"><strong>${spiel.titel}</strong><span class="hint">${st.info ? `${st.name} · ${st.info}` : `Stufe ${stufeIdx + 1} · ${st.name}`}</span></div>
+          <div class="runde-titel"><strong>${spiel.titel}</strong><span class="hint">${st.info ? `${st.name} · ${st.info}` : `Stufe ${stufenReihe(spiel).indexOf(stufeIdx) + 1} · ${st.name}`}</span></div>
           <div class="runde-stand"><span id="r-stand"></span><span class="punkte" id="r-punkte">0</span></div>
         </div>
         <div class="bahn"><div class="balken" id="r-balken"></div></div>
@@ -655,7 +657,9 @@ const App = {
     const rekord = Fortschritt.eintragen(spiel.id, stufeIdx, sterne, r.punkte, r.richtig, von, dauer);
     this.aufraeumen();
     const lob = ['', 'Nicht aufgeben – nochmal!', 'Weiter üben!', 'Da geht noch mehr!', 'Gut gemacht!', 'Super!', 'Perfekt!'][sterne];
-    const naechste = stufeIdx + 1 < spiel.stufen.length && sterne >= 4;
+    const reihe = stufenReihe(spiel);
+    const weiter = reihe[reihe.indexOf(stufeIdx) + 1];
+    const naechste = weiter !== undefined && sterne >= 4;
     const schwellen = spiel.zeit ? Bewertung.zeitSchwellen(st.ziel) : null;
     const daneben = Object.entries(r.daneben).sort((x, y) => y[1] - x[1]);
     this.el.innerHTML = `
@@ -671,14 +675,14 @@ const App = {
           ${schwellen && sterne < Bewertung.MAX ? `<p class="hint">Für ${sterne + 1} Sterne brauchst du ${schwellen[sterne - 1]} richtige Noten.</p>` : ''}
           <div class="btn-row mitte">
             <button type="button" id="e-nochmal" class="${naechste ? '' : 'primary'}">${Icons.raw('reset')}Nochmal</button>
-            ${naechste ? `<button type="button" id="e-weiter" class="primary">${spiel.stufen[stufeIdx + 1].info ? spiel.stufen[stufeIdx + 1].name : `Stufe ${stufeIdx + 2}`}${Icons.raw('next')}</button>` : ''}
+            ${naechste ? `<button type="button" id="e-weiter" class="primary">${spiel.stufen[weiter].info ? spiel.stufen[weiter].name : `Stufe ${reihe.indexOf(weiter) + 1}`}${Icons.raw('next')}</button>` : ''}
             <a class="knopf" href="#/spiel/${spiel.id}">Stufen</a>
             <a class="knopf" href="#/">Alle Spiele</a>
           </div>
         </div>
       </section>`;
     document.getElementById('e-nochmal').addEventListener('click', () => this.starteRunde(spiel, stufeIdx));
-    document.getElementById('e-weiter')?.addEventListener('click', () => this.starteRunde(spiel, stufeIdx + 1));
+    document.getElementById('e-weiter')?.addEventListener('click', () => this.starteRunde(spiel, weiter));
 
     Ton.audio();
     const leiter = [72, 74, 76, 79, 81, 84];

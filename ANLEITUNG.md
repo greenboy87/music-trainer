@@ -81,9 +81,14 @@ Beispiel der Bayerische Landesbeauftragte für den Datenschutz.
 
 ### Noten und „Meine Note“ (seit 01.11.2026)
 
-- Reiter music-trainer: oben **Bereich, Spiel und Stufe** wählen. Die Tabelle
-  zeigt je Kind die Note jeder Aufgabe (Ampelfarben, gestrichelt = noch offen),
-  rechts die Gesamtnote, dazu Runden, Übungstage und Übungszeit.
+- Reiter music-trainer: oben **Bereich, Spiel und Stufe** wählen, bei mehreren
+  Bereichen die Stufen je Bereich. Die Tabelle zeigt je Kind die Note jeder
+  Aufgabe (Ampelfarben, gestrichelt = noch offen), rechts die Gesamtnote, dazu
+  Runden, Übungstage und Übungszeit.
+- Stammtöne haben seit 02.11.2026 sechs Stufen: Junior 1 (c, d, e), Junior 2
+  (c–g), Anfänger 1 (c'–c''), Anfänger 2 (c'–e''), Fortgeschritten, Profi.
+  Junior 2 und Anfänger 2 sind gespeichert unter den Nummern 4 und 5, damit
+  alte Ergebnisse gültig bleiben; angezeigt werden sie an ihrem Platz.
 - **Je Aufgabe zählt der Schnitt der 3 besten Runden** (wer weniger gespielt
   hat: der gespielten) – im School-Tool und in „Meine Note“ gleich gerechnet.
 - Regler **Noten ⟷ Score**: statt der Note die Sterne (5,3/6), Prozent richtig

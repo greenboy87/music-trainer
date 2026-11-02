@@ -1,8 +1,9 @@
 /* Notenlesen nach der Stunde „Stammtöne & Noten lesen“ (Klasse 5).
 
    Zwei Bereiche mit denselben fünf Spielen (Noten lesen, Blitzlesen, Note → Taste,
-   Noten schreiben, Notenkette) und je vier Stufen:
-     Stammtöne   Junior: c, d, e · Anfänger: c'–c'' · Fortgeschritten: h–g'' · Profi: g–d'''
+   Noten schreiben, Notenkette):
+     Stammtöne   Junior 1: c, d, e · Junior 2: c–g · Anfänger 1: c'–c'' · Anfänger 2: c'–e''
+                 · Fortgeschritten: h–g'' · Profi: g–d'''
      Vorzeichen  Junior: nur ♯ · Anfänger: nur ♭ · Fortgeschritten/Profi: gemischt
    Höchstens zwei Hilfslinien. Notennamen klein wie im Unterricht (c, cis, es, b).
 
@@ -63,10 +64,12 @@ const Tonname = {
 
 const NOTEN_STUFEN = {
   stamm: [
-    { name: 'Junior', info: 'Drei Töne: c, d, e', von: 0, bis: 2, kette: 3, ziel: [12, 18, 24] },
-    { name: 'Anfänger', info: "Alle Stammtöne von c' bis c''", von: 0, bis: 7, kette: 4, ziel: [10, 16, 22] },
+    { name: 'Junior 1', info: 'Drei Töne: c, d, e', von: 0, bis: 2, kette: 3, ziel: [12, 18, 24] },
+    { name: 'Anfänger 1', info: "Alle Stammtöne von c' bis c''", von: 0, bis: 7, kette: 4, ziel: [10, 16, 22] },
     { name: 'Fortgeschritten', info: "Ein paar Töne mehr: h bis g''", von: -1, bis: 11, kette: 5, ziel: [9, 14, 19] },
     { name: 'Profi', info: "Bis zu zwei Hilfslinien: g bis d'''", von: -3, bis: 15, kette: 6, ziel: [8, 13, 18] },
+    { name: 'Junior 2', info: 'Fünf Töne: c, d, e, f, g', von: 0, bis: 4, kette: 3, ziel: [11, 17, 23] },
+    { name: 'Anfänger 2', info: "Zwei Töne mehr: c' bis e''", von: 0, bis: 9, kette: 4, ziel: [10, 15, 20] },
   ],
   vz: [
     { name: 'Junior', info: 'Nur Kreuz ♯: cis, dis, fis, gis, ais', von: 0, bis: 6, kette: 3, kreuz: true, ziel: [8, 12, 16] },
@@ -75,6 +78,11 @@ const NOTEN_STUFEN = {
     { name: 'Profi', info: 'Alles gemischt, bis zu zwei Hilfslinien', von: -3, bis: 15, kette: 6, kreuz: true, b: true, stamm: true, ziel: [6, 10, 14] },
   ],
 };
+
+/* Junior 2 und Anfänger 2 kamen im November 2026 dazu. Sie stehen hinten in der
+   Liste, weil gespeicherte Ergebnisse an der Stufennummer hängen; gezeigt und
+   gespielt werden die Stufen in dieser Reihenfolge. */
+const NOTEN_REIHE = { stamm: [0, 4, 1, 5, 2, 3] };
 
 /* Alle Töne einer Stufe. Bei „gemischt“ kommen Vorzeichen doppelt so oft dran. */
 function tonVorrat(st) {
@@ -196,6 +204,7 @@ function notenSpiele(art) {
   const vz = art === 'vz';
   const bereich = vz ? 'Vorzeichen' : 'Stammtöne';
   const stufen = NOTEN_STUFEN[art];
+  const reihe = NOTEN_REIHE[art];
   const farben = vz ? ['#f0abfc', '#e879f9', '#c4b5fd', '#a5b4fc', '#f9a8d4'] : ['#5eead4', '#67e8f9', '#93c5fd', '#86efac', '#fcd34d'];
 
   const lesen = (st, vorher) => {
@@ -227,19 +236,19 @@ function notenSpiele(art) {
     {
       id: `${art}-lesen`, bereich, titel: 'Noten lesen', icon: 'music', farbe: farben[0],
       text: vz ? 'Wie heißt die Note mit ♯ oder ♭? Achtung bei es, as und b!' : 'Wie heißt die Note? Linien: Eine Gelbe Hummel Darf Fliegen – Zwischenräume: FACE.',
-      stufen,
+      stufen, reihe,
       aufgabe: lesen,
     },
     {
       id: `${art}-blitz`, bereich, titel: 'Blitzlesen', icon: 'timer', farbe: farben[1], zeit: 60,
       text: 'So viele Noten wie möglich in 60 Sekunden. Am Rechner gehen auch die Tasten.',
-      stufen,
+      stufen, reihe,
       aufgabe: lesen,
     },
     {
       id: `${art}-taste`, bereich, titel: 'Note → Taste', icon: 'piano', farbe: farben[2],
       text: vz ? 'Finde die schwarze Taste zur Note. Kreuz: rechts daneben, b: links daneben.' : 'Finde die Taste zur Note – in der richtigen Lage!',
-      stufen,
+      stufen, reihe,
       aufgabe(st, vorher) {
         const t = neuerTon(st, vorher?.ton);
         const ziel = Tonname.midi(t);
@@ -266,7 +275,7 @@ function notenSpiele(art) {
     {
       id: `${art}-schreiben`, bereich, titel: 'Noten schreiben', icon: 'hand', farbe: farben[3],
       text: vz ? 'Setze die Note mit dem richtigen Vorzeichen ins Notensystem.' : 'Setze die Note ins Notensystem. Jede Lage zählt – c\' und c\'\' sind beide ein c.',
-      stufen,
+      stufen, reihe,
       aufgabe(st, vorher) {
         const t = neuerTon(st, vorher?.ton);
         const name = Tonname.vonTon(t);
@@ -296,7 +305,7 @@ function notenSpiele(art) {
       id: `${art}-kette`, bereich, titel: 'Notenkette', icon: 'sparkles', farbe: farben[4],
       text: vz ? 'Mehrere Noten hintereinander: Tippe ihre Namen der Reihe nach. Erst ♯ oder ♭, dann den Buchstaben.'
                : 'Mehrere Noten hintereinander: Tippe ihre Namen der Reihe nach. Am Rechner gehen auch die Tasten C bis H.',
-      stufen,
+      stufen, reihe,
       aufgabe(st) {
         const toene = [];
         while (toene.length < st.kette) toene.push(neuerTon(st, toene[toene.length - 1]));

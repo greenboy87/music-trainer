@@ -22,6 +22,10 @@ const mische = liste => {
   return l;
 };
 
+/* Stufen in der Reihenfolge zum Spielen. Neue Stufen hängen hinten an, weil
+   gespeicherte Ergebnisse an der Nummer hängen; „reihe“ stellt sie an ihren Platz. */
+const stufenReihe = spiel => spiel.reihe || spiel.stufen.map((_, i) => i);
+
 const INTERVALLE = [
   { name: 'Prime', h: 0 },
   { name: 'kleine Sekunde', h: 1 },
