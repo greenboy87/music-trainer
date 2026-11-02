@@ -80,11 +80,14 @@ const Ton = {
     });
   },
 
-  /* Ein Klavierton zum freien Spielen (Klavierseite): klingt, solange die Taste gedrückt
-     ist, und von selbst aus wie beim Klavier, tiefe Töne länger als hohe. Gibt eine
-     Funktion zum Loslassen zurück. Alle Töne laufen über einen Kompressor, damit
-     Akkorde mit vielen Fingern nicht übersteuern. */
-  anschlag(midi, laut = 0.24) {
+  /* Klänge der Klavierseite – alle im Browser erzeugt, ohne Aufnahmen */
+  KLAENGE: { klavier: 'Klavier', epiano: 'E-Piano', orgel: 'Orgel', cembalo: 'Cembalo', streicher: 'Streicher', glockenspiel: 'Glockenspiel' },
+
+  /* Ein Ton zum freien Spielen: klingt, solange die Taste gedrückt ist. Gibt eine Funktion
+     zum Loslassen zurück. Alle Töne laufen über einen Kompressor, damit Akkorde mit vielen
+     Fingern nicht übersteuern. Jeder Oszillator bekommt genau ein stop() – entweder beim
+     Loslassen oder wenn der Ton von selbst ausgeklungen ist. */
+  anschlag(midi, klang = 'klavier') {
     const c = this.audio();
     if (this.busAusgang !== this.ausgang) {
       this.bus = c.createDynamicsCompressor();
@@ -97,39 +100,130 @@ const Ton = {
       this.busAusgang = this.ausgang;
     }
     const t = c.currentTime + 0.005;
-    const f = this.frequenz(midi);
-    const nachklang = Math.min(7, Math.max(1.2, 2 + (84 - midi) * 0.08));
-    const huelle = c.createGain();
-    huelle.gain.setValueAtTime(0, t);
-    huelle.gain.linearRampToValueAtTime(laut, t + 0.006);
-    huelle.gain.exponentialRampToValueAtTime(laut * 0.4, t + 0.3);
-    huelle.gain.exponentialRampToValueAtTime(0.0005, t + nachklang);
-    const daempfer = c.createGain();
-    const filter = c.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(Math.min(f * 8, 9000), t);
-    filter.frequency.exponentialRampToValueAtTime(Math.max(f * 2, 400), t + Math.min(nachklang, 2));
-    huelle.connect(daempfer).connect(filter).connect(this.bus);
-    const oszillatoren = [[1, 'triangle', 1], [2, 'sine', 0.35], [3, 'sine', 0.12]].map(([mal, form, anteil]) => {
-      const o = c.createOscillator();
-      const g = c.createGain();
-      o.type = form;
-      o.frequency.value = f * mal;
-      g.gain.value = anteil;
-      o.connect(g).connect(huelle);
-      o.start(t);
-      o.stop(t + nachklang + 0.1);
-      return o;
-    });
-    let los = false;
-    return () => {
-      if (los) return;
-      los = true;
-      // Der Dämpfer legt sich auf die Saite; ganz kurzes Tippen klingt trotzdem kurz an
-      const ab = Math.max(c.currentTime, t + 0.09);
-      daempfer.gain.setTargetAtTime(0, ab, 0.07);
-      oszillatoren.forEach(o => { try { o.stop(ab + 0.6); } catch { /* schon aus */ } });
+    const aus = c.createGain();
+    aus.connect(this.bus);
+    const quellen = [];
+    const w = {
+      osz: (typ, frequenz, ziel) => {
+        const o = c.createOscillator();
+        o.type = typ;
+        o.frequency.value = frequenz;
+        o.connect(ziel);
+        o.start(t);
+        quellen.push(o);
+        return o;
+      },
+      verst: (wert, ziel = aus) => {
+        const g = c.createGain();
+        g.gain.value = wert;
+        g.connect(ziel);
+        return g;
+      },
+      /* Hüllkurve: [[Zeit ab Anschlag, Wert], …] – der erste Punkt sofort, dann linear auf den
+         zweiten (Anschlag), danach exponentiell (Ausklingen) */
+      huelle: (punkte, ziel = aus) => {
+        const g = c.createGain();
+        punkte.forEach(([zeit, wert], i) => {
+          if (i === 0) g.gain.setValueAtTime(wert, t + zeit);
+          else if (i === 1) g.gain.linearRampToValueAtTime(wert, t + zeit);
+          else g.gain.exponentialRampToValueAtTime(wert, t + zeit);
+        });
+        g.connect(ziel);
+        return g;
+      },
+      tiefpass: (von, bis, dauer, ziel = aus) => {
+        const fl = c.createBiquadFilter();
+        fl.type = 'lowpass';
+        fl.frequency.setValueAtTime(von, t);
+        if (bis !== von) fl.frequency.exponentialRampToValueAtTime(bis, t + dauer);
+        fl.connect(ziel);
+        return fl;
+      },
     };
+    const { ende, loslassen } = (this.stimmen[klang] || this.stimmen.klavier)(c, t, this.frequenz(midi), midi, w);
+    let gestoppt = false, uhr = 0, los = false;
+    const stoppen = wann => {
+      if (gestoppt) return;
+      gestoppt = true;
+      clearTimeout(uhr);
+      quellen.forEach(o => { try { o.stop(wann); } catch { /* egal */ } });
+    };
+    uhr = setTimeout(() => stoppen(c.currentTime + 0.05), Math.max(0, ende - c.currentTime) * 1000);
+    return () => {
+      if (los || !loslassen) return;          // Glockenspiel: klingt aus wie angeschlagen
+      los = true;
+      // Ganz kurzes Tippen klingt trotzdem kurz an
+      const ab = Math.max(c.currentTime, t + 0.09);
+      aus.gain.setTargetAtTime(0, ab, loslassen);
+      stoppen(ab + loslassen * 8);
+    };
+  },
+
+  /* Die Stimmen. Jede baut ihre Oszillatoren mit den Werkzeugen „w“ und sagt, wann sie von
+     selbst zu Ende ist und wie schnell sie beim Loslassen verstummt (Zeitkonstante in
+     Sekunden). Die Pegel sind so gewählt, dass alle Klänge etwa gleich laut sind. */
+  stimmen: {
+    /* Wie Ton.klavier: Dreieck mit zwei Obertönen, tiefe Töne klingen länger */
+    klavier(c, t, f, midi, w) {
+      const lang = Math.min(7, Math.max(1.2, 2 + (84 - midi) * 0.08));
+      const h = w.huelle([[0, 0], [0.006, 0.24], [0.3, 0.096], [lang, 0.0005]],
+        w.tiefpass(Math.min(f * 8, 9000), Math.max(f * 2, 400), Math.min(lang, 2)));
+      [[1, 'triangle', 1], [2, 'sine', 0.35], [3, 'sine', 0.12]].forEach(([mal, typ, anteil]) => w.osz(typ, f * mal, w.verst(anteil, h)));
+      return { ende: t + lang + 0.1, loslassen: 0.07 };
+    },
+
+    /* Frequenzmodulation 1 : 1 – hell im Anschlag, dann weich, dazu ein leiser Glockenton */
+    epiano(c, t, f, midi, w) {
+      const lang = Math.min(6, Math.max(1.5, 3 + (84 - midi) * 0.05));
+      const traeger = w.osz('sine', f, w.huelle([[0, 0], [0.004, 0.15], [0.6, 0.075], [lang, 0.0005]]));
+      const tiefe = c.createGain();
+      tiefe.gain.setValueAtTime(f * 1.8, t);
+      tiefe.gain.exponentialRampToValueAtTime(f * 0.2, t + 0.9);
+      tiefe.connect(traeger.frequency);
+      w.osz('sine', f, tiefe);
+      if (f * 4 < 14000) w.osz('sine', f * 4, w.huelle([[0, 0], [0.002, 0.03], [0.3, 0.0005]]));
+      return { ende: t + lang + 0.1, loslassen: 0.1 };
+    },
+
+    /* Zugriegel wie bei der Hammondorgel (16', 8', 4', 2⅔', 2'); klingt, solange man drückt */
+    orgel(c, t, f, midi, w) {
+      const h = w.huelle([[0, 0], [0.015, 0.085]]);
+      [[0.5, 0.5], [1, 0.8], [2, 0.6], [3, 0.35], [4, 0.3]].forEach(([mal, anteil]) => {
+        if (f * mal < 12000) w.osz('sine', f * mal, w.verst(anteil, h));
+      });
+      return { ende: t + 30, loslassen: 0.025 };
+    },
+
+    /* Gezupft: zwei Register (8' und 4'), heller Anschlag, der Filter schließt schnell */
+    cembalo(c, t, f, midi, w) {
+      const lang = Math.min(4, Math.max(0.9, 1.8 + (84 - midi) * 0.04));
+      const h = w.huelle([[0, 0], [0.002, 0.36], [0.2, 0.13], [lang, 0.0005]],
+        w.tiefpass(Math.min(f * 16, 14000), Math.max(f * 3, 1200), 0.5));
+      w.osz('sawtooth', f, w.verst(1, h));
+      w.osz('sawtooth', f * 2, w.verst(0.3, h));
+      return { ende: t + lang + 0.1, loslassen: 0.035 };
+    },
+
+    /* Drei leicht verstimmte Sägezähne, weicher Bogenstrich, Vibrato setzt später ein */
+    streicher(c, t, f, midi, w) {
+      const h = w.huelle([[0, 0], [0.2, 0.32]], w.tiefpass(Math.min(f * 5, 7000), Math.min(f * 5, 7000), 0));
+      const vibrato = c.createGain();
+      vibrato.gain.setValueAtTime(0, t);
+      vibrato.gain.linearRampToValueAtTime(f * 0.004, t + 0.6);
+      w.osz('sine', 5.5, vibrato);
+      [-0.005, 0, 0.005].forEach(d => vibrato.connect(w.osz('sawtooth', f * (1 + d), w.verst(0.33, h)).frequency));
+      return { ende: t + 30, loslassen: 0.2 };
+    },
+
+    /* Metallstab: Teiltöne bei 1 : 2,76 : 5,40 : 8,93, die hohen klingen schneller ab;
+       klingt aus wie angeschlagen, auch wenn man loslässt */
+    glockenspiel(c, t, f, midi, w) {
+      const lang = Math.min(2.5, Math.max(0.8, 1.5 + (72 - midi) * 0.03));
+      [[1, 1, 1], [2.76, 0.35, 0.35], [5.4, 0.15, 0.18], [8.93, 0.08, 0.1]].forEach(([mal, anteil, dauer]) => {
+        if (f * mal < 15000) w.osz('sine', f * mal, w.huelle([[0, 0], [0.002, 0.22 * anteil], [lang * dauer, 0.0005]]));
+      });
+      return { ende: t + lang + 0.1, loslassen: null };
+    },
   },
 
   akkord(midis, start = 0, dauer = 1.4, laut = 0.2) {

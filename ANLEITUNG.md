@@ -115,13 +115,17 @@ frei wählen.
 
 ### Klavier zum freien Spielen (seit 02.11.2026)
 
-Knopf **Klavier** oben rechts (oder `…/music-trainer/#/klavier`). Zwei Oktaven
-von c bis c'', auf dem Handy eine. Die Pfeile (am Rechner auch ← und →)
-verschieben die Lage oktavweise über die 88 Tasten von A₂ bis c'''''; die
-Leiste darüber zeigt die Lage und lässt sich antippen. Mehrere Finger
-gleichzeitig und Gleiten über die Tasten gehen. Der Schalter blendet die
-Notennamen ein und aus (schwarze Tasten mit beiden Namen, z. B. cis/des).
-Nichts davon geht an den Server; Lage und Schalter merkt sich der Browser.
+Knopf **Klavier** oben rechts (oder `…/music-trainer/#/klavier`).
+**Tasten klein** zeigt zwei Oktaven von c bis c'', **mittel** (Standard) und
+**groß** breitere Tasten wie in Musik-Apps auf dem Tablet (iPad quer: c'–f''
+bzw. c'–c''). Die Pfeile (am Rechner auch ← und →) verschieben die Lage
+oktavweise über die 88 Tasten von A₂ bis c'''''; die Leiste daneben zeigt die
+Lage und lässt sich antippen. Mehrere Finger gleichzeitig und Gleiten über die
+Tasten gehen. **Klang**: Klavier, E-Piano, Orgel, Cembalo, Streicher,
+Glockenspiel – alle im Browser erzeugt, ohne Aufnahmen. Der Schalter blendet
+die Notennamen ein und aus (schwarze Tasten mit beiden Namen, z. B. cis/des).
+Nichts davon geht an den Server; Lage, Tastengröße, Klang und Schalter merkt
+sich der Browser.
 
 ## Wie sich die Kinder anmelden
 

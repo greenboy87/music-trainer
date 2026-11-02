@@ -1,20 +1,27 @@
 /* Klavier zum freien Spielen (#/klavier).
 
-   Sichtbar sind zwei Oktaven von c bis c'' (auf schmalen Bildschirmen eine).
-   Die Pfeile – am Rechner auch ← und → – verschieben die Lage oktavweise über
-   die 88 Tasten eines echten Klaviers, von A₂ bis c'''''. Die Leiste darüber
-   zeigt, wo man gerade ist, und lässt sich antippen. Mehrere Finger zugleich
-   und Gleiten über die Tasten gehen; ein Ton klingt, solange seine Taste
-   gedrückt ist (Ton.anschlag). Lage und Notennamen merkt sich der Browser. */
+   Die Tastengröße bestimmt, wie viele Tasten zu sehen sind: „klein“ zeigt zwei
+   Oktaven von c bis c'', „mittel“ und „groß“ breitere Tasten wie in Musik-Apps
+   auf dem Tablet. Die Pfeile – am Rechner auch ← und → – verschieben die Lage
+   oktavweise über die 88 Tasten eines echten Klaviers, von A₂ bis c'''''; die
+   Leiste daneben zeigt, wo man gerade ist, und lässt sich antippen. Mehrere
+   Finger zugleich und Gleiten über die Tasten gehen; ein Ton klingt, solange
+   seine Taste gedrückt ist (Ton.anschlag, Klänge in Ton.KLAENGE). Lage, Größe,
+   Klang und Notennamen merkt sich der Browser. */
 const Klavierseite = {
   TIEFSTE: 21,          // A₂, die tiefste Taste
   HOECHSTE: 108,        // c''''', die höchste
   SCHWARZ: [1, 3, 6, 8, 10],
   NAMEN: ['c', 'cis', 'd', 'dis', 'e', 'f', 'fis', 'g', 'gis', 'a', 'ais', 'h'],
   B_NAMEN: { 1: 'des', 3: 'es', 6: 'ges', 8: 'as', 10: 'b' },
+  /* Breite einer weißen Taste in Pixeln; klein = zwei Oktaven, so breit es eben geht */
+  GROESSEN: { klein: 0, mittel: 95, gross: 130 },
+  GROESSEN_TEXT: { klein: 'klein', mittel: 'mittel', gross: 'groß' },
 
-  von: 48,              // tiefste sichtbare Taste
-  okt: 2,               // sichtbare Oktaven
+  von: 60,              // tiefste sichtbare Taste
+  n: 12,                // sichtbare weiße Tasten
+  groesse: 'mittel',
+  klang: 'klavier',
   namen: true,
   finger: new Map(),    // Zeiger → { m, aus } – null, wenn der Finger neben den Tasten liegt
   gedrueckt: new Map(), // Taste → wie viele Finger gerade darauf liegen
@@ -35,10 +42,26 @@ const Klavierseite = {
     return [this.NAMEN[m % 12], this.B_NAMEN[m % 12]].map(n => (gross ? n[0].toUpperCase() + n.slice(1) : n));
   },
 
-  /* Mögliche tiefste Tasten der Lage: A₂ und jedes C, solange die Lage nicht über c''''' hinausgeht */
+  alleWeissen() {
+    const liste = [];
+    for (let m = this.TIEFSTE; m <= this.HOECHSTE; m++) if (this.weiss(m)) liste.push(m);
+    return liste;
+  },
+
+  /* Wie viele weiße Tasten zu sehen sind – nie schmaler als 42 Pixel, nie mehr als zwei Oktaven */
+  anzahl() {
+    const breite = this.tastenEl.clientWidth;
+    const ziel = this.GROESSEN[this.groesse];
+    const n = ziel ? Math.round(breite / ziel) : 15;
+    return Math.max(5, Math.min(n, 15, Math.floor(breite / 42)));
+  },
+
+  /* Mögliche tiefste Tasten: A₂, jedes C und zuletzt die Lage, die genau mit c''''' endet */
   anfaenge() {
-    const liste = [this.TIEFSTE];
-    for (let c = 24; c + 12 * this.okt <= this.HOECHSTE; c += 12) liste.push(c);
+    const alle = this.alleWeissen();
+    const liste = [21, 24, 36, 48, 60, 72, 84, 96].filter(s => alle.indexOf(s) + this.n <= alle.length);
+    const oben = alle[alle.length - this.n];
+    if (oben > liste[liste.length - 1]) liste.push(oben);
     return liste;
   },
 
@@ -47,81 +70,100 @@ const Klavierseite = {
     return this.anfaenge().reduce((best, a) => (Math.abs(a - s) < Math.abs(best - s) ? a : best));
   },
 
-  /* Die weißen Tasten der Lage: sieben je Oktave und eine dazu (c bis c'') */
+  /* Zwei Oktaven beginnen bei c (c bis c''), weniger Tasten bei c' */
+  standard() { return this.n >= 15 ? 48 : 60; },
+
   weisse(von = this.von) {
-    const liste = [];
-    for (let m = von; liste.length < 7 * this.okt + 1; m++) if (this.weiss(m)) liste.push(m);
-    return liste;
+    const alle = this.alleWeissen();
+    const i = alle.indexOf(von);
+    return alle.slice(i, i + this.n);
   },
 
-  alleWeissen() {
-    const liste = [];
-    for (let m = this.TIEFSTE; m <= this.HOECHSTE; m++) if (this.weiss(m)) liste.push(m);
-    return liste;
+  merken(schluessel, wert) {
+    try { localStorage.setItem(`musiktrainer-klavier-${schluessel}`, String(wert)); } catch { /* privates Fenster */ }
   },
-
-  /* Unter 600 Pixeln Breite wären 15 Tasten zu schmal für Finger */
-  passendeOktaven() { return this.tastenEl.clientWidth < 600 ? 1 : 2; },
 
   zeigen(el) {
     this.el = el;
     let gemerkt = null;
     try {
-      this.namen = localStorage.getItem('musiktrainer-klavier-namen') !== 'aus';
-      gemerkt = Number(localStorage.getItem('musiktrainer-klavier-lage')) || null;
+      const lies = s => localStorage.getItem(`musiktrainer-klavier-${s}`);
+      this.namen = lies('namen') !== 'aus';
+      if (lies('groesse') in this.GROESSEN) this.groesse = lies('groesse');
+      if (lies('klang') in Ton.KLAENGE) this.klang = lies('klang');
+      gemerkt = Number(lies('von')) || null;
+      localStorage.removeItem('musiktrainer-klavier-lage');    // Lage bis 02.11.2026, galt für zwei Oktaven
     } catch { /* privates Fenster */ }
     el.innerHTML = `
       <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card klavier-seite">
         <div class="klavier-kopf">
           <h2>${Icons.raw('piano')}Klavier</h2>
+          <div class="klavier-einstellungen">
+            <label class="klavier-klang">Klang
+              <select id="k-klang">${Object.entries(Ton.KLAENGE).map(([id, name]) =>
+                `<option value="${id}"${id === this.klang ? ' selected' : ''}>${name}</option>`).join('')}</select>
+            </label>
+            <div class="klavier-groesse" role="group" aria-label="Tastengröße">
+              <span>Tasten</span>
+              ${Object.keys(this.GROESSEN).map(g => `<button type="button" data-groesse="${g}">${this.GROESSEN_TEXT[g]}</button>`).join('')}
+            </div>
+            <label class="schalter"><input type="checkbox" role="switch" id="k-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Notennamen</label>
+          </div>
+        </div>
+        <div class="klavier-navi">
           <div class="klavier-lage">
             <button type="button" data-schritt="-1" aria-label="Eine Oktave tiefer" title="Eine Oktave tiefer (←)">${Icons.raw('back')}</button>
             <span class="klavier-lage-text" aria-live="polite"></span>
             <button type="button" data-schritt="1" aria-label="Eine Oktave höher" title="Eine Oktave höher (→)">${Icons.raw('next')}</button>
           </div>
-          <label class="schalter"><input type="checkbox" role="switch" id="k-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Notennamen</label>
+          <div class="uebersicht" title="Die 88 Tasten eines Klaviers – antippen, um dorthin zu springen"></div>
         </div>
-        <div class="uebersicht" title="Die 88 Tasten eines Klaviers – antippen, um dorthin zu springen"></div>
         <div class="klaviatur${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>
-        <p class="hint klavier-tipp">Spiel mit mehreren Fingern gleichzeitig oder gleite über die Tasten. Die Pfeile – am Rechner
-          auch ← und → – verschieben die Lage um eine Oktave; die Leiste oben zeigt, wo du auf den 88 Tasten eines Klaviers bist.</p>
-        <p class="hint klavier-quer">Tipp: Halte das Gerät quer, dann werden die Tasten breiter.</p>
       </section>`;
     this.tastenEl = el.querySelector('.klaviatur');
     this.uebersichtEl = el.querySelector('.uebersicht');
     this.finger.clear();
     this.gedrueckt.clear();
-    this.okt = this.passendeOktaven();
-    this.von = this.gueltig(gemerkt ?? (this.okt === 2 ? 48 : 60));
+    this.n = this.anzahl();
+    this.von = this.gueltig(gemerkt ?? this.standard());
     this.uebersichtZeichnen();
     this.zeichnen();
 
     el.querySelectorAll('[data-schritt]').forEach(b => b.addEventListener('click', () => {
       Ton.audio();
-      this.schieben(+b.dataset.schritt);
+      this.schieben(Number(b.dataset.schritt));
     }));
+    el.querySelectorAll('[data-groesse]').forEach(b => b.addEventListener('click', () => {
+      Ton.audio();
+      this.groesse = b.dataset.groesse;
+      this.merken('groesse', this.groesse);
+      this.anpassen();
+    }));
+    el.querySelector('#k-klang').addEventListener('change', e => {
+      this.klang = e.target.value;
+      this.merken('klang', this.klang);
+      setTimeout(Ton.anschlag(60, this.klang), 450);      // zum Hören einmal c'
+    });
     el.querySelector('#k-namen').addEventListener('change', e => {
       Ton.audio();
       this.namen = e.target.checked;
       this.tastenEl.classList.toggle('ohne-namen', !this.namen);
-      try { localStorage.setItem('musiktrainer-klavier-namen', this.namen ? 'an' : 'aus'); } catch { /* egal */ }
+      this.merken('namen', this.namen ? 'an' : 'aus');
     });
     this.tastenBedienen();
     this.uebersichtBedienen();
 
     const pfeile = e => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      if (e.target.closest?.('select')) return;
       e.preventDefault();
       this.schieben(e.key === 'ArrowLeft' ? -1 : 1);
     };
-    // Gerät gedreht: eine oder zwei Oktaven
+    // Gerät gedreht oder Fenster schmaler: Tastenzahl anpassen, Schrift mitwachsen lassen
     const groesse = () => {
-      const okt = this.passendeOktaven();
-      if (okt === this.okt) return;
-      this.okt = okt;
-      this.von = this.gueltig(this.von);
-      this.zeichnen();
+      if (this.anzahl() !== this.n) this.anpassen();
+      else this.tastenEl.style.setProperty('--taste', `${this.tastenEl.clientWidth / this.n}px`);
     };
     const weg = () => this.allesLoslassen();
     document.addEventListener('keydown', pfeile);
@@ -135,7 +177,16 @@ const Klavierseite = {
     });
   },
 
-  /* Tasten der Lage neu aufbauen; dazu Lage-Anzeige, Pfeile und Rahmen in der Leiste */
+  /* Nach anderer Tastengröße oder Drehen: Lage behalten – stand sie auf der
+     Standardlage, auf die Standardlage der neuen Größe */
+  anpassen() {
+    const warStandard = this.von === this.standard();
+    this.n = this.anzahl();
+    this.von = warStandard ? this.standard() : this.gueltig(this.von);
+    this.zeichnen();
+  },
+
+  /* Tasten der Lage neu aufbauen; dazu Lage-Anzeige, Pfeile, Größenwahl und Rahmen in der Leiste */
   zeichnen() {
     this.allesLoslassen();
     const weisse = this.weisse();
@@ -149,11 +200,14 @@ const Klavierseite = {
         <span class="kt-name">${kreuz}<br>${be}</span></button>`;
     });
     this.tastenEl.innerHTML = html;
+    this.tastenEl.style.setProperty('--taste', `${this.tastenEl.clientWidth / weisse.length}px`);
+    this.merken('von', this.von);
 
     this.el.querySelector('.klavier-lage-text').textContent = `${this.name(weisse[0])} – ${this.name(weisse[weisse.length - 1])}`;
     const a = this.anfaenge();
     this.el.querySelector('[data-schritt="-1"]').disabled = this.von <= a[0];
     this.el.querySelector('[data-schritt="1"]').disabled = this.von >= a[a.length - 1];
+    this.el.querySelectorAll('[data-groesse]').forEach(k => k.setAttribute('aria-pressed', String(k.dataset.groesse === this.groesse)));
     const alle = this.alleWeissen();
     const rahmen = this.uebersichtEl.querySelector('.ue-rahmen');
     rahmen.style.left = `${alle.indexOf(weisse[0]) / alle.length * 100}%`;
@@ -175,7 +229,6 @@ const Klavierseite = {
   lageSetzen(s) {
     if (s === this.von) return;
     this.von = s;
-    try { localStorage.setItem('musiktrainer-klavier-lage', String(s)); } catch { /* egal */ }
     this.zeichnen();
   },
 
@@ -219,7 +272,7 @@ const Klavierseite = {
     // Mit der Tastatur angewählte Taste (Eingabe oder Leertaste) klingt kurz an
     t.addEventListener('click', e => {
       const k = e.detail === 0 && e.target.closest('.kt');
-      if (k) setTimeout(Ton.anschlag(Number(k.dataset.m)), 500);
+      if (k) setTimeout(Ton.anschlag(Number(k.dataset.m), this.klang), 500);
     });
   },
 
@@ -244,7 +297,7 @@ const Klavierseite = {
 
   anschlagen(id, m) {
     if (m === null) { this.finger.set(id, null); return; }
-    this.finger.set(id, { m, aus: Ton.anschlag(m) });
+    this.finger.set(id, { m, aus: Ton.anschlag(m, this.klang) });
     this.markieren(m, 1);
   },
 
