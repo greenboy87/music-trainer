@@ -1,7 +1,8 @@
 # Hinweise für Claude Code
 
 music-trainer by greenboy: Musik-Lernspiele für Klasse 5 (Stammtöne,
-Vorzeichen, Hören, Rhythmus), Design wie das School-Tool. Einrichtung des
+Vorzeichen, Hören, Rhythmus), Design wie das School-Tool. Dazu ein Klavier zum
+freien Spielen (`js/klavierseite.js`, `#/klavier`). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
 ## Versionsnummer nach jeder CSS/JS-Änderung hochzählen

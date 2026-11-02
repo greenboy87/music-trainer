@@ -80,6 +80,58 @@ const Ton = {
     });
   },
 
+  /* Ein Klavierton zum freien Spielen (Klavierseite): klingt, solange die Taste gedrückt
+     ist, und von selbst aus wie beim Klavier, tiefe Töne länger als hohe. Gibt eine
+     Funktion zum Loslassen zurück. Alle Töne laufen über einen Kompressor, damit
+     Akkorde mit vielen Fingern nicht übersteuern. */
+  anschlag(midi, laut = 0.24) {
+    const c = this.audio();
+    if (this.busAusgang !== this.ausgang) {
+      this.bus = c.createDynamicsCompressor();
+      this.bus.threshold.value = -12;
+      this.bus.knee.value = 10;
+      this.bus.ratio.value = 5;
+      this.bus.attack.value = 0.003;
+      this.bus.release.value = 0.25;
+      this.bus.connect(this.ausgang);
+      this.busAusgang = this.ausgang;
+    }
+    const t = c.currentTime + 0.005;
+    const f = this.frequenz(midi);
+    const nachklang = Math.min(7, Math.max(1.2, 2 + (84 - midi) * 0.08));
+    const huelle = c.createGain();
+    huelle.gain.setValueAtTime(0, t);
+    huelle.gain.linearRampToValueAtTime(laut, t + 0.006);
+    huelle.gain.exponentialRampToValueAtTime(laut * 0.4, t + 0.3);
+    huelle.gain.exponentialRampToValueAtTime(0.0005, t + nachklang);
+    const daempfer = c.createGain();
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(Math.min(f * 8, 9000), t);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(f * 2, 400), t + Math.min(nachklang, 2));
+    huelle.connect(daempfer).connect(filter).connect(this.bus);
+    const oszillatoren = [[1, 'triangle', 1], [2, 'sine', 0.35], [3, 'sine', 0.12]].map(([mal, form, anteil]) => {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = form;
+      o.frequency.value = f * mal;
+      g.gain.value = anteil;
+      o.connect(g).connect(huelle);
+      o.start(t);
+      o.stop(t + nachklang + 0.1);
+      return o;
+    });
+    let los = false;
+    return () => {
+      if (los) return;
+      los = true;
+      // Der Dämpfer legt sich auf die Saite; ganz kurzes Tippen klingt trotzdem kurz an
+      const ab = Math.max(c.currentTime, t + 0.09);
+      daempfer.gain.setTargetAtTime(0, ab, 0.07);
+      oszillatoren.forEach(o => { try { o.stop(ab + 0.6); } catch { /* schon aus */ } });
+    };
+  },
+
   akkord(midis, start = 0, dauer = 1.4, laut = 0.2) {
     midis.forEach(m => this.klavier(m, start, dauer, laut));
   },

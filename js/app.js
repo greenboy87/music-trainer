@@ -245,6 +245,8 @@ const App = {
     Theme.updateButton();
     this.kontoLeiste();
     document.getElementById('btn-theme').addEventListener('click', () => Theme.toggle());
+    // Im Klick den Ton freigeben – auf dem iPad klingt sonst die erste Taste nicht sofort
+    document.getElementById('btn-klavier').addEventListener('click', () => Ton.audio());
     if (Konto.angemeldet()) Konto.abgleichen().then(() => { if (!this.runde && Konto.angemeldet()) this.route(); });
     document.addEventListener('keydown', e => this.taste(e));
     window.addEventListener('hashchange', () => this.route());
@@ -280,8 +282,10 @@ const App = {
       this.zeigeAnmeldung(link.get('u'), link.get('p'));
     }
     else if (art === 'spiel' && spiel) this.zeigeSpiel(spiel);
+    else if (art === 'klavier') Klavierseite.zeigen(this.el);
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
+    document.getElementById('btn-klavier').classList.toggle('aktiv', art === 'klavier');
     window.scrollTo(0, 0);
   },
 

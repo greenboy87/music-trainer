@@ -113,6 +113,16 @@ Eigene Zugänge (z. B. für die eigenen Kinder): School-Tool → Extras →
 „music-trainer: eigene Zugänge“. Gruppe mit Passwort anlegen, Benutzernamen
 frei wählen.
 
+### Klavier zum freien Spielen (seit 02.11.2026)
+
+Knopf **Klavier** oben rechts (oder `…/music-trainer/#/klavier`). Zwei Oktaven
+von c bis c'', auf dem Handy eine. Die Pfeile (am Rechner auch ← und →)
+verschieben die Lage oktavweise über die 88 Tasten von A₂ bis c'''''; die
+Leiste darüber zeigt die Lage und lässt sich antippen. Mehrere Finger
+gleichzeitig und Gleiten über die Tasten gehen. Der Schalter blendet die
+Notennamen ein und aus (schwarze Tasten mit beiden Namen, z. B. cis/des).
+Nichts davon geht an den Server; Lage und Schalter merkt sich der Browser.
+
 ## Wie sich die Kinder anmelden
 
 - **Am schnellsten:** den eigenen QR-Code am Beamer scannen. Der Link meldet
