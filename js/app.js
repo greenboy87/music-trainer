@@ -544,7 +544,8 @@ const App = {
   uhrTick() {
     const r = this.runde;
     const rest = Math.max(0, r.ende - Date.now());
-    document.getElementById('r-stand').innerHTML = `${Icons.raw('timer')}${Math.ceil(rest / 1000)} s`;
+    // Zeitspiele: Restzeit und wie viele schon richtig sind
+    document.getElementById('r-stand').innerHTML = `${Icons.raw('timer')}${Math.ceil(rest / 1000)} s<span class="r-richtig">${Icons.raw('check')}${r.richtig}</span>`;
     document.getElementById('r-balken').style.width = `${rest / (r.spiel.zeit * 10)}%`;
     if (rest <= 0) this.zeigeErgebnis();
   },

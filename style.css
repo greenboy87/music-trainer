@@ -277,6 +277,7 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .option:disabled:not(.richtig):not(.falsch) { opacity: .55; }
 @keyframes schuetteln { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 
+.r-richtig { margin-left: .8rem; color: var(--green); font-weight: 700; }
 .rueckmeldung { min-height: 1.8rem; margin-top: 1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; }
 .rueckmeldung.gut { color: var(--green); }
 .rueckmeldung.schlecht { color: var(--danger); }
