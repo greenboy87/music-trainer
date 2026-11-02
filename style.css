@@ -267,8 +267,13 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .option:active:not(:disabled) { transform: scale(.97); }
 .option kbd { position: absolute; top: .35rem; right: .45rem; }
 .optionen.breit .option { padding: .5rem; }
-.option.richtig { background: color-mix(in srgb, var(--green) 25%, transparent); border-color: var(--green); }
-.option.falsch { background: var(--danger-bg); border-color: var(--danger); animation: schuetteln .35s ease; }
+/* Richtig und falsch deutlich: kräftiges Grün bzw. Rot mit dunkler Schrift */
+.option.richtig { background: var(--green); border-color: var(--green); color: #0b2e28; }
+.option.falsch { background: var(--danger); border-color: var(--danger); color: #3d0b14; animation: schuetteln .35s ease; }
+.option.richtig kbd, .option.falsch kbd { color: inherit; border-color: currentColor; background: transparent; }
+/* Nach einem Fehler steht der richtige Notenname groß unter der Note */
+.bild { flex-direction: column; align-items: center; }
+.bild-loesung { margin-top: .3rem; padding: .1rem 1rem; border-radius: var(--radius-sm); background: var(--green); color: #0b2e28; font-size: 1.6rem; font-weight: 800; }
 .option:disabled:not(.richtig):not(.falsch) { opacity: .55; }
 @keyframes schuetteln { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 

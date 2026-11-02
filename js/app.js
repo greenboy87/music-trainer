@@ -609,6 +609,8 @@ const App = {
     optionen.forEach(b => (b.disabled = true));
     if (knopf) knopf.classList.add(ok ? 'richtig' : 'falsch');
     if (!ok && optionen[a.richtig]) optionen[a.richtig].classList.add('richtig');
+    // Notenspiele: den richtigen Namen groß unter die Note schreiben
+    if (!ok && a.ton && a.bild) document.getElementById('r-bild').insertAdjacentHTML('beforeend', `<div class="bild-loesung">${Tonname.vonTon(a.ton)}</div>`);
 
     if (ok) {
       r.richtig++;
@@ -630,7 +632,7 @@ const App = {
 
     // Kein Klingel-Signal: es beißt sich mit dem Ton, der gerade erklingt
     if (r.spiel.zeit) {
-      this.spaeter(() => this.naechste(), ok ? 250 : 1100);
+      this.spaeter(() => this.naechste(), ok ? 250 : 1800);   // nach Fehler Zeit zum Lesen der Lösung
       return;
     }
     if (ok) this.spaeter(() => this.naechste(), a.wartezeit || (a.eigen ? 2200 : 1000));
