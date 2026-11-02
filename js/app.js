@@ -285,8 +285,18 @@ const App = {
     else if (art === 'klavier') Klavierseite.zeigen(this.el);
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
-    document.getElementById('btn-klavier').classList.toggle('aktiv', art === 'klavier');
+    this.klavierKnopf(art === 'klavier', pfad);
     window.scrollTo(0, 0);
+  },
+
+  /* Der Knopf „Klavier“ oben öffnet das Klavier; auf der Klavierseite führt er dorthin
+     zurück, wo man vorher war (die Adresse ohne Anmeldedaten), sonst zur Startseite */
+  klavierKnopf(an, pfad) {
+    if (!an) this.vorKlavier = pfad || '#/';
+    const k = document.getElementById('btn-klavier');
+    k.classList.toggle('aktiv', an);
+    k.href = an ? this.vorKlavier || '#/' : '#/klavier';
+    k.title = an ? 'Zurück zum music-trainer' : 'Klavier zum freien Spielen';
   },
 
   /* ---------- Anmeldung ---------- */
