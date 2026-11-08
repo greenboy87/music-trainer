@@ -176,7 +176,7 @@ async function spaltenSichern(env) {
 
 function pruefeBenotung(b) {
   if (!b || !Array.isArray(b.liste)) throw new Fehler(400, 'Benotung: Liste fehlt');
-  const liste = [...new Set(b.liste.map(String))].filter(w => /^[a-z-]{1,30}\|\d$/.test(w)).slice(0, 200);
+  const liste = [...new Set(b.liste.map(String))].filter(w => /^[a-z-]{1,30}\|\d{1,2}$/.test(w)).slice(0, 200);
   return { liste, fehltAls6: b.fehltAls6 === true };
 }
 
@@ -278,7 +278,7 @@ async function ergebnisseSpeichern(env, wer, body) {
     const zeit = Number.isInteger(e.zeit) && e.zeit <= t && e.zeit > t - 30 * TAG ? e.zeit : t;
     if (!/^[a-z-]{1,30}$/.test(spiel)) continue;
     if (![stufe, sterne, punkte].every(Number.isInteger)) continue;
-    if (stufe < 0 || stufe > 9 || sterne < 0 || sterne > 6 || punkte < 0 || punkte > 10000) continue;   // 6 Sterne = Note 1
+    if (stufe < 0 || stufe > 29 || sterne < 0 || sterne > 6 || punkte < 0 || punkte > 10000) continue;   // 6 Sterne = Note 1
     // Richtige Antworten von wie vielen Aufgaben – ältere Seiten schicken das nicht mit
     let richtig = e.richtig, von = e.von;
     if (!Number.isInteger(richtig) || !Number.isInteger(von) || richtig < 0 || richtig > 1000 || von < 1 || von > 1000) richtig = von = null;

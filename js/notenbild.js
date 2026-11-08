@@ -99,8 +99,9 @@ const Notenbild = {
        schlaege  Viertel je Takt (2, 3, 4) – steht als Taktart vorne
        luecke    [takt, nr]: dieser Baustein wird als „?“-Kästchen gezeichnet
        markiert  Nummer eines Taktes, der farbig hinterlegt wird
-       frei      nur die Noten, ohne Taktart und Taktstrich (Antwortknöpfe)   */
-  rhythmus(eingabe, { schlaege = 4, luecke = null, markiert = null, frei = false } = {}) {
+       frei      nur die Noten, ohne Taktart und Taktstrich (Antwortknöpfe)
+       eng       jeder Baustein nur eine Viertel breit (Bausteinkarten)        */
+  rhythmus(eingabe, { schlaege = 4, luecke = null, markiert = null, frei = false, eng = false } = {}) {
     const takte = typeof eingabe[0] === 'string' ? [eingabe] : eingabe;
     const SCHLAG = 48, y = 62, halsOben = 26;
     let x = frei ? -4 : 52, s = '', hinten = '';
@@ -108,7 +109,7 @@ const Notenbild = {
     takte.forEach((takt, ti) => {
       const von = x;
       takt.forEach((b, bi) => {
-        const breite = SCHLAG * RhythmusBausteine[b].schlaege;
+        const breite = eng ? SCHLAG : SCHLAG * RhythmusBausteine[b].schlaege;
         if (luecke && luecke[0] === ti && luecke[1] === bi) {
           s += `<rect x="${x + 2}" y="${halsOben - 6}" width="${breite - 8}" height="${y - halsOben + 18}" rx="6" class="rb-luecke"/>` +
             `<text x="${x + breite / 2 - 2}" y="${y - 4}" class="rb-frage">?</text>`;

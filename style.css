@@ -646,3 +646,29 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .quellen th, .quellen td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .quellen img { width: 48px; height: 48px; object-fit: contain; background: #fff; border-radius: 6px; }
 .quellen a, .rechtstext a { color: var(--accent-soft); }
+
+/* ---------- Rhythmus nachbauen ---------- */
+.bau { display: flex; flex-direction: column; align-items: center; gap: .7rem; width: 100%; }
+.bau-zeile { display: flex; align-items: stretch; gap: .35rem; width: 100%; max-width: 820px; min-height: 5rem; padding: .45rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.bau-taktart { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; font: 800 1.2rem/1 Georgia, serif; padding: 0 .2rem; }
+.bau-strich { flex: 0 0 3px; background: currentColor; opacity: .55; border-radius: 2px; margin: .3rem 0; }
+.bau-takt { flex: 1 1 0; display: flex; gap: .3rem; min-width: 0; border-radius: 10px; }
+.bau-takt.gut { background: color-mix(in srgb, var(--green) 18%, transparent); }
+.bau-takt.falsch { background: color-mix(in srgb, var(--danger) 18%, transparent); }
+.bau-fest, .bau-stein, .bau-leer { display: flex; align-items: center; justify-content: center; min-width: 0; border-radius: 10px; }
+.bau-fest { opacity: .8; }
+.bau-fest .rhythmusbild, .bau-stein .rhythmusbild, .bau-baustein .rhythmusbild { width: auto; height: 3rem; max-width: 100%; }
+.bau-luecke { display: flex; gap: .2rem; padding: .2rem; min-width: 2.6rem; border: 2px dashed var(--border); border-radius: 12px; cursor: pointer; }
+.bau-luecke.aktiv { border-color: var(--farbe); background: color-mix(in srgb, var(--farbe) 12%, transparent); }
+.bau-stein { padding: .1rem; border: 1px solid var(--border); background: var(--track); min-height: 0; }
+.bau-leer { border: 1px dashed var(--border); opacity: .6; }
+.bau-cursor { align-self: center; padding: 0 .4rem; font-size: 1.4rem; font-weight: 800; color: var(--farbe); opacity: .7; }
+.ohne-hilfe .bau-takt { flex: 0 1 auto; }
+.bau-leiste { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+.bau-baustein { padding: .4rem .7rem; min-width: 4rem; }
+.bau-knoepfe { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+.bau-stand { margin: 0; text-align: center; min-height: 1.3rem; }
+.bau-stand.wackeln { color: var(--danger); animation: schuetteln .35s ease; }
+.bau-loesung { display: flex; flex-direction: column; align-items: center; }
+.bau-loesung .hint { margin: 0; }
+.bau [hidden] { display: none !important; }

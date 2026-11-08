@@ -23,6 +23,9 @@ erscheinen, legt `reihe` im Spiel die Reihenfolge fest (Stammtöne:
 `NOTEN_REIHE`, Junior 2 und Anfänger 2 sind Nummer 4 und 5); `MT_SPIELE` im
 School-Tool braucht dieselbe `reihe`.
 
+Der Worker nimmt Stufennummern 0–29 an (`stufe > 29` und `\d{1,2}` in
+`cloudflare/worker.js`); ein Spiel mit mehr Stufen braucht dort eine höhere Grenze.
+
 ## Noten: Schnitt der 3 besten Runden
 
 Je Spiel und Stufe zählt der Schnitt der drei besten Runden (Note = 7 − Sterne).
