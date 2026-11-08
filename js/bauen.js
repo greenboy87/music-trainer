@@ -86,7 +86,7 @@ const Bauen = {
         <div class="bau-zeile"></div>
         <p class="hint bau-stand"></p>
         <div class="bau-leiste">${st.palette.map(b =>
-          `<button type="button" class="bau-baustein" data-b="${b}" title="${RhythmusBausteine[b].wort}">${Notenbild.rhythmus([b], { frei: true, eng: true })}</button>`).join('')}</div>
+          `<button type="button" class="bau-baustein" data-b="${b}" title="${RhythmusBausteine[b].wort}">${Notenbild.rhythmus([b], { frei: true, eng: true, linie: false })}</button>`).join('')}</div>
         <div class="bau-knoepfe">
           <button type="button" class="small" data-tat="zurueck">${Icons.raw('reset')}Zurück</button>
           <button type="button" class="small" data-tat="meins">${Icons.raw('volume')}Meins anhören</button>
@@ -99,7 +99,7 @@ const Bauen = {
     const pruefen = el.querySelector('[data-tat="pruefen"]');
     const rest = a => a.luecke - this.dauer(a.inhalt);
     const ist = () => teile.map(t => t.flatMap(a => a.fest ? [a.fest] : a.inhalt));
-    const svg = b => Notenbild.rhythmus([b], { frei: true, eng: true });
+    const svg = b => Notenbild.rhythmus([b], { frei: true, eng: true, linie: false });
 
     const zeichnen = (ergebnis) => {
       let html = `<div class="bau-taktart"><span>${schlaege}</span><span>4</span></div>`;
@@ -193,7 +193,7 @@ const Bauen = {
       stand.textContent = ok ? 'Genau so klang es!' : '';
       if (!ok) {
         el.querySelector('.bau-loesung').innerHTML = '<p class="hint">So war es richtig:</p>' +
-          Notenbild.rhythmus(soll, { schlaege, markiert: ergebnis.indexOf(false) });
+          Notenbild.rhythmus(soll, { schlaege, markiert: ergebnis.indexOf(false), linie: false });
         // Erst das Original, dann die eigene Version
         Ton.stopp();
         const d1 = this.spielen(soll, tempo, schlaege, 0.2);
@@ -208,6 +208,8 @@ const Bauen = {
   },
 };
 
+const VIER_SELTEN_DREI = [4, 4, 4, 4, 3];
+
 SPIELE.splice(SPIELE.findIndex(s => s.id === 'rhythmus-detektiv') + 1, 0, {
   id: 'rhythmus-bauen',
   bereich: 'Rhythmus',
@@ -215,17 +217,18 @@ SPIELE.splice(SPIELE.findIndex(s => s.id === 'rhythmus-detektiv') + 1, 0, {
   text: 'Ein Rhythmus erklingt, ein Teil der Noten steht schon da. Setze die fehlenden Notenwerte ein – erst einzelne, bald ganze Takte, am Ende ganz ohne Hilfe.',
   icon: 'pen',
   farbe: '#93c5fd',
-  /* art: einzeln (anzahl Zählzeiten), haelfte (halber Takt), takt (ganze Takte).
+  /* Fast immer 4/4, ab Stufe 5 ab und zu (jede fünfte Aufgabe) 3/4.
+     art: einzeln (anzahl Zählzeiten), haelfte (halber Takt), takt (ganze Takte).
      frei: keine leeren Kästchen, keine Sperre – man kann zu viel eintragen. */
   stufen: [
     { name: 'Eine Lücke', art: 'einzeln', anzahl: 1, bausteine: ['H', 'V', 'AA', 'Vp'], palette: ['V', 'AA', 'Vp'] },
     { name: 'Zwei Lücken', art: 'einzeln', anzahl: 2, bausteine: ['H', 'V', 'AA', 'Vp'], palette: ['H', 'V', 'AA', 'Vp'] },
     { name: 'Ein halber Takt', art: 'haelfte', bausteine: ['H', 'V', 'AA', 'Vp'], palette: ['H', 'V', 'AA', 'Vp'] },
     { name: 'Ein ganzer Takt', art: 'takt', bausteine: ['H', 'V', 'AA', 'Vp'], palette: ['H', 'V', 'AA', 'Vp'] },
-    { name: 'Zwei ganze Takte', art: 'takt', takte: 2, bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
-    { name: 'Ohne Hilfe: ein Takt', art: 'takt', frei: true, bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
-    { name: 'Ohne Hilfe: zwei Takte', art: 'takt', takte: 2, frei: true, bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
-    { name: 'Ohne Hilfe: 2/4, 3/4 und 4/4', art: 'takt', takte: 2, frei: true, schlaege: [2, 3, 4], bausteine: ['H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
+    { name: 'Zwei ganze Takte', art: 'takt', takte: 2, schlaege: VIER_SELTEN_DREI, bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
+    { name: 'Ohne Hilfe: ein Takt', art: 'takt', frei: true, schlaege: VIER_SELTEN_DREI, bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
+    { name: 'Ohne Hilfe: zwei Takte', art: 'takt', takte: 2, frei: true, schlaege: VIER_SELTEN_DREI, bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
+    { name: 'Ohne Hilfe: drei Takte', art: 'takt', takte: 3, frei: true, schlaege: [4, 4, 4, 3], bausteine: ['G', 'H', 'V', 'AA', 'Vp'], palette: ['G', 'H', 'V', 'AA', 'Vp'] },
   ],
   aufgabe(st) {
     for (let v = 0; v < 100; v++) {

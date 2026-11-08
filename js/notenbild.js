@@ -100,11 +100,15 @@ const Notenbild = {
        luecke    [takt, nr]: dieser Baustein wird als „?“-Kästchen gezeichnet
        markiert  Nummer eines Taktes, der farbig hinterlegt wird
        frei      nur die Noten, ohne Taktart und Taktstrich (Antwortknöpfe)
-       eng       jeder Baustein nur eine Viertel breit (Bausteinkarten)        */
-  rhythmus(eingabe, { schlaege = 4, luecke = null, markiert = null, frei = false, eng = false } = {}) {
+       eng       jeder Baustein nur eine Viertel breit (Bausteinkarten)
+       linie     false = ohne die Notenlinie (Rhythmus nachbauen)               */
+  rhythmus(eingabe, { schlaege = 4, luecke = null, markiert = null, frei = false, eng = false, linie: mitLinie = true } = {}) {
     const takte = typeof eingabe[0] === 'string' ? [eingabe] : eingabe;
     const SCHLAG = 48, y = 62, halsOben = 26;
     let x = frei ? -4 : 52, s = '', hinten = '';
+    // Frei: wie weit die Zeichen links und rechts über den ersten Notenkopf reichen, zum Mittig-Setzen
+    const AUSDEHNUNG = { AA: [-7, 31], pA: [-5, 38], Ap: [-7, 34], Vp: [-4, 6] };
+    let links = Infinity, rechts = -Infinity;
     if (!frei) s += `<text x="22" y="${y - 3}" class="nt">${schlaege}</text><text x="22" y="${y + 21}" class="nt">4</text>`;
     takte.forEach((takt, ti) => {
       const von = x;
@@ -114,6 +118,8 @@ const Notenbild = {
           s += `<rect x="${x + 2}" y="${halsOben - 6}" width="${breite - 8}" height="${y - halsOben + 18}" rx="6" class="rb-luecke"/>` +
             `<text x="${x + breite / 2 - 2}" y="${y - 4}" class="rb-frage">?</text>`;
         } else s += this.rhythmusZeichen(b, x + 10, y, halsOben);
+        const [l, r] = AUSDEHNUNG[b] || [-7, 7];
+        links = Math.min(links, x + 10 + l); rechts = Math.max(rechts, x + 10 + r);
         x += breite;
       });
       x += 4;
@@ -121,12 +127,15 @@ const Notenbild = {
       if (!frei) s += `<line x1="${x}" x2="${x}" y1="${y - 12}" y2="${y + 12}" class="nh"/>`;
       if (ti < takte.length - 1) x += 6;
     });
-    const linie = `<line x1="${frei ? 0 : 6}" x2="${frei ? x : x}" y1="${y}" y2="${y}" class="nl"/>`;
     if (frei) {
-      // Antwortknopf: nur der Ausschnitt um die Noten, mittig
-      const w = Math.max(x + 16, 84), links = (w - x) / 2;
-      return `<svg class="notenbild rhythmusbild rb-frei" viewBox="${-links} 14 ${w} 64" style="max-width:${Math.round(w * 1.3)}px" role="img" aria-label="Rhythmus">${linie}${s}</svg>`;
+      // Antwortknopf: nur der Ausschnitt um die Noten, die Noten genau in der Mitte
+      const mitte = (links + rechts) / 2;
+      const w = Math.max(rechts - links + 20, mitLinie ? 84 : 44);
+      const l0 = mitte - w / 2;
+      const linie = mitLinie ? `<line x1="${l0 + 4}" x2="${l0 + w - 4}" y1="${y}" y2="${y}" class="nl"/>` : '';
+      return `<svg class="notenbild rhythmusbild rb-frei" viewBox="${l0} 20 ${w} 60" style="max-width:${Math.round(w * 1.3)}px" role="img" aria-label="Rhythmus">${linie}${s}</svg>`;
     }
+    const linie = mitLinie ? `<line x1="6" x2="${x}" y1="${y}" y2="${y}" class="nl"/>` : '';
     const breite = x + 8;
     // Mehrere Takte: breiteres Bild, damit die Noten nicht winzig werden
     const max = Math.max(360, breite * 1.25);
