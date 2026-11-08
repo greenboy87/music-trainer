@@ -461,7 +461,7 @@ const SPIELE = [
       { name: 'Klasse 5 · 2', info: 'Dazu Achtel', bausteine: ['H', 'V', 'AA'], neu: ['AA'] },
       { name: 'Klasse 5 · 3', info: 'Dazu Viertelpausen', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['Vp'], arten: ['waehlen', 'waehlen', 'luecke'] },
       { name: 'Klasse 5 · 4', info: 'Mit Ganzen – zwei Takte', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['G', 'AA'], takte: 2, arten: ['waehlen', 'luecke'] },
-      { name: 'Klasse 5 · 5', info: '2/4- und 3/4-Takt', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [2, 3], arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 5 · 5', info: 'Viertel und Achtel – ein Takt', bausteine: ['V', 'AA'] },
       { name: 'Klasse 5 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 4, 3], optionen: 4, arten: ['waehlen', 'fehler', 'fehler'] },
       // Klasse 6: wie Klasse 5, etwas schwerer (schneller, mehr Antworten, früher gemischt)
       { name: 'Klasse 6 · 1', info: 'Halbe, Viertel und Achtel', bausteine: ['H', 'V', 'AA'], neu: ['AA'], tempo: 84 },
