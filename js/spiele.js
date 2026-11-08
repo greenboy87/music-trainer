@@ -247,12 +247,12 @@ const Detektiv = {
     const tempo = this.tempo(st, schlaege);
     return {
       frage: 'Was gehört in die Lücke? Hör genau hin.',
-      bild: Notenbild.rhythmus(takte, { schlaege, luecke: [ti, bi] }),
+      bild: Notenbild.rhythmus(takte, { schlaege, luecke: [ti, bi], linie: false }),
       hoeren: () => Rhythmus.abspielenTakte(takte, tempo, schlaege),
-      optionen: reihe.map(t => Notenbild.rhythmus(t, { frei: true })),
+      optionen: reihe.map(t => Notenbild.rhythmus(t, { frei: true, eng: true, linie: false })),
       richtig,
       loesung: `In die Lücke gehört: ${RhythmusBausteine[soll].wort}.`,
-      nachher() { document.getElementById('r-bild').innerHTML = Notenbild.rhythmus(takte, { schlaege, markiert: ti }); },
+      nachher() { document.getElementById('r-bild').innerHTML = Notenbild.rhythmus(takte, { schlaege, markiert: ti, linie: false }); },
     };
   },
 
@@ -444,13 +444,13 @@ const SPIELE = [
     id: 'rhythmus-detektiv',
     bereich: 'Rhythmus',
     titel: 'Rhythmus-Detektiv',
-    text: 'Hör genau hin: Welcher Rhythmus war es, was gehört in die Lücke, in welchem Takt steckt der Fehler? Sechs Stufen für Klasse 5, sechs für Klasse 6.',
+    text: 'Hör genau hin: Welcher Rhythmus war es, was gehört in die Lücke, in welchem Takt steckt der Fehler? Je sechs Stufen für Klasse 5, Klasse 6 und Profis.',
     icon: 'music',
     farbe: '#fda4af',
     /* Die ersten drei Stufen gab es schon (Ergebnisse hängen an der Nummer).
-       Klasse 5 nur G H V AA Vp (keine Punktierungen), Klasse 6 wie die Stunde
-       „Rhythmus mit Sticks“: dazu halbe Pause, Achtelpause mit Achtel,
-       Zeilen mit vier Takten, Tempo 90 und mehr. Stufennamen ohne Bezug auf
+       Klasse 5 nur G H V AA Vp (keine Punktierungen). Klasse 6 ist Klasse 5
+       etwas schwerer. Profi (Stufen 12–17): dazu halbe Pause, Achtelpause mit
+       Achtel, Zeilen mit vier Takten, Tempo 90 und mehr. Stufennamen ohne Bezug auf
        Stücke oder Hefte (keine Mozart-, Rondo- oder Drumscripts-Titel).
        „Ap“ (Achtel + Achtelpause) fehlt mit Absicht: mit der Snare klingt es wie eine Viertel.
          arten     welche Übungen in der Stufe vorkommen (wählen, lücke, fehler)
@@ -463,12 +463,20 @@ const SPIELE = [
       { name: 'Klasse 5 · 4', info: 'Mit Ganzen – zwei Takte', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['G', 'AA'], takte: 2, arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 5 · 5', info: '2/4- und 3/4-Takt', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [2, 3], arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 5 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 4, 3], optionen: 4, arten: ['waehlen', 'fehler', 'fehler'] },
-      { name: 'Klasse 6 · 1', info: 'Viertel und Achtel, vier Antworten', bausteine: ['V', 'AA'], optionen: 4, tempo: 90 },
-      { name: 'Klasse 6 · 2', info: 'Mit Viertelpausen – zwei Takte', bausteine: ['V', 'AA', 'Vp'], neu: ['Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
-      { name: 'Klasse 6 · 3', info: 'Ganze bis Achtel, dazu die halbe Pause', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp'], neu: ['Hp', 'Vp'], takte: 2, fehlerTakte: 4, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke', 'fehler'] },
-      { name: 'Klasse 6 · 4', info: 'Achtelpause: die Achtel kommt erst auf „und“', bausteine: ['H', 'V', 'AA', 'Vp', 'pA'], neu: ['pA'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
-      { name: 'Klasse 6 · 5', info: 'Vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, fehlerTakte: 4, tempo: 92, arten: ['waehlen', 'fehler'] },
-      { name: 'Klasse 6 · 6', info: 'Profi: alles, 3/4 und 4/4, schneller', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 3], optionen: 4, tempo: 104, arten: ['waehlen', 'luecke', 'fehler'] },
+      // Klasse 6: wie Klasse 5, etwas schwerer (schneller, mehr Antworten, früher gemischt)
+      { name: 'Klasse 6 · 1', info: 'Halbe, Viertel und Achtel', bausteine: ['H', 'V', 'AA'], neu: ['AA'], tempo: 84 },
+      { name: 'Klasse 6 · 2', info: 'Dazu Viertelpausen – vier Antworten', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['Vp'], optionen: 4, tempo: 84, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 3', info: 'Mit Ganzen – zwei Takte', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['G', 'AA', 'Vp'], takte: 2, tempo: 84, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 4', info: '4/4 und 3/4 – zwei Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [4, 3], tempo: 84, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 5', info: 'Zwei Takte, vier Antworten', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 3, optionen: 4, tempo: 88, arten: ['waehlen', 'luecke', 'fehler'] },
+      { name: 'Klasse 6 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 4, 3], optionen: 4, tempo: 88, arten: ['waehlen', 'fehler', 'fehler'] },
+      // Profi (bis 11.2026 die Stufen für Klasse 6): halbe Pause, Achtelpause, vier Takte, schneller
+      { name: 'Profi · 1', info: 'Viertel und Achtel, vier Antworten', bausteine: ['V', 'AA'], optionen: 4, tempo: 90 },
+      { name: 'Profi · 2', info: 'Mit Viertelpausen – zwei Takte', bausteine: ['V', 'AA', 'Vp'], neu: ['Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
+      { name: 'Profi · 3', info: 'Ganze bis Achtel, dazu die halbe Pause', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp'], neu: ['Hp', 'Vp'], takte: 2, fehlerTakte: 4, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke', 'fehler'] },
+      { name: 'Profi · 4', info: 'Achtelpause: die Achtel kommt erst auf „und“', bausteine: ['H', 'V', 'AA', 'Vp', 'pA'], neu: ['pA'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
+      { name: 'Profi · 5', info: 'Vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, fehlerTakte: 4, tempo: 92, arten: ['waehlen', 'fehler'] },
+      { name: 'Profi · 6', info: 'Alles, 3/4 und 4/4, schneller', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 3], optionen: 4, tempo: 104, arten: ['waehlen', 'luecke', 'fehler'] },
     ],
     aufgabe(st, vorher) {
       const arten = st.arten || ['waehlen'];
