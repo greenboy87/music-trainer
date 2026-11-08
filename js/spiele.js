@@ -450,7 +450,8 @@ const SPIELE = [
     /* Die ersten drei Stufen gab es schon (Ergebnisse hängen an der Nummer).
        Klasse 5 nur G H V AA Vp (keine Punktierungen), Klasse 6 wie die Stunde
        „Rhythmus mit Sticks“: dazu halbe Pause, Achtelpause mit Achtel,
-       Drumscripts-Zeilen mit vier Takten, Mozart-Rhythmen bei Tempo 90.
+       Zeilen mit vier Takten, Tempo 90 und mehr. Stufennamen ohne Bezug auf
+       Stücke oder Hefte (keine Mozart-, Rondo- oder Drumscripts-Titel).
        „Ap“ (Achtel + Achtelpause) fehlt mit Absicht: mit der Snare klingt es wie eine Viertel.
          arten     welche Übungen in der Stufe vorkommen (wählen, lücke, fehler)
          takte     Takte beim Wählen und bei der Lücke; fehlerTakte beim Fehler
@@ -462,11 +463,11 @@ const SPIELE = [
       { name: 'Klasse 5 · 4', info: 'Mit Ganzen – zwei Takte', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['G', 'AA'], takte: 2, arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 5 · 5', info: '2/4- und 3/4-Takt', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [2, 3], arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 5 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 4, 3], optionen: 4, arten: ['waehlen', 'fehler', 'fehler'] },
-      { name: 'Klasse 6 · 1', info: 'Mozart-Vorübungen: Viertel und Achtel', bausteine: ['V', 'AA'], optionen: 4, tempo: 90 },
-      { name: 'Klasse 6 · 2', info: 'Rondo-Rhythmen mit Viertelpausen – zwei Takte', bausteine: ['V', 'AA', 'Vp'], neu: ['Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 1', info: 'Viertel und Achtel, vier Antworten', bausteine: ['V', 'AA'], optionen: 4, tempo: 90 },
+      { name: 'Klasse 6 · 2', info: 'Mit Viertelpausen – zwei Takte', bausteine: ['V', 'AA', 'Vp'], neu: ['Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 6 · 3', info: 'Ganze bis Achtel, dazu die halbe Pause', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp'], neu: ['Hp', 'Vp'], takte: 2, fehlerTakte: 4, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke', 'fehler'] },
       { name: 'Klasse 6 · 4', info: 'Achtelpause: die Achtel kommt erst auf „und“', bausteine: ['H', 'V', 'AA', 'Vp', 'pA'], neu: ['pA'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
-      { name: 'Klasse 6 · 5', info: 'Drumscripts: vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, fehlerTakte: 4, tempo: 92, arten: ['waehlen', 'fehler'] },
+      { name: 'Klasse 6 · 5', info: 'Vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, fehlerTakte: 4, tempo: 92, arten: ['waehlen', 'fehler'] },
       { name: 'Klasse 6 · 6', info: 'Profi: alles, 3/4 und 4/4, schneller', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 3], optionen: 4, tempo: 104, arten: ['waehlen', 'luecke', 'fehler'] },
     ],
     aufgabe(st, vorher) {
