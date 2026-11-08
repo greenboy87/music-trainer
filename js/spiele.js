@@ -444,7 +444,7 @@ const SPIELE = [
     id: 'rhythmus-detektiv',
     bereich: 'Rhythmus',
     titel: 'Rhythmus-Detektiv',
-    text: 'Hör genau hin: Welcher Rhythmus war es, was gehört in die Lücke, in welchem Takt steckt der Fehler? Sieben Stufen für Klasse 5, je sechs für Klasse 6 und Profis.',
+    text: 'Hör genau hin: Welcher Rhythmus war es, was gehört in die Lücke, in welchem Takt steckt der Fehler? Stufen für Klasse 5, Klasse 6 und Profis. Wählen und Fehler-Finden kommen nie in derselben Stufe vor.',
     icon: 'music',
     farbe: '#fda4af',
     /* Die ersten drei Stufen gab es schon (Ergebnisse hängen an der Nummer).
@@ -468,20 +468,23 @@ const SPIELE = [
       { name: 'Klasse 6 · 2', info: 'Dazu Viertelpausen – vier Antworten', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['Vp'], optionen: 4, tempo: 84, arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 6 · 3', info: 'Mit Ganzen – zwei Takte', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['G', 'AA', 'Vp'], takte: 2, tempo: 84, arten: ['waehlen', 'luecke'] },
       { name: 'Klasse 6 · 4', info: '4/4 und 3/4 – zwei Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [4, 3], tempo: 84, arten: ['waehlen', 'luecke'] },
-      { name: 'Klasse 6 · 5', info: 'Zwei Takte, vier Antworten', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 3, optionen: 4, tempo: 88, arten: ['waehlen', 'luecke', 'fehler'] },
-      { name: 'Klasse 6 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 4, 3], optionen: 4, tempo: 88, arten: ['waehlen', 'fehler', 'fehler'] },
+      { name: 'Klasse 6 · 5', info: 'Zwei Takte, vier Antworten', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, optionen: 4, tempo: 88, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], fehlerTakte: 4, schlaege: [4, 4, 3], tempo: 88, arten: ['fehler'] },
       // Profi (bis 11.2026 die Stufen für Klasse 6): halbe Pause, Achtelpause, vier Takte, schneller
       { name: 'Profi · 1', info: 'Viertel und Achtel, vier Antworten', bausteine: ['V', 'AA'], optionen: 4, tempo: 90 },
       { name: 'Profi · 2', info: 'Mit Viertelpausen – zwei Takte', bausteine: ['V', 'AA', 'Vp'], neu: ['Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
-      { name: 'Profi · 3', info: 'Ganze bis Achtel, dazu die halbe Pause', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp'], neu: ['Hp', 'Vp'], takte: 2, fehlerTakte: 4, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke', 'fehler'] },
+      { name: 'Profi · 3', info: 'Ganze bis Achtel, dazu die halbe Pause', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp'], neu: ['Hp', 'Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
       { name: 'Profi · 4', info: 'Achtelpause: die Achtel kommt erst auf „und“', bausteine: ['H', 'V', 'AA', 'Vp', 'pA'], neu: ['pA'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
-      { name: 'Profi · 5', info: 'Vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, fehlerTakte: 4, tempo: 92, arten: ['waehlen', 'fehler'] },
-      { name: 'Profi · 6', info: 'Alles, 3/4 und 4/4, schneller', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 3], optionen: 4, tempo: 104, arten: ['waehlen', 'luecke', 'fehler'] },
+      { name: 'Profi · 5', info: 'Vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, tempo: 92 },
+      { name: 'Profi · 6', info: 'Alles, 3/4 und 4/4, schneller', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], takte: 2, schlaege: [4, 3], optionen: 4, tempo: 104, arten: ['waehlen', 'luecke'] },
       // Nr. 18 (11.2026): früher steckte das Wählen mit vier Antworten in Klasse 5 · 7 (Fehler finden)
       { name: 'Klasse 5 · 6', info: 'Zwei Takte, vier Antworten', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [4, 4, 3], optionen: 4 },
+      // Nr. 19: Fehler finden für Profis (vorher in Profi · 3, 5 und 6 eingestreut)
+      { name: 'Profi · 7', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], fehlerTakte: 4, schlaege: [4, 3], tempo: 96, arten: ['fehler'] },
     ],
-    // Klasse 5 · 6 (Nr. 18) kommt vor das Fehler-Finden (Nr. 5)
-    reihe: [0, 1, 2, 3, 4, 18, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+    // Klasse 5 · 6 (Nr. 18) kommt vor das Fehler-Finden (Nr. 5); Fehler-Finden nie mit Wählen
+    // in einer Stufe mischen – das verwirrt (einmal den falschen, einmal den gehörten Takt antippen)
+    reihe: [0, 1, 2, 3, 4, 18, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19],
     aufgabe(st, vorher) {
       const arten = st.arten || ['waehlen'];
       let art = zufall(arten);
