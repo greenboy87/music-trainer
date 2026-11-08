@@ -93,31 +93,70 @@ const Notenbild = {
     return `<svg class="notenbild" viewBox="0 0 ${breite} 120" style="max-width:${200 + toene.length * 50}px" role="img" aria-label="Noten">${s}</svg>`;
   },
 
-  /* Rhythmus auf einer Linie. Bausteine: G H V AA Vp (je ein Takt 4/4). */
-  rhythmus(bausteine) {
+  /* Rhythmus auf einer Linie. Eingabe: ein Takt (Liste von Bausteinen wie
+     ['V', 'AA', 'H']) oder mehrere Takte (Liste von Takten). Bausteine siehe
+     RhythmusBausteine. Optionen:
+       schlaege  Viertel je Takt (2, 3, 4) – steht als Taktart vorne
+       luecke    [takt, nr]: dieser Baustein wird als „?“-Kästchen gezeichnet
+       markiert  Nummer eines Taktes, der farbig hinterlegt wird
+       frei      nur die Noten, ohne Taktart und Taktstrich (Antwortknöpfe)   */
+  rhythmus(eingabe, { schlaege = 4, luecke = null, markiert = null, frei = false } = {}) {
+    const takte = typeof eingabe[0] === 'string' ? [eingabe] : eingabe;
     const SCHLAG = 48, y = 62, halsOben = 26;
-    let x = 52, s = '';
-    s += `<line x1="6" x2="${52 + 4 * SCHLAG}" y1="${y}" y2="${y}" class="nl"/>`;
-    s += `<text x="22" y="${y - 3}" class="nt">4</text><text x="22" y="${y + 21}" class="nt">4</text>`;
-    const hals = hx => `<line x1="${hx + 5.8}" x2="${hx + 5.8}" y1="${y - 1}" y2="${halsOben}" class="nh"/>`;
-    bausteine.forEach(b => {
-      const nx = x + 10;
-      if (b === 'G') s += this.kopf(nx, y, true);
-      else if (b === 'H') s += this.kopf(nx, y, true) + hals(nx);
-      else if (b === 'V') s += this.kopf(nx, y) + hals(nx);
-      else if (b === 'AA') {
-        const nx2 = nx + SCHLAG / 2;
-        s += this.kopf(nx, y) + hals(nx) + this.kopf(nx2, y) + hals(nx2);
-        s += `<rect x="${nx + 5}" y="${halsOben}" width="${nx2 - nx + 1.6}" height="5" class="nb"/>`;
-      } else if (b === 'Vp') {
-        s += `<path transform="translate(${nx - 4} ${y - 16})" class="np" ` +
-          `d="M2 0 L9 8 L4 14 L10 22 C5 20 2 23 6 29 C-1 25 0 18 6 20 L0 13 L5 7 Z"/>`;
-      }
-      x += SCHLAG * RhythmusBausteine[b].schlaege;
+    let x = frei ? -4 : 52, s = '', hinten = '';
+    if (!frei) s += `<text x="22" y="${y - 3}" class="nt">${schlaege}</text><text x="22" y="${y + 21}" class="nt">4</text>`;
+    takte.forEach((takt, ti) => {
+      const von = x;
+      takt.forEach((b, bi) => {
+        const breite = SCHLAG * RhythmusBausteine[b].schlaege;
+        if (luecke && luecke[0] === ti && luecke[1] === bi) {
+          s += `<rect x="${x + 2}" y="${halsOben - 6}" width="${breite - 8}" height="${y - halsOben + 18}" rx="6" class="rb-luecke"/>` +
+            `<text x="${x + breite / 2 - 2}" y="${y - 4}" class="rb-frage">?</text>`;
+        } else s += this.rhythmusZeichen(b, x + 10, y, halsOben);
+        x += breite;
+      });
+      x += 4;
+      if (markiert === ti) hinten += `<rect x="${von + 2}" y="14" width="${x - von - 4}" height="68" rx="6" class="rb-mark"/>`;
+      if (!frei) s += `<line x1="${x}" x2="${x}" y1="${y - 12}" y2="${y + 12}" class="nh"/>`;
+      if (ti < takte.length - 1) x += 6;
     });
-    x += 4;
-    s += `<line x1="${x}" x2="${x}" y1="${y - 12}" y2="${y + 12}" class="nh"/>`;
-    return `<svg class="notenbild rhythmusbild" viewBox="0 0 ${x + 8} 100" role="img" aria-label="Rhythmus">${s}</svg>`;
+    const linie = `<line x1="${frei ? 0 : 6}" x2="${frei ? x : x}" y1="${y}" y2="${y}" class="nl"/>`;
+    if (frei) {
+      // Antwortknopf: nur der Ausschnitt um die Noten, mittig
+      const w = Math.max(x + 16, 84), links = (w - x) / 2;
+      return `<svg class="notenbild rhythmusbild rb-frei" viewBox="${-links} 14 ${w} 64" style="max-width:${Math.round(w * 1.3)}px" role="img" aria-label="Rhythmus">${linie}${s}</svg>`;
+    }
+    const breite = x + 8;
+    // Mehrere Takte: breiteres Bild, damit die Noten nicht winzig werden
+    const max = Math.max(360, breite * 1.25);
+    return `<svg class="notenbild rhythmusbild" viewBox="0 0 ${breite} 100" style="max-width:${Math.round(max)}px" role="img" aria-label="Rhythmus">${hinten}${linie}${s}</svg>`;
+  },
+
+  /* Ein Baustein, nx = x des ersten Notenkopfs */
+  rhythmusZeichen(b, nx, y, halsOben) {
+    const hals = hx => `<line x1="${hx + 5.8}" x2="${hx + 5.8}" y1="${y - 1}" y2="${halsOben}" class="nh"/>`;
+    const fahne = hx => `<path d="M${hx + 5.8} ${halsOben} q1.5 8 8 12 q3 4 0.5 10" class="nh" fill="none"/>`;
+    const achtelpause = px => `<g transform="translate(${px - 5} ${y - 16})"><circle cx="3" cy="3.2" r="2.9" class="np"/>` +
+      `<path d="M3 5.6 Q7 6.2 10 1.5 L5.2 19" class="nh" fill="none"/></g>`;
+    const halb = 24;
+    switch (b) {
+      case 'G': return this.kopf(nx, y, true);
+      case 'H': return this.kopf(nx, y, true) + hals(nx);
+      case 'V': return this.kopf(nx, y) + hals(nx);
+      case 'AA': {
+        const nx2 = nx + halb;
+        return this.kopf(nx, y) + hals(nx) + this.kopf(nx2, y) + hals(nx2) +
+          `<rect x="${nx + 5}" y="${halsOben}" width="${nx2 - nx + 1.6}" height="5" class="nb"/>`;
+      }
+      case 'pA': return achtelpause(nx) + this.kopf(nx + halb, y) + hals(nx + halb) + fahne(nx + halb);
+      case 'Ap': return this.kopf(nx, y) + hals(nx) + fahne(nx) + achtelpause(nx + halb);
+      case 'Vp': return `<path transform="translate(${nx - 4} ${y - 16})" class="np" ` +
+        'd="M2 0 L9 8 L4 14 L10 22 C5 20 2 23 6 29 C-1 25 0 18 6 20 L0 13 L5 7 Z"/>';
+      // Auf einer Linie: die halbe Pause liegt auf, die ganze hängt
+      case 'Hp': return `<rect x="${nx - 7}" y="${y - 5}" width="14" height="5" class="nb"/>`;
+      case 'Gp': return `<rect x="${nx - 7}" y="${y}" width="14" height="5" class="nb"/>`;
+    }
+    return '';
   },
 };
 
@@ -128,6 +167,11 @@ const RhythmusBausteine = {
   V:  { schlaege: 1, einsaetze: [0],      wort: 'Viertel' },
   AA: { schlaege: 1, einsaetze: [0, 0.5], wort: 'zwei Achtel' },
   Vp: { schlaege: 1, einsaetze: [],       wort: 'Viertelpause' },
+  // Klasse 6 (Rhythmus-Detektiv): halbe und ganze Pause, Achtelpause mit Achtel
+  Hp: { schlaege: 2, einsaetze: [],       wort: 'halbe Pause' },
+  Gp: { schlaege: 4, einsaetze: [],       wort: 'ganze Pause' },
+  pA: { schlaege: 1, einsaetze: [0.5],    wort: 'Achtelpause und Achtel' },
+  Ap: { schlaege: 1, einsaetze: [0],      wort: 'Achtel und Achtelpause' },
 };
 
 const Rhythmus = {
@@ -176,5 +220,23 @@ const Rhythmus = {
     this.einsaetze(takt).forEach(e => Ton.snare(beginn + e * schlag, e === 0 ? 1.3 : 1));
     for (let i = 0; i < 4; i++) Ton.klick(beginn + i * schlag, i === 0);
     return { beginn: Ton.jetzt() + beginn + 0.02, dauer: beginn + 4 * schlag };
+  },
+
+  /* Mehrere Takte (Liste von Takten) mit „schlaege“ Vierteln je Takt */
+  einsaetzeTakte(takte, schlaege = 4) {
+    return takte.flatMap((t, i) => this.einsaetze(t).map(e => i * schlaege + e));
+  },
+
+  /* Mehrere Takte mit einem Takt Vorzähler (2/4: zwei Takte). Snare und Betonung
+     wie in der Rhythmus-Werkstatt: die 1 jedes Taktes etwas lauter, das Metronom
+     klickt leise mit. Gibt die Dauer in Sekunden zurück. */
+  abspielenTakte(takte, tempo = 80, schlaege = 4) {
+    const schlag = 60 / tempo;
+    const vor = schlaege === 2 ? 4 : schlaege;
+    for (let i = 0; i < vor; i++) Ton.klick(i * schlag, i % schlaege === 0);
+    const beginn = vor * schlag;
+    this.einsaetzeTakte(takte, schlaege).forEach(e => Ton.snare(beginn + e * schlag, e % schlaege === 0 ? 1.3 : 1));
+    for (let i = 0; i < takte.length * schlaege; i++) Ton.klick(beginn + i * schlag, i % schlaege === 0);
+    return beginn + takte.length * schlaege * schlag + 0.3;
   },
 };

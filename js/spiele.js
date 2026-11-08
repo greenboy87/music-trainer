@@ -79,6 +79,206 @@ const AKKORDE = {
   m7: { name: 'kleiner Moll-Septakkord', satz: 'ein kleiner Moll-Septakkord', h: [0, 3, 7, 10], bau: 'Moll-Dreiklang + kleine Septime' },
 };
 
+/* ---------------- Rhythmus-Detektiv ----------------
+   Die falschen Antworten entstehen aus der richtigen: an genau einer Stelle
+   wird etwas geändert (Viertel ↔ zwei Achtel, Note ↔ Pause, zwei Bausteine
+   tauschen, Halbe ↔ zwei Viertel …). So bleiben Notendichte und Notenzahl
+   fast gleich, und man muss wirklich hinhören. Ein Stück ist eine Liste von
+   Takten, ein Takt eine Liste von Bausteinen (RhythmusBausteine). */
+const Detektiv = {
+  dauer: b => RhythmusBausteine[b].schlaege,
+  toene: takte => Rhythmus.einsaetzeTakte(takte).length,
+  klang: (takte, schlaege) => Rhythmus.einsaetzeTakte(takte, schlaege).join(','),
+
+  /* Passt ein Baustein an diese Stelle? Halbe (und halbe Pause) nicht über die
+     Taktmitte im 4/4-Takt, im 2/4-Takt nur auf der 1; Ganze nur als ganzer 4/4-Takt. */
+  passt(b, pos, schlaege) {
+    const n = this.dauer(b);
+    if (pos + n > schlaege) return false;
+    if (n === 4) return pos === 0 && schlaege === 4;
+    if (n === 2 && schlaege === 4 && pos % 2) return false;
+    return true;
+  },
+
+  gueltig(takt, schlaege, erlaubt) {
+    let pos = 0;
+    for (const b of takt) {
+      if (!erlaubt.includes(b) || !this.passt(b, pos, schlaege)) return false;
+      pos += this.dauer(b);
+    }
+    if (pos !== schlaege) return false;
+    const stumm = takt.filter(b => !RhythmusBausteine[b].einsaetze.length).reduce((s, b) => s + this.dauer(b), 0);
+    // Höchstens die Hälfte Pausen, mindestens ein Ton
+    return Rhythmus.einsaetze(takt).length >= 1 && stumm * 2 <= schlaege;
+  },
+
+  takt(erlaubt, schlaege) {
+    for (let v = 0; v < 100; v++) {
+      const takt = [];
+      let pos = 0;
+      while (pos < schlaege) {
+        const moeglich = erlaubt.filter(b => this.passt(b, pos, schlaege));
+        if (!moeglich.length) break;
+        const b = zufall(moeglich);
+        takt.push(b);
+        pos += this.dauer(b);
+      }
+      // Ganze Takte selten, sonst mindestens zwei Töne
+      if (takt.length === 1 && Math.random() < 0.6) continue;
+      if (this.gueltig(takt, schlaege, erlaubt) && (takt.length === 1 || Rhythmus.einsaetze(takt).length >= 2)) return takt;
+    }
+    return Array(schlaege).fill('V');
+  },
+
+  stueck(st, anzahl, schlaege) {
+    const mitNeu = st.neu && Math.random() < 0.8;
+    for (let v = 0; v < 200; v++) {
+      const takte = Array.from({ length: anzahl }, () => this.takt(st.bausteine, schlaege));
+      if (mitNeu && !takte.flat().some(b => st.neu.includes(b))) continue;
+      // Mehrere Takte: nicht alle gleich
+      if (anzahl > 1 && new Set(takte.map(t => t.join())).size === 1) continue;
+      return takte;
+    }
+    return Array.from({ length: anzahl }, () => this.takt(st.bausteine, schlaege));
+  },
+
+  /* Alle Takte, die an genau einer Stelle anders sind */
+  varianten(takt, schlaege, erlaubt) {
+    const ersetzen = {
+      V: [['AA'], ['Vp'], ['pA'], ['Ap']],
+      AA: [['V'], ['pA'], ['Ap']],
+      Vp: [['V']],
+      pA: [['AA'], ['Ap'], ['V']],
+      Ap: [['AA'], ['pA']],
+      H: [['V', 'V'], ['Hp']],
+      Hp: [['H'], ['V', 'Vp'], ['Vp', 'V']],
+      G: [['H', 'H']],
+    };
+    const liste = [];
+    takt.forEach((b, i) => (ersetzen[b] || []).forEach(neu => liste.push([...takt.slice(0, i), ...neu, ...takt.slice(i + 1)])));
+    for (let i = 0; i + 1 < takt.length; i++) {
+      const [x, y] = [takt[i], takt[i + 1]];
+      if (x !== y) liste.push([...takt.slice(0, i), y, x, ...takt.slice(i + 2)]);
+      if (x === 'V' && y === 'V') liste.push([...takt.slice(0, i), 'H', ...takt.slice(i + 2)]);
+      if (x === 'H' && y === 'H') liste.push(['G']);
+    }
+    return liste.filter(t => this.gueltig(t, schlaege, erlaubt));
+  },
+
+  /* Eine Änderung in einem zufälligen Takt; gibt das neue Stück und den Takt zurück */
+  aendern(takte, schlaege, erlaubt) {
+    const reihe = mische(takte.map((_, i) => i));
+    for (const k of reihe) {
+      const v = this.varianten(takte[k], schlaege, erlaubt)
+        .filter(t => Rhythmus.einsaetze(t).join() !== Rhythmus.einsaetze(takte[k]).join());
+      if (v.length) return { takte: takte.map((t, i) => (i === k ? zufall(v) : t)), takt: k };
+    }
+    return null;
+  },
+
+  /* „anzahl“ verschieden klingende Stücke mit je einer Änderung */
+  aehnliche(takte, anzahl, schlaege, erlaubt) {
+    const gesehen = new Set([this.klang(takte, schlaege)]);
+    const n = this.toene(takte);
+    const liste = [];
+    for (let v = 0; v < 200 && liste.length < anzahl; v++) {
+      const neu = this.aendern(takte, schlaege, erlaubt);
+      if (!neu) break;
+      const k = this.klang(neu.takte, schlaege);
+      if (gesehen.has(k) || Math.abs(this.toene(neu.takte) - n) > 1) continue;
+      gesehen.add(k);
+      liste.push(neu.takte);
+    }
+    return liste.length === anzahl ? liste : null;
+  },
+
+  schlaege: st => zufall(st.schlaege || [4]),
+  tempo: (st, schlaege) => (st.tempo || 80) + (schlaege === 3 ? 8 : 0),
+
+  /* Hören und aus mehreren Notenbildern das richtige wählen */
+  waehlen(st) {
+    const schlaege = this.schlaege(st);
+    const takte = this.stueck(st, st.takte || 1, schlaege);
+    const andere = this.aehnliche(takte, (st.optionen || 3) - 1, schlaege, st.bausteine);
+    if (!andere) return null;
+    const reihe = mische([takte, ...andere]);
+    const tempo = this.tempo(st, schlaege);
+    return {
+      frage: `Welchen Rhythmus hörst du? Die Antworten unterscheiden sich nur an einer Stelle. (Erst ${schlaege === 2 ? 4 : schlaege} Klicks zum Einzählen)`,
+      hoeren: () => Rhythmus.abspielenTakte(takte, tempo, schlaege),
+      optionen: reihe.map(t => Notenbild.rhythmus(t, { schlaege })),
+      breit: true,
+      lang: takte.length > 2,
+      richtig: reihe.indexOf(takte),
+      loesung: 'Der richtige Rhythmus ist jetzt grün markiert. Hör noch einmal hin, wo er sich von deinem unterscheidet.',
+    };
+  },
+
+  /* Ein Baustein fehlt: welcher gehört in die Lücke? Alle Antworten sind gleich lang. */
+  luecke(st) {
+    const schlaege = this.schlaege(st);
+    const takte = this.stueck(st, st.takte || 1, schlaege);
+    const stellen = [];
+    takte.forEach((t, ti) => t.forEach((b, bi) => { if (this.dauer(b) <= 2) stellen.push([ti, bi]); }));
+    // Lieber eine Stelle, an der etwas klingt
+    const klingend = stellen.filter(([ti, bi]) => RhythmusBausteine[takte[ti][bi]].einsaetze.length);
+    const [ti, bi] = zufall(klingend.length && Math.random() < 0.8 ? klingend : stellen);
+    const soll = takte[ti][bi];
+    const n = this.dauer(soll);
+    const einer = st.bausteine.filter(b => this.dauer(b) === 1);
+    const kandidaten = n === 1 ? einer.map(b => [b])
+      : [...st.bausteine.filter(b => this.dauer(b) === 2).map(b => [b]), ...einer.flatMap(x => einer.map(y => [x, y]))];
+    const mit = teil => takte.map((t, i) => (i === ti ? [...t.slice(0, bi), ...teil, ...t.slice(bi + 1)] : t));
+    const gesehen = new Set([this.klang(takte, schlaege)]);
+    const tSoll = Rhythmus.einsaetze([soll]).length;
+    const andere = [];
+    mische(kandidaten).forEach(teil => {
+      const neu = mit(teil);
+      const k = this.klang(neu, schlaege);
+      if (andere.length >= (st.optionen || 3) - 1 || gesehen.has(k)) return;
+      if (!this.gueltig(neu[ti], schlaege, st.bausteine)) return;
+      if (Math.abs(Rhythmus.einsaetze(teil).length - tSoll) > 1) return;
+      gesehen.add(k);
+      andere.push(teil);
+    });
+    if (andere.length < 2) return null;
+    const reihe = mische([[soll], ...andere]);
+    const richtig = reihe.findIndex(t => t.length === 1 && t[0] === soll);
+    const tempo = this.tempo(st, schlaege);
+    return {
+      frage: 'Was gehört in die Lücke? Hör genau hin.',
+      bild: Notenbild.rhythmus(takte, { schlaege, luecke: [ti, bi] }),
+      hoeren: () => Rhythmus.abspielenTakte(takte, tempo, schlaege),
+      optionen: reihe.map(t => Notenbild.rhythmus(t, { frei: true })),
+      richtig,
+      loesung: `In die Lücke gehört: ${RhythmusBausteine[soll].wort}.`,
+      nachher() { document.getElementById('r-bild').innerHTML = Notenbild.rhythmus(takte, { schlaege, markiert: ti }); },
+    };
+  },
+
+  /* Die Noten stehen da, gespielt wird in einem Takt etwas anderes: in welchem? */
+  fehler(st) {
+    const schlaege = this.schlaege(st);
+    const anzahl = st.fehlerTakte || st.takte || 2;
+    const takte = this.stueck(st, anzahl, schlaege);
+    const neu = this.aendern(takte, schlaege, st.bausteine);
+    if (!neu || Math.abs(this.toene(neu.takte) - this.toene(takte)) > 1) return null;
+    const tempo = this.tempo(st, schlaege);
+    return {
+      frage: 'Detektiv-Auftrag: In einem Takt wird etwas anderes gespielt, als dasteht. In welchem?',
+      bild: Notenbild.rhythmus(takte, { schlaege }),
+      hoeren: () => Rhythmus.abspielenTakte(neu.takte, tempo, schlaege),
+      optionen: takte.map((_, i) => `Takt ${i + 1}`),
+      richtig: neu.takt,
+      loesung: `In Takt ${neu.takt + 1} klang es anders. Oben siehst du, was gespielt wurde.`,
+      nachher() {
+        document.getElementById('r-bild').innerHTML = '<p class="hint">Notiert:</p>' + Notenbild.rhythmus(takte, { schlaege, markiert: neu.takt }) +
+          `<p class="hint">Gespielt wurde:</p>` + Notenbild.rhythmus(neu.takte, { schlaege, markiert: neu.takt });
+      },
+    };
+  },
+};
+
 const SPIELE = [
   /* ---------------- Hören ---------------- */
   {
@@ -244,31 +444,40 @@ const SPIELE = [
     id: 'rhythmus-detektiv',
     bereich: 'Rhythmus',
     titel: 'Rhythmus-Detektiv',
-    text: 'Du hörst einen Takt. Welcher der notierten Rhythmen war es?',
+    text: 'Hör genau hin: Welcher Rhythmus war es, was gehört in die Lücke, in welchem Takt steckt der Fehler? Sechs Stufen für Klasse 5, sechs für Klasse 6.',
     icon: 'music',
     farbe: '#fda4af',
+    /* Die ersten drei Stufen gab es schon (Ergebnisse hängen an der Nummer).
+       Klasse 5 nur G H V AA Vp (keine Punktierungen), Klasse 6 wie die Stunde
+       „Rhythmus mit Sticks“: dazu halbe Pause, Achtelpause mit Achtel,
+       Drumscripts-Zeilen mit vier Takten, Mozart-Rhythmen bei Tempo 90.
+       „Ap“ (Achtel + Achtelpause) fehlt mit Absicht: mit der Snare klingt es wie eine Viertel.
+         arten     welche Übungen in der Stufe vorkommen (wählen, lücke, fehler)
+         takte     Takte beim Wählen und bei der Lücke; fehlerTakte beim Fehler
+         neu       mindestens einer davon kommt meistens vor                    */
     stufen: [
-      { name: 'Halbe und Viertel', bausteine: ['H', 'V'] },
-      { name: 'Dazu Achtel', bausteine: ['H', 'V', 'AA'] },
-      { name: 'Dazu Viertelpausen', bausteine: ['H', 'V', 'AA', 'Vp'] },
+      { name: 'Klasse 5 · 1', info: 'Halbe und Viertel', bausteine: ['H', 'V'] },
+      { name: 'Klasse 5 · 2', info: 'Dazu Achtel', bausteine: ['H', 'V', 'AA'], neu: ['AA'] },
+      { name: 'Klasse 5 · 3', info: 'Dazu Viertelpausen', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['Vp'], arten: ['waehlen', 'waehlen', 'luecke'] },
+      { name: 'Klasse 5 · 4', info: 'Mit Ganzen – zwei Takte', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['G', 'AA'], takte: 2, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 5 · 5', info: '2/4- und 3/4-Takt', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, schlaege: [2, 3], arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 5 · 6', info: 'Vier Takte – finde den Fehler', bausteine: ['G', 'H', 'V', 'AA', 'Vp'], neu: ['AA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 4, 3], optionen: 4, arten: ['waehlen', 'fehler', 'fehler'] },
+      { name: 'Klasse 6 · 1', info: 'Mozart-Vorübungen: Viertel und Achtel', bausteine: ['V', 'AA'], optionen: 4, tempo: 90 },
+      { name: 'Klasse 6 · 2', info: 'Rondo-Rhythmen mit Viertelpausen – zwei Takte', bausteine: ['V', 'AA', 'Vp'], neu: ['Vp'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 3', info: 'Ganze bis Achtel, dazu die halbe Pause', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp'], neu: ['Hp', 'Vp'], takte: 2, fehlerTakte: 4, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke', 'fehler'] },
+      { name: 'Klasse 6 · 4', info: 'Achtelpause: die Achtel kommt erst auf „und“', bausteine: ['H', 'V', 'AA', 'Vp', 'pA'], neu: ['pA'], takte: 2, optionen: 4, tempo: 90, arten: ['waehlen', 'luecke'] },
+      { name: 'Klasse 6 · 5', info: 'Drumscripts: vier Takte', bausteine: ['H', 'V', 'AA', 'Vp'], neu: ['AA'], takte: 4, fehlerTakte: 4, tempo: 92, arten: ['waehlen', 'fehler'] },
+      { name: 'Klasse 6 · 6', info: 'Profi: alles, 3/4 und 4/4, schneller', bausteine: ['G', 'H', 'V', 'AA', 'Vp', 'Hp', 'pA'], neu: ['pA', 'Vp'], takte: 2, fehlerTakte: 4, schlaege: [4, 3], optionen: 4, tempo: 104, arten: ['waehlen', 'luecke', 'fehler'] },
     ],
-    aufgabe(st) {
-      const takte = [Rhythmus.zufall(st.bausteine)];
-      const klang = t => Rhythmus.einsaetze(t).join(',');
-      for (let v = 0; takte.length < 3 && v < 200; v++) {
-        const t = Rhythmus.zufall(st.bausteine);
-        if (!takte.some(x => klang(x) === klang(t))) takte.push(t);
+    aufgabe(st, vorher) {
+      const arten = st.arten || ['waehlen'];
+      let art = zufall(arten);
+      if (arten.length > 1 && art === vorher?.art && Math.random() < 0.5) art = zufall(arten);
+      for (let v = 0; v < 30; v++) {
+        const a = Detektiv[art](st);
+        if (a) return { ...a, art };
       }
-      const richtigerTakt = takte[0];
-      const reihe = mische(takte);
-      return {
-        frage: 'Welchen Rhythmus hörst du? (Erst vier Klicks zum Einzählen)',
-        hoeren: () => Rhythmus.abspielen(richtigerTakt, 80).dauer,
-        optionen: reihe.map(t => Notenbild.rhythmus(t)),
-        breit: true,
-        richtig: reihe.indexOf(richtigerTakt),
-        loesung: 'Der richtige Rhythmus ist jetzt grün markiert.',
-      };
+      return { ...Detektiv.waehlen({ ...st, takte: 1, optionen: 3 }), art: 'waehlen' };
     },
   },
 

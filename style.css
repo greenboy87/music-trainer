@@ -288,6 +288,13 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .notenbild { width: 100%; max-width: 260px; height: auto; color: var(--text); overflow: visible; }
 .rhythmusbild { max-width: 360px; }
 .optionen.breit .notenbild { width: 100%; max-width: 400px; }
+/* Rhythmus-Detektiv: vier Takte brauchen mehr Breite; Lücke und markierter Takt */
+.optionen.breit.lang { max-width: 900px; }
+.optionen.breit.lang .notenbild { max-width: none; }
+.bild .rhythmusbild + .hint { margin: .4rem 0 0; }
+.rb-luecke { fill: none; stroke: var(--farbe, currentColor); stroke-width: 2; stroke-dasharray: 5 4; }
+.rb-frage { fill: var(--farbe, currentColor); font-size: 30px; font-weight: 800; text-anchor: middle; }
+.rb-mark { fill: var(--farbe, currentColor); opacity: .22; }
 .optionen.notenwahl { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 640px; }
 .optionen.notenwahl .option { padding: .4rem; }
 .optionen.drei { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 640px; }

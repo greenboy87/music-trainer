@@ -586,7 +586,7 @@ const App = {
     if (a.eigen) {
       a.eigen(eingabe, ok => this.beantworte(ok, null), a);
     } else {
-      eingabe.className = 'optionen' + (a.bilder ? ' bilder' : a.notenwahl ? ' notenwahl' : a.drei ? ' drei' : a.breit ? ' breit' : a.optionen.length > 4 ? ' viele' : a.optionen.length <= 3 ? ' wenige' : '');
+      eingabe.className = 'optionen' + (a.bilder ? ' bilder' : a.notenwahl ? ' notenwahl' : a.drei ? ' drei' : a.breit ? (a.lang ? ' breit lang' : ' breit') : a.optionen.length > 4 ? ' viele' : a.optionen.length <= 3 ? ' wenige' : '');
       a.optionen.forEach((o, i) => {
         const b = document.createElement('button');
         b.type = 'button';
