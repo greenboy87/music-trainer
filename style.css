@@ -974,3 +974,12 @@ body.hat-vollbild { overflow: hidden; }
 .pz-ergebnis.cursor .pz-prozent { opacity: .7; }
 .pz-uebungshinweis { display: flex; align-items: center; gap: .5rem; margin: .7rem 0 0; padding: .45rem .7rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--yellow) 16%, transparent); font-weight: 600; font-size: .9rem; }
 .pz-uebungshinweis .icon { color: var(--yellow); margin: 0; }
+/* Einzähler groß über den Noten */
+.pz-noten { position: relative; }
+.pz-einzaehler {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
+  border-radius: var(--radius-sm); background: color-mix(in srgb, var(--bg) 62%, transparent);
+}
+.pz-einzaehler span { font-size: clamp(3.5rem, 12vw, 7rem); font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 4px 24px color-mix(in srgb, var(--accent) 45%, transparent); }
+.pz-einzaehler span.schlag { animation: pz-zaehl .45s ease-out; }
+@keyframes pz-zaehl { from { transform: scale(1.35); opacity: .4; } 40% { opacity: 1; } to { transform: scale(1); } }

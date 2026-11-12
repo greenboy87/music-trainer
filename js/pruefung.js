@@ -209,7 +209,7 @@ const Pruefungsseite = {
                 : this.bester(z.note) ? ` · Bester Versuch: ${this.bester(z.note)} %` : ''}</p>
           </div>
         </div>
-        <div class="pz-noten">${this.svg(z, { gross: true })}</div>
+        <div class="pz-noten">${this.svg(z, { gross: true })}<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div></div>
         <div class="pz-steuerung">
           <button type="button" class="primary pz-los" id="pz-los">${Icons.raw('play')}${pr ? `Versuch ${pr.versuch} starten` : 'Los – ich spiele'}</button>
           <button type="button" id="pz-hoeren"${pr ? ' hidden' : ''}>${Icons.raw('volume')}Vorspielen</button>
@@ -320,6 +320,7 @@ const Pruefungsseite = {
     const status = ort.querySelector('.pz-status');
     const punkte = [...ort.querySelectorAll('.pz-punkte i')];
     const zeiger = ort.querySelector('.pz-noten .pz-kopfzeiger');
+    const einzaehler = ort.querySelector('.pz-einzaehler');
     const notenEl = [...ort.querySelectorAll('.pz-noten .pz-n')];
     this.leuchtet = '';
     let letzter = -1;
@@ -331,8 +332,17 @@ const Pruefungsseite = {
       if (ganz !== letzter && b >= -4) {
         letzter = ganz;
         punkte.forEach((p, i) => p.classList.toggle('an', i === ((ganz % 4) + 4) % 4));
-        if (b < 0) status.textContent = `Einzählen: ${ganz + 5} …${ganz === -1 ? (mitspielen ? ' – gleich geht’s los!' : '') : ''}`;
-        else if (ganz < 16) status.textContent = `${mitspielen ? 'Spiel mit!' : 'Hör zu und zähl mit:'} Takt ${Math.floor(ganz / 4) + 1} · ${ganz % 4 + 1}`;
+        if (b < 0) {
+          status.textContent = `Einzählen: ${ganz + 5} …${ganz === -1 ? (mitspielen ? ' – gleich geht’s los!' : '') : ''}`;
+          // Groß über den Noten: 1 – 2 – 3 – 4, auf jedem Schlag neu angestoßen
+          einzaehler.hidden = false;
+          const zahl = einzaehler.firstChild;
+          zahl.textContent = ganz + 5;
+          zahl.classList.remove('schlag'); void zahl.offsetWidth; zahl.classList.add('schlag');
+        } else {
+          einzaehler.hidden = true;
+          if (ganz < 16) status.textContent = `${mitspielen ? 'Spiel mit!' : 'Hör zu und zähl mit:'} Takt ${Math.floor(ganz / 4) + 1} · ${ganz % 4 + 1}`;
+        }
       }
       // SVG kennt .hidden nicht – das Attribut selbst entfernen
       // Cursor: beim Vorspielen immer, beim Mitspielen nur zum Üben (Schalter), in der Prüfung nie
@@ -378,6 +388,7 @@ const Pruefungsseite = {
     ort.querySelectorAll('#pz-los, #pz-hoeren, [data-pm]').forEach(b => { b.disabled = false; });
     ort.querySelectorAll('.pz-punkte i').forEach(p => p.classList.remove('an'));
     ort.querySelector('.pz-noten .pz-kopfzeiger').setAttribute('hidden', '');
+    ort.querySelector('.pz-einzaehler').hidden = true;
     ort.querySelectorAll('.pz-noten .pz-n.klingt').forEach(g => g.classList.remove('klingt'));
   },
 
