@@ -257,6 +257,9 @@ const Schlagzeugseite = {
   /* Drumcomputer */
   /* Reihenfolge und Farben wie bei Step-Sequenzern auf dem Tablet: Bassdrum oben, je Spur eine Farbe */
   SPUREN: ['b', 's', 'clap', 'hh', 'ho', 'crash', 'ride', 't1', 'bh', 'bt'],
+  /* Einfache Ansicht für den Anfang: nur Bassdrum, Snare, Hi-Hat und Becken */
+  EINFACH: ['b', 's', 'hh', 'crash'],
+  einfach: true,
   SPUR_NAMEN: { crash: 'Becken', ride: 'Ride', ho: 'Hi-Hat offen', hh: 'Hi-Hat', clap: 'Klatschen', s: 'Snare', t1: 'Tom', bh: 'Bongo hoch', bt: 'Bongo tief', b: 'Bassdrum' },
   SPUR_KURZ: { crash: 'Becken', ride: 'Ride', ho: 'HH offen', hh: 'Hi-Hat', clap: 'Klatschen', s: 'Snare', t1: 'Tom', bh: 'Bongo ↑', bt: 'Bongo ↓', b: 'Bass' },
   SPUR_FARBE: { b: '#e055d2', s: '#eaa93c', clap: '#eaa93c', hh: '#4fd3dc', ho: '#4fd3dc', crash: '#62a8ff', ride: '#62a8ff', t1: '#5ed65e', bh: '#a46cf5', bt: '#a46cf5' },
@@ -304,6 +307,7 @@ const Schlagzeugseite = {
       const a = JSON.parse(this.lies('set'));
       if (a && typeof a === 'object') this.SET.forEach(({ k }) => { if (typeof a[k] === 'boolean') this.setAn[k] = a[k]; });
       this.hhOffen = this.lies('hh-offen') === 'an';
+      this.einfach = this.lies('ansicht') !== 'profi';
       this.namen = this.lies('namen') !== 'aus';
       const bpm = Number(this.lies('bpm'));
       if (bpm >= 50 && bpm <= 200) this.bpm = bpm;
@@ -572,24 +576,62 @@ const Schlagzeugseite = {
   },
 
   /* ---------- Drumcomputer ---------- */
+  /* Die sichtbaren Spuren – nur sie klingen, damit nichts Unsichtbares mitspielt */
+  spuren() { return this.einfach ? this.SPUREN.filter(k => this.EINFACH.includes(k)) : this.SPUREN; },
+
+  /* Vorlagen, die nur sichtbare Spuren brauchen */
+  vorlagen() {
+    const sp = this.spuren();
+    return Object.entries(this.VORLAGEN).filter(([, v]) => Object.keys(v.beat).every(k => sp.includes(k)));
+  },
+
+  tempoSetzen(bpm) {
+    this.bpm = Math.max(50, Math.min(200, Math.round(bpm)));
+    this.merken('bpm', String(this.bpm));
+    const r = this.inhalt?.querySelector('#sz-bpm');
+    if (r) { r.value = this.bpm; this.inhalt.querySelector('#sz-bpm-text').textContent = this.bpm; }
+  },
+
+  /* Tempo tippen: Schnitt der letzten bis zu vier Abstände; nach 2 Sekunden Pause neu anfangen */
+  tippen() {
+    const jetzt = performance.now();
+    if (!this.tipps || jetzt - this.tipps[this.tipps.length - 1] > 2000) this.tipps = [];
+    this.tipps.push(jetzt);
+    if (this.tipps.length > 5) this.tipps.shift();
+    const k = this.inhalt.querySelector('#sz-tippen');
+    this.aufblitzen(k);
+    if (this.tipps.length < 2) { k.lastChild.textContent = 'weiter tippen …'; return; }
+    const abstand = (this.tipps[this.tipps.length - 1] - this.tipps[0]) / (this.tipps.length - 1);
+    this.tempoSetzen(60000 / abstand);
+    k.lastChild.textContent = 'Tippen';
+  },
+
   computerZeigen() {
     const kopf = Array.from({ length: 16 }, (_, i) => `<span class="sz-zaehl${i % 4 ? '' : ' schlag'}">${i % 4 ? this.SILBEN[i % 4] : i / 4 + 1}</span>`).join('');
     this.inhalt.innerHTML = `
       <div class="sz-steuerung">
         <button type="button" class="primary sz-play" id="sz-play"></button>
-        <label class="sz-tempo">Tempo
-          <input type="range" id="sz-bpm" min="50" max="200" step="1" value="${this.bpm}">
-          <span id="sz-bpm-text">${this.bpm}</span> BPM
-        </label>
+        <div class="sz-tempo" role="group" aria-label="Tempo">
+          <span>Tempo</span>
+          <button type="button" class="sz-pm" data-pm="-1" aria-label="Langsamer" title="Langsamer (−1)">−</button>
+          <input type="range" id="sz-bpm" min="50" max="200" step="1" value="${this.bpm}" aria-label="Tempo in BPM">
+          <button type="button" class="sz-pm" data-pm="1" aria-label="Schneller" title="Schneller (+1)">+</button>
+          <span class="sz-bpm-wert"><span id="sz-bpm-text">${this.bpm}</span> BPM</span>
+          <button type="button" id="sz-tippen" class="sz-tippen" title="Mehrmals im Takt antippen – das Tempo stellt sich danach ein">${Icons.raw('hand')}<span>Tippen</span></button>
+        </div>
         <label class="klavier-klang">Vorlage
-          <select id="sz-vorlage"><option value="">– wählen –</option>${Object.entries(this.VORLAGEN).map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('')}</select>
+          <select id="sz-vorlage"><option value="">– wählen –</option>${this.vorlagen().map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('')}</select>
         </label>
         <button type="button" id="sz-loeschen" class="small">${Icons.raw('reset')}Alles löschen</button>
+        <div class="klavier-groesse sz-ansicht" role="group" aria-label="Ansicht">
+          <button type="button" data-ansicht="einfach" aria-pressed="${this.einfach}" title="Nur Bassdrum, Snare, Hi-Hat und Becken">Einfach</button>
+          <button type="button" data-ansicht="profi" aria-pressed="${!this.einfach}" title="Alle Instrumente">Fortgeschritten</button>
+        </div>
       </div>
       <div class="sz-gitter-rahmen">
-        <div class="sz-gitter" role="grid" aria-label="Beat: 16 Sechzehntel je Instrument">
+        <div class="sz-gitter${this.einfach ? ' einfach' : ''}" role="grid" aria-label="Beat: 16 Sechzehntel je Instrument">
           <span class="sz-ecke"></span>${kopf}
-          ${this.SPUREN.map(k => `
+          ${this.spuren().map(k => `
             <button type="button" class="sz-spur" data-spur="${k}" style="--farbe:${this.SPUR_FARBE[k]}" title="${this.SPUR_NAMEN[k]} anhören" aria-label="${this.SPUR_NAMEN[k]} anhören">
               <svg viewBox="0 0 24 24" aria-hidden="true">${this.SPUR_ICON[k]}</svg><span>${this.SPUR_KURZ[k]}</span></button>
             ${this.beat[k].map((an, i) => `<button type="button" class="sz-zelle${an ? ' an' : ''}" data-k="${k}" data-i="${i}" style="--farbe:${this.SPUR_FARBE[k]}" aria-pressed="${an}" aria-label="${this.SPUR_NAMEN[k]}, Sechzehntel ${i + 1}"></button>`).join('')}`).join('')}
@@ -601,11 +643,29 @@ const Schlagzeugseite = {
     const play = this.inhalt.querySelector('#sz-play');
     play.addEventListener('click', () => (this.laeuft ? this.stoppen() : this.starten()));
     const regler = this.inhalt.querySelector('#sz-bpm');
-    regler.addEventListener('input', () => {
-      this.bpm = Number(regler.value);
-      this.inhalt.querySelector('#sz-bpm-text').textContent = this.bpm;
-      this.merken('bpm', String(this.bpm));
+    regler.addEventListener('input', () => this.tempoSetzen(Number(regler.value)));
+    // − und +: einmal antippen = 1 BPM, gedrückt halten zählt weiter
+    this.inhalt.querySelectorAll('[data-pm]').forEach(b => {
+      let halt = null;
+      const los = () => { clearTimeout(halt); clearInterval(halt); halt = null; };
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        const d = Number(b.dataset.pm);
+        this.tempoSetzen(this.bpm + d);
+        halt = setTimeout(() => { halt = setInterval(() => this.tempoSetzen(this.bpm + d), 70); }, 400);
+      });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, los));
+      b.addEventListener('click', e => { if (e.detail === 0) this.tempoSetzen(this.bpm + Number(b.dataset.pm)); });
+      App.beimAufraeumen(los);
     });
+    const tipp = this.inhalt.querySelector('#sz-tippen');
+    tipp.addEventListener('pointerdown', e => { e.preventDefault(); this.tippen(); });
+    tipp.addEventListener('click', e => { if (e.detail === 0) this.tippen(); });
+    this.inhalt.querySelectorAll('[data-ansicht]').forEach(b => b.addEventListener('click', () => {
+      this.einfach = b.dataset.ansicht === 'einfach';
+      this.merken('ansicht', this.einfach ? 'einfach' : 'profi');
+      this.computerZeigen();
+    }));
     this.inhalt.querySelector('#sz-vorlage').addEventListener('change', e => {
       if (!e.target.value) return;
       this.vorlageLaden(e.target.value);
@@ -713,7 +773,7 @@ const Schlagzeugseite = {
     if (this.naechsteZeit < c.currentTime - 0.2) this.naechsteZeit = c.currentTime + 0.05;
     while (this.naechsteZeit < c.currentTime + 0.12) {
       const i = this.schritt;
-      this.SPUREN.forEach(k => {
+      this.spuren().forEach(k => {
         if (this.beat[k][i]) Drums.spielen(k, this.naechsteZeit, k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1);
       });
       this.warteschlange.push({ schritt: i, zeit: this.naechsteZeit });

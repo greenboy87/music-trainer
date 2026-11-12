@@ -761,8 +761,16 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 /* Drumcomputer */
 .sz-steuerung { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1.3rem; margin-bottom: 1rem; }
 .sz-play { min-width: 7.5rem; min-height: 2.8rem; font-size: 1rem; }
-.sz-tempo { display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; }
-.sz-tempo input { width: clamp(110px, 22vw, 200px); accent-color: var(--accent); }
+.sz-tempo { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .45rem; font-weight: 600; }
+.sz-tempo input { width: clamp(100px, 18vw, 180px); accent-color: var(--accent); }
+.sz-pm { width: 2.6rem; height: 2.6rem; padding: 0; font-size: 1.35rem; line-height: 1; touch-action: none; user-select: none; -webkit-user-select: none; }
+.sz-bpm-wert { white-space: nowrap; }
+.sz-tippen { min-height: 2.6rem; min-width: 6.4rem; touch-action: none; user-select: none; -webkit-user-select: none; }
+.sz-tippen.schlag { animation: sz-tipp .15s ease-out; }
+@keyframes sz-tipp { from { background: var(--active-soft); border-color: var(--accent); transform: scale(.95); } to { transform: none; } }
+.sz-ansicht { margin-left: auto; }
+.sz-ansicht button { min-height: 2.4rem; }
+@media (max-width: 620px) { .sz-ansicht { margin-left: 0; } }
 #sz-bpm-text { display: inline-block; min-width: 2.2rem; text-align: right; font-variant-numeric: tabular-nums; }
 /* Aufteilung wie bei Step-Sequenzern auf dem Tablet: breite Spuren in der Farbe des
    Instruments, gesetzte Schläge leuchten, Vierergruppen mit etwas Abstand */
@@ -776,6 +784,8 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 }
 .sz-gitter > :nth-child(17n + 6), .sz-gitter > :nth-child(17n + 10), .sz-gitter > :nth-child(17n + 14) { margin-left: clamp(3px, .8vw, 8px); }
 .sz-ecke { display: block; }
+.sz-gitter.einfach { --zeile: clamp(46px, 10vh, 84px); row-gap: 8px; }
+.sz-gitter.einfach .sz-spur { font-size: .72rem; }
 .sz-zaehl { text-align: center; font-size: .72rem; color: var(--muted); padding: 0 0 .15rem; border-bottom: 1px solid var(--border); }
 .sz-zaehl.schlag { font-weight: 800; color: var(--text); font-size: .85rem; text-align: left; padding-left: 3px; border-left: 1px solid var(--muted); }
 .sz-zaehl.jetzt { color: var(--accent); border-bottom-color: var(--accent); }
@@ -805,6 +815,7 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
   .sz-gitter-rahmen { padding: .45rem .35rem; margin: 0 -.6rem; }
   .sz-gitter { --spur-b: 2.3rem; --zeile: 34px; column-gap: 2px; row-gap: 5px; }
   .sz-spur { margin-right: .2rem; }
+  .sz-gitter.einfach { --zeile: 52px; }
   .sz-spur span { display: none; }
   .sz-zaehl { font-size: .58rem; } .sz-zaehl.schlag { font-size: .72rem; }
 }
