@@ -983,3 +983,4 @@ body.hat-vollbild { overflow: hidden; }
 .pz-einzaehler span { font-size: clamp(3.5rem, 12vw, 7rem); font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 4px 24px color-mix(in srgb, var(--accent) 45%, transparent); }
 .pz-einzaehler span.schlag { animation: pz-zaehl .45s ease-out; }
 @keyframes pz-zaehl { from { transform: scale(1.35); opacity: .4; } 40% { opacity: 1; } to { transform: scale(1); } }
+.pz-noten.ohne-hand .pz-hand { display: none; }
