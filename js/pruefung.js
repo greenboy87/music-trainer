@@ -29,7 +29,7 @@ const Pruefungsseite = {
   ],
   ZEILEN6: [
     { note: 5, farbe: '#1f7f86', hand: '', takte: [['H', 'V', 'V'], ['AA', 'AA', 'V', 'V'], ['V', 'V', 'AA', 'AA'], ['V', 'V', 'H']] },
-    { note: 4, farbe: '#1f7f86', hand: '', takte: [['AA', 'AA', 'H'], ['AA', 'AA', 'H'], ['H', 'V', 'AA'], ['V', 'AA', 'V', 'V']] },
+    { note: 4, farbe: '#1f7f86', hand: 'RLRLR RLRLR RRRL RRLRL', takte: [['AA', 'AA', 'H'], ['AA', 'AA', 'H'], ['H', 'V', 'AA'], ['V', 'AA', 'V', 'V']] },
     { note: 3, farbe: '#e07b2e', hand: 'RLRLR RRLRRL RLLRRL RRLRLR', takte: [['V', 'V', 'AA', 'V'], ['V', 'AA', 'V', 'AA'], ['AA', 'V', 'V', 'AA'], ['V', 'AA', 'AA', 'V']] },
     { note: 2, farbe: '#e07b2e', hand: 'RLRLRRL RLRRLRL RLRRLRL RRLRLRL', takte: [['AA', 'AA', 'V', 'AA'], ['AA', 'V', 'AA', 'AA'], ['AA', 'V', 'AA', 'AA'], ['V', 'AA', 'AA', 'AA']] },
     { note: 1, farbe: '#8c2332', hand: 'RRL RRLRRL RLRRRL RLRL', takte: [['V', 'Vp', 'AA', 'Vp'], ['V', 'AA', 'V', 'AA'], ['AA', 'V', 'V', 'AA'], ['V', 'V', 'AA', 'Vp']] },
