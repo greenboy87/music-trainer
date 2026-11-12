@@ -784,7 +784,6 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 }
 .sz-gitter > :nth-child(17n + 6), .sz-gitter > :nth-child(17n + 10), .sz-gitter > :nth-child(17n + 14) { margin-left: clamp(3px, .8vw, 8px); }
 .sz-ecke { display: block; }
-.sz-gitter.einfach { --zeile: clamp(46px, 10vh, 84px); row-gap: 8px; }
 .sz-gitter.einfach .sz-spur { font-size: .72rem; }
 .sz-zaehl { text-align: center; font-size: .72rem; color: var(--muted); padding: 0 0 .15rem; border-bottom: 1px solid var(--border); }
 .sz-zaehl.schlag { font-weight: 800; color: var(--text); font-size: .85rem; text-align: left; padding-left: 3px; border-left: 1px solid var(--muted); }
@@ -815,7 +814,6 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
   .sz-gitter-rahmen { padding: .45rem .35rem; margin: 0 -.6rem; }
   .sz-gitter { --spur-b: 2.3rem; --zeile: 34px; column-gap: 2px; row-gap: 5px; }
   .sz-spur { margin-right: .2rem; }
-  .sz-gitter.einfach { --zeile: 52px; }
   .sz-spur span { display: none; }
   .sz-zaehl { font-size: .58rem; } .sz-zaehl.schlag { font-size: .72rem; }
 }
