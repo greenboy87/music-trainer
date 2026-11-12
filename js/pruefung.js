@@ -221,9 +221,10 @@ const Pruefungsseite = {
             <button type="button" class="sz-pm" data-pm="4" aria-label="Schneller">+</button>
           </div>
           <span class="metro-punkte pz-punkte" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          ${pr ? '' : `<label class="schalter" title="Beim Vorspielen läuft der Cursor immer mit, in der Prüfung nie"><input type="checkbox" role="switch" id="pz-cursor" ${this.cursorAn ? 'checked' : ''}><span class="schalter-bahn"></span>Cursor beim Mitspielen <span class="sz-tk">(wird nicht gewertet)</span></label>`}
+          ${pr ? '' : `<label class="schalter" title="Übungsmodus: Der Cursor läuft beim Mitspielen mit, der Versuch zählt aber nicht. Beim Vorspielen läuft der Cursor immer mit, in der Prüfung nie."><input type="checkbox" role="switch" id="pz-cursor" ${this.cursorAn ? 'checked' : ''}><span class="schalter-bahn"></span>Übungsmodus <span class="sz-tk">(Cursor läuft mit)</span></label>`}
           ${this.klasse === 6 && z.hand && !pr ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
+        ${pr ? '' : `<p class="pz-uebungshinweis"${this.cursorAn ? '' : ' hidden'}>${Icons.raw('target')}Achtung, Übungsmodus: Deine Versuche zählen nicht – so sammelst du keinen Bestwert.</p>`}
         <p class="pz-status" aria-live="polite">${pr ? `Tippe auf „Versuch ${pr.versuch} starten“: ein Takt wird eingezählt, dann spielst du.` : 'Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.'}</p>
         <div class="pz-ergebnis" hidden></div>
         <div class="pz-pads${zwei || this.klasse === 6 ? ' zwei' : ''}">
@@ -240,7 +241,11 @@ const Pruefungsseite = {
     this.bpm = pr ? this.PRUEF_BPM : this.tempoUeben;
     this.gleicheAdresse();
     const cursorKnopf = this.el.querySelector('#pz-cursor');
-    cursorKnopf?.addEventListener('change', () => { this.cursorAn = cursorKnopf.checked; this.merken('cursor', cursorKnopf.checked ? 'an' : 'aus'); });
+    cursorKnopf?.addEventListener('change', () => {
+      this.cursorAn = cursorKnopf.checked;
+      this.merken('cursor', cursorKnopf.checked ? 'an' : 'aus');
+      this.el.querySelector('.pz-uebungshinweis').hidden = !this.cursorAn;
+    });
     const handKnopf = this.el.querySelector('#pz-hand');
     handKnopf?.addEventListener('change', () => { this.handPruefen = handKnopf.checked; this.merken('hand', handKnopf.checked ? 'an' : 'aus'); });
     this.zustand = 'bereit';
@@ -430,7 +435,7 @@ const Pruefungsseite = {
     const pr = this.pruefung;
     const ok = prozent >= this.BESTANDEN;
     const lob = pr ? (ok ? `Bestanden! Die Zeile für Note ${this.z.note} sitzt.` : `Noch nicht bestanden – ${this.BESTANDEN} % brauchst du.`)
-      : this.mitCursor ? (prozent >= 75 ? 'Gut! Jetzt probier es ohne Cursor.' : 'Weiter üben – gern etwas langsamer.')
+      : this.mitCursor ? (prozent >= 75 ? 'Gut! Jetzt probier es ohne Übungsmodus.' : 'Weiter üben – gern etwas langsamer.')
       : prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
       : prozent >= 75 ? 'Gut! Noch ein paar Mal, dann sitzt es.'
       : prozent >= 50 ? 'Schon ordentlich – übe weiter, gern etwas langsamer.'
@@ -439,7 +444,7 @@ const Pruefungsseite = {
     const erg = ort.querySelector('.pz-ergebnis');
     erg.hidden = false;
     erg.innerHTML = `
-      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Mit Cursor gespielt – nicht gewertet. Schalte den Cursor aus, damit der Versuch zählt.</p>` : ''}
+      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Übungsmodus – dieser Versuch zählt nicht. Schalte den Übungsmodus aus, damit er zählt.</p>` : ''}
       <div class="pz-prozent" style="--wert:${prozent}"><strong>${prozent} %</strong><span>genau</span></div>
       <div class="pz-auswertung">
         <h3>${lob}${prozent > alt && alt ? ' <span class="rekord">Neuer Bestwert!</span>' : ''}</h3>
