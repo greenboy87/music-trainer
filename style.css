@@ -822,3 +822,19 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 @media (prefers-reduced-motion: reduce) {
   .sz-pad.schlag, .sz-teil.schlag *, .sz-teil.schlag-offen *, .sz-zelle.an.schlag { animation-duration: .01s !important; }
 }
+
+/* ---------- Metronom und Tempo (js/metronom.js): Klavier und Schlagzeug ---------- */
+.metro-leiste {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem;
+  padding: .6rem .8rem; margin-bottom: 1rem; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--border);
+}
+.metro-an { min-height: 2.6rem; }
+.metro-an[aria-pressed="true"] { background: var(--accent-grad); border-color: transparent; color: var(--on-accent); }
+.metro-punkte { display: inline-flex; gap: .45rem; }
+.metro-punkte i { width: .8rem; height: .8rem; border-radius: 50%; background: var(--track); transition: background .06s, transform .06s; }
+.metro-punkte i:first-child { width: .95rem; height: .95rem; margin-top: -.075rem; }
+.metro-punkte i.an { background: var(--accent); transform: scale(1.3); }
+.metro-punkte i:first-child.an { background: var(--highlight); }
+.klavier-metro .metro-leiste { margin-bottom: 1rem; }
+@media (max-width: 620px) { .metro-leiste { padding: .5rem; gap: .5rem .7rem; } .metro-leiste .sz-tempo input { width: 90px; } }

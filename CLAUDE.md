@@ -4,7 +4,9 @@ music-trainer by greenboy: Musik-Lernspiele für Klasse 5 (Stammtöne,
 Vorzeichen, Hören, Rhythmus), Design wie das School-Tool. Dazu ein Klavier zum
 freien Spielen (`js/klavierseite.js`, `#/klavier`) und ein Schlagzeug
 (`js/schlagzeug.js`, `#/schlagzeug` mit den Reitern Pads, Drumset und
-Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt). Einrichtung des
+Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt).
+Beide haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
+Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
 ## Versionsnummer nach jeder CSS/JS-Änderung hochzählen

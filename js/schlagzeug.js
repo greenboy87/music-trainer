@@ -287,11 +287,8 @@ const Schlagzeugseite = {
   },
   bpm: 100,
   beat: {},             // Spur → Array mit 16 Wahrheitswerten
-  laeuft: false,
-  schritt: 0,
-  naechsteZeit: 0,
-  warteschlange: [],    // { schritt, zeit } – für die Laufmarke
-  uhr: null,
+  laeuft: false,        // Drumcomputer spielt
+  metroAn: false,       // Metronom klickt – beide laufen über dieselbe Taktuhr
 
   merken(s, wert) {
     try { localStorage.setItem(`musiktrainer-schlagzeug-${s}`, typeof wert === 'string' ? wert : JSON.stringify(wert)); } catch { /* privates Fenster */ }
@@ -356,9 +353,17 @@ const Schlagzeugseite = {
             </div>
           </div>
         </div>
+        <div class="sz-metro"></div>
         <div class="sz-inhalt"></div>
       </section>`;
     this.inhalt = el.querySelector('.sz-inhalt');
+    this.metroAn = false;
+    this.uhr = new Taktuhr(() => this.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i));
+    this.leiste = new Tempoleiste(el.querySelector('.sz-metro'), {
+      bpm: this.bpm,
+      beiTempo: b => { this.bpm = b; this.merken('bpm', String(b)); },
+      beiMetronom: () => this.metronom(!this.metroAn),
+    });
     el.querySelectorAll('[data-reiter]').forEach(b => b.addEventListener('click', () => {
       Ton.audio();
       this.reiterZeigen(b.dataset.reiter);
@@ -367,13 +372,14 @@ const Schlagzeugseite = {
     this.reiterZeigen(this.reiter);
 
     const taste = e => this.taste(e);
-    const weg = () => { if (document.hidden) this.stoppen(); };
+    const weg = () => { if (document.hidden) { this.stoppen(); this.metronom(false); } };
     document.addEventListener('keydown', taste);
     document.addEventListener('visibilitychange', weg);
     App.beimAufraeumen(() => {
       document.removeEventListener('keydown', taste);
       document.removeEventListener('visibilitychange', weg);
-      this.stoppen();
+      this.laeuft = this.metroAn = false;
+      this.uhr.stoppen();
     });
   },
 
@@ -409,6 +415,7 @@ const Schlagzeugseite = {
     }
     if (e.repeat) return;
     const k = e.key.toLowerCase();
+    if (k === 'm' && !e.target.closest?.('input')) { e.preventDefault(); this.metronom(!this.metroAn); return; }
     if (this.reiter === 'pads') {
       const i = this.PAD_TASTEN.indexOf(k);
       if (i >= 0) { e.preventDefault(); this.padSchlag(i); }
@@ -585,40 +592,11 @@ const Schlagzeugseite = {
     return Object.entries(this.VORLAGEN).filter(([, v]) => Object.keys(v.beat).every(k => sp.includes(k)));
   },
 
-  tempoSetzen(bpm) {
-    this.bpm = Math.max(50, Math.min(200, Math.round(bpm)));
-    this.merken('bpm', String(this.bpm));
-    const r = this.inhalt?.querySelector('#sz-bpm');
-    if (r) { r.value = this.bpm; this.inhalt.querySelector('#sz-bpm-text').textContent = this.bpm; }
-  },
-
-  /* Tempo tippen: Schnitt der letzten bis zu vier Abstände; nach 2 Sekunden Pause neu anfangen */
-  tippen() {
-    const jetzt = performance.now();
-    if (!this.tipps || jetzt - this.tipps[this.tipps.length - 1] > 2000) this.tipps = [];
-    this.tipps.push(jetzt);
-    if (this.tipps.length > 5) this.tipps.shift();
-    const k = this.inhalt.querySelector('#sz-tippen');
-    this.aufblitzen(k);
-    if (this.tipps.length < 2) { k.lastChild.textContent = 'weiter tippen …'; return; }
-    const abstand = (this.tipps[this.tipps.length - 1] - this.tipps[0]) / (this.tipps.length - 1);
-    this.tempoSetzen(60000 / abstand);
-    k.lastChild.textContent = 'Tippen';
-  },
-
   computerZeigen() {
     const kopf = Array.from({ length: 16 }, (_, i) => `<span class="sz-zaehl${i % 4 ? '' : ' schlag'}">${i % 4 ? this.SILBEN[i % 4] : i / 4 + 1}</span>`).join('');
     this.inhalt.innerHTML = `
       <div class="sz-steuerung">
         <button type="button" class="primary sz-play" id="sz-play"></button>
-        <div class="sz-tempo" role="group" aria-label="Tempo">
-          <span>Tempo</span>
-          <button type="button" class="sz-pm" data-pm="-1" aria-label="Langsamer" title="Langsamer (−1)">−</button>
-          <input type="range" id="sz-bpm" min="50" max="200" step="1" value="${this.bpm}" aria-label="Tempo in BPM">
-          <button type="button" class="sz-pm" data-pm="1" aria-label="Schneller" title="Schneller (+1)">+</button>
-          <span class="sz-bpm-wert"><span id="sz-bpm-text">${this.bpm}</span> BPM</span>
-          <button type="button" id="sz-tippen" class="sz-tippen" title="Mehrmals im Takt antippen – das Tempo stellt sich danach ein">${Icons.raw('hand')}<span>Tippen</span></button>
-        </div>
         <label class="klavier-klang">Vorlage
           <select id="sz-vorlage"><option value="">– wählen –</option>${this.vorlagen().map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('')}</select>
         </label>
@@ -637,30 +615,11 @@ const Schlagzeugseite = {
             ${this.beat[k].map((an, i) => `<button type="button" class="sz-zelle${an ? ' an' : ''}" data-k="${k}" data-i="${i}" style="--farbe:${this.SPUR_FARBE[k]}" aria-pressed="${an}" aria-label="${this.SPUR_NAMEN[k]}, Sechzehntel ${i + 1}"></button>`).join('')}`).join('')}
         </div>
       </div>
-      <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger kannst du über mehrere Kästchen streichen. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
+      <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger kannst du über mehrere Kästchen streichen. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp, M: Metronom. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
     this.gitter = this.inhalt.querySelector('.sz-gitter');
     this.playKnopf();
     const play = this.inhalt.querySelector('#sz-play');
     play.addEventListener('click', () => (this.laeuft ? this.stoppen() : this.starten()));
-    const regler = this.inhalt.querySelector('#sz-bpm');
-    regler.addEventListener('input', () => this.tempoSetzen(Number(regler.value)));
-    // − und +: einmal antippen = 1 BPM, gedrückt halten zählt weiter
-    this.inhalt.querySelectorAll('[data-pm]').forEach(b => {
-      let halt = null;
-      const los = () => { clearTimeout(halt); clearInterval(halt); halt = null; };
-      b.addEventListener('pointerdown', e => {
-        e.preventDefault();
-        const d = Number(b.dataset.pm);
-        this.tempoSetzen(this.bpm + d);
-        halt = setTimeout(() => { halt = setInterval(() => this.tempoSetzen(this.bpm + d), 70); }, 400);
-      });
-      ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, los));
-      b.addEventListener('click', e => { if (e.detail === 0) this.tempoSetzen(this.bpm + Number(b.dataset.pm)); });
-      App.beimAufraeumen(los);
-    });
-    const tipp = this.inhalt.querySelector('#sz-tippen');
-    tipp.addEventListener('pointerdown', e => { e.preventDefault(); this.tippen(); });
-    tipp.addEventListener('click', e => { if (e.detail === 0) this.tippen(); });
     this.inhalt.querySelectorAll('[data-ansicht]').forEach(b => b.addEventListener('click', () => {
       this.einfach = b.dataset.ansicht === 'einfach';
       this.merken('ansicht', this.einfach ? 'einfach' : 'profi');
@@ -669,7 +628,7 @@ const Schlagzeugseite = {
     this.inhalt.querySelector('#sz-vorlage').addEventListener('change', e => {
       if (!e.target.value) return;
       this.vorlageLaden(e.target.value);
-      this.merken('bpm', String(this.bpm));
+      this.leiste.setzen(this.bpm);
       this.beatMerken();
       this.computerZeigen();
     });
@@ -732,22 +691,12 @@ const Schlagzeugseite = {
     g.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.closest('.sz-zelle')) e.stopPropagation(); });
   },
 
-  /* Planen mit Vorlauf: alle 25 ms die Schläge der nächsten 120 ms in den AudioContext legen */
+  /* Beat starten: Läuft das Metronom schon, steigt der Beat an der Stelle im Takt ein,
+     an der die Uhr gerade ist – beide bleiben zusammen */
   starten() {
     if (this.laeuft) return;
-    const c = Ton.audio();
     this.laeuft = true;
-    this.schritt = 0;
-    this.naechsteZeit = c.currentTime + 0.08;
-    this.warteschlange = [];
-    this.uhr = setInterval(() => this.planen(), 25);
-    this.planen();
-    const malen = () => {
-      if (!this.laeuft) return;
-      this.laufmarke();
-      this.bild = requestAnimationFrame(malen);
-    };
-    this.bild = requestAnimationFrame(malen);
+    this.uhr.starten();
     this.playKnopf();
     this.miniStopp();
   },
@@ -755,43 +704,35 @@ const Schlagzeugseite = {
   stoppen() {
     if (!this.laeuft) return;
     this.laeuft = false;
-    clearInterval(this.uhr);
-    cancelAnimationFrame(this.bild);
-    this.warteschlange = [];
     this.gitter?.querySelectorAll('.jetzt').forEach(z => z.classList.remove('jetzt'));
-    this.gezeigt = -1;
-    // Was schon eingeplant ist, verstummt: neuer Ausgang
-    Ton.stopp();
+    // Läuft das Metronom nicht weiter: Uhr anhalten, schon Eingeplantes verstummt
+    if (!this.metroAn) { this.uhr.stoppen(); Ton.stopp(); }
     this.playKnopf();
     if (this.el?.isConnected) this.miniStopp();
   },
 
-  planen() {
-    const c = Ton.audio();
-    const sechzehntel = 60 / this.bpm / 4;
-    // Nach langer Pause (Tab im Hintergrund) nicht alles nachholen
-    if (this.naechsteZeit < c.currentTime - 0.2) this.naechsteZeit = c.currentTime + 0.05;
-    while (this.naechsteZeit < c.currentTime + 0.12) {
-      const i = this.schritt;
-      this.spuren().forEach(k => {
-        if (this.beat[k][i]) Drums.spielen(k, this.naechsteZeit, k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1);
-      });
-      this.warteschlange.push({ schritt: i, zeit: this.naechsteZeit });
-      this.naechsteZeit += sechzehntel;
-      this.schritt = (i + 1) % 16;
-    }
+  metronom(an) {
+    if (an === this.metroAn) return;
+    this.metroAn = an;
+    this.leiste.an(an);
+    if (an) this.uhr.starten();
+    else if (!this.laeuft) { this.uhr.stoppen(); Ton.stopp(); }
   },
 
-  /* Die Spalte, die gerade klingt, leuchtet */
-  laufmarke() {
-    const c = Ton.ctx;
-    const jetzt = c.currentTime - Ton.verzoegerung();
-    let aktuell = null;
-    while (this.warteschlange.length && this.warteschlange[0].zeit <= jetzt) aktuell = this.warteschlange.shift();
-    if (!aktuell || !this.gitter || aktuell.schritt === this.gezeigt) return;
-    this.gezeigt = aktuell.schritt;
+  /* Ein Sechzehntel planen: Beat (nur die sichtbaren Spuren) und Metronom-Klick */
+  schritt(i, zeit) {
+    if (this.laeuft) this.spuren().forEach(k => {
+      if (this.beat[k][i]) Drums.spielen(k, zeit, k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1);
+    });
+    if (this.metroAn && i % 4 === 0) Metronom.klick(zeit, i === 0);
+  },
+
+  /* Die Spalte, die gerade klingt, leuchtet; die Punkte des Metronoms zeigen das Viertel */
+  laufmarke(i) {
+    if (this.metroAn && i % 4 === 0) this.leiste.schlag(i / 4);
+    if (!this.laeuft || !this.gitter) return;
     this.gitter.querySelectorAll('.jetzt').forEach(z => z.classList.remove('jetzt'));
-    this.gitter.querySelectorAll(`[data-i="${aktuell.schritt}"], .sz-zaehl:nth-of-type(${aktuell.schritt + 2})`).forEach(z => z.classList.add('jetzt'));
-    this.gitter.querySelectorAll(`.sz-zelle.an[data-i="${aktuell.schritt}"]`).forEach(z => this.aufblitzen(z));
+    this.gitter.querySelectorAll(`[data-i="${i}"], .sz-zaehl:nth-of-type(${i + 2})`).forEach(z => z.classList.add('jetzt'));
+    this.gitter.querySelectorAll(`.sz-zelle.an[data-i="${i}"]`).forEach(z => this.aufblitzen(z));
   },
 };

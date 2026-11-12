@@ -7,7 +7,8 @@
    Leiste daneben zeigt, wo man gerade ist, und lässt sich antippen. Mehrere
    Finger zugleich und Gleiten über die Tasten gehen; ein Ton klingt, solange
    seine Taste gedrückt ist (Ton.anschlag, Klänge in Ton.KLAENGE). Lage, Größe,
-   Klang und Notennamen merkt sich der Browser. */
+   Klang, Notennamen und das Tempo des Metronoms (js/metronom.js, Taste M) merkt
+   sich der Browser. */
 const Klavierseite = {
   TIEFSTE: 21,          // A₂, die tiefste Taste
   HOECHSTE: 108,        // c''''', die höchste
@@ -119,9 +120,17 @@ const Klavierseite = {
           </div>
           <div class="uebersicht" title="Die 88 Tasten eines Klaviers – antippen, um dorthin zu springen"></div>
         </div>
+        <div class="klavier-metro"></div>
         <div class="klaviatur${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>
       </section>`;
     this.tastenEl = el.querySelector('.klaviatur');
+    // Metronom zum Üben im Takt, Tempo merkt sich der Browser
+    let bpm = 80;
+    try { bpm = Number(localStorage.getItem('musiktrainer-klavier-bpm')) || 80; } catch { /* privates Fenster */ }
+    this.metronom = new Metronomuhr(el.querySelector('.klavier-metro'), {
+      bpm: Math.max(50, Math.min(200, bpm)),
+      merken: b => this.merken('bpm', b),
+    });
     this.uebersichtEl = el.querySelector('.uebersicht');
     this.finger.clear();
     this.gedrueckt.clear();
