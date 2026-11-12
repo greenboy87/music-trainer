@@ -59,7 +59,9 @@ const Pruefungsseite = {
       takt.forEach(roh => {
         const b = roh.replace('_', '');
         const stimme = roh.endsWith('_') ? 'u' : 'o';
-        RhythmusBausteine[b].einsaetze.forEach(e => liste.push({ zeit: ti * 4 + pos + e, stimme, takt: ti, b }));
+        const { einsaetze, schlaege } = RhythmusBausteine[b];
+        // dauer: wie lange die Note beim Vorspielen leuchtet (Achtel ½, Halbe 2 …)
+        einsaetze.forEach(e => liste.push({ zeit: ti * 4 + pos + e, dauer: schlaege / einsaetze.length, stimme, takt: ti, b }));
         pos += RhythmusBausteine[b].schlaege;
       });
     });
@@ -265,6 +267,8 @@ const Pruefungsseite = {
     const status = ort.querySelector('.pz-status');
     const punkte = [...ort.querySelectorAll('.pz-punkte i')];
     const zeiger = ort.querySelector('.pz-noten .pz-kopfzeiger');
+    const notenEl = [...ort.querySelectorAll('.pz-noten .pz-n')];
+    this.leuchtet = '';
     let letzter = -1;
     const malen = () => {
       if (this.zustand !== 'zaehlen' && this.zustand !== 'spielen') return;
@@ -277,7 +281,17 @@ const Pruefungsseite = {
         if (b < 0) status.textContent = `Einzählen: ${ganz + 5} …${ganz === -1 ? (mitspielen ? ' – gleich geht’s los!' : '') : ''}`;
         else if (ganz < 16) status.textContent = `${mitspielen ? 'Spiel mit!' : 'Hör zu und zähl mit:'} Takt ${Math.floor(ganz / 4) + 1} · ${ganz % 4 + 1}`;
       }
-      if (b >= 0) { this.zustand = 'spielen'; zeiger.hidden = false; zeiger.setAttribute('x', this.x(Math.min(b, 15.99)) - 1.5); }
+      // SVG kennt .hidden nicht – das Attribut selbst entfernen
+      if (b >= 0) { this.zustand = 'spielen'; zeiger.removeAttribute('hidden'); zeiger.setAttribute('x', this.x(Math.min(b, 15.99)) - 1.5); }
+      // Vorspielen: die Note, die gerade klingt, leuchtet
+      if (!mitspielen) {
+        const jetzt = noten.filter(n => b >= n.zeit && b < n.zeit + n.dauer).map(n => n.i);
+        const schluessel = jetzt.join(',');
+        if (schluessel !== this.leuchtet) {
+          this.leuchtet = schluessel;
+          notenEl.forEach((g, i) => g.classList.toggle('klingt', jetzt.includes(i)));
+        }
+      }
       if (b >= 16.5) return this.fertig();
       this.raf = requestAnimationFrame(malen);
     };
@@ -298,7 +312,8 @@ const Pruefungsseite = {
     ort.querySelector('#pz-hoeren').innerHTML = `${Icons.raw('volume')}Vorspielen`;
     ort.querySelectorAll('#pz-los, #pz-hoeren, [data-pm]').forEach(b => { b.disabled = false; });
     ort.querySelectorAll('.pz-punkte i').forEach(p => p.classList.remove('an'));
-    ort.querySelector('.pz-noten .pz-kopfzeiger').hidden = true;
+    ort.querySelector('.pz-noten .pz-kopfzeiger').setAttribute('hidden', '');
+    ort.querySelectorAll('.pz-noten .pz-n.klingt').forEach(g => g.classList.remove('klingt'));
   },
 
   fertig() {

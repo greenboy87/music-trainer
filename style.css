@@ -934,3 +934,7 @@ body.hat-vollbild { overflow: hidden; }
 .sz-seite.vollbild .sz-gitter { --zeile: clamp(30px, 6.4vh, 64px); }
 .sz-seite.vollbild .sz-hinweis { display: none; }
 @media (max-width: 520px) { .vollbild-knopf span { display: none; } .vollbild-knopf .icon { margin-right: 0; } }
+/* Laufmarke und klingende Note beim Vorspielen */
+.pz-kopfzeiger { filter: drop-shadow(0 0 4px var(--accent)); }
+.pz-n { transition: color .08s; }
+.pz-n.klingt { color: var(--accent); filter: drop-shadow(0 0 5px var(--accent)); }
