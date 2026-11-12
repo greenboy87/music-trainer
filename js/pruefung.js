@@ -1,4 +1,5 @@
-/* Prüfungszeilen Klasse 5 (#/pruefung, #/pruefung/<note>): „Wähle deine Zeile – und
+/* Prüfungszeilen Klasse 5 und 6 (#/pruefung, #/pruefung/<note> für Klasse 5,
+   #/pruefung/k6 und #/pruefung/k6-<note> für Klasse 6): „Wähle deine Zeile – und
    klatsch sie vor!“ Fünf Zeilen mit vier Takten; wer die Zeile für Note 5 kann, hat
    die 5, die nächste schwerere Zeile ist die 4 und so weiter.
 
@@ -9,17 +10,34 @@
    oder zu spät, wo es noch hakt. Gespeichert wird nur der beste Versuch je Zeile im
    Browser – nichts geht an den Server.
 
+   Klasse 6: alles auf der Snare, zwei Pads für rechte und linke Hand (R, L). Der
+   Handsatz steht über den Noten zum Üben. Gewertet wird nur das Timing – außer
+   man schaltet „Handsatz mitbewerten“ ein: dann zählt eine Note mit der falschen
+   Hand nur halb und wird lila markiert.
+
    Bausteine wie im übrigen music-trainer (G H V AA Vp), ein „_“ dahinter heißt:
-   untere Stimme. Klasse 5: keine punktierten Noten. */
+   untere Stimme. Klasse 5: keine punktierten Noten.
+   hand: Handsatz je Note als Text (R/L), leer = keiner angezeigt. */
 const Pruefungsseite = {
-  ZEILEN: [
+  klasse: 5,
+  ZEILEN5: [
     { note: 5, farbe: '#1f7f86', takte: [['G'], ['V', 'V', 'V', 'V'], ['H', 'H'], ['V', 'V', 'H']] },
     { note: 4, farbe: '#1f7f86', takte: [['G_'], ['V', 'V', 'V', 'V'], ['H_', 'H'], ['V_', 'V_', 'H']] },
     { note: 3, farbe: '#e07b2e', takte: [['V', 'V', 'H'], ['V', 'V', 'H'], ['H', 'H'], ['AA', 'AA', 'H']] },
     { note: 2, farbe: '#e07b2e', takte: [['V_', 'V_', 'H'], ['V', 'V', 'H_'], ['H', 'H_'], ['AA', 'AA', 'H_']] },
     { note: 1, farbe: '#8c2332', takte: [['V', 'AA', 'V', 'Vp'], ['AA', 'AA', 'V', 'Vp'], ['Vp', 'V', 'AA', 'V'], ['AA', 'Vp', 'AA', 'Vp']] },
   ],
+  ZEILEN6: [
+    { note: 5, farbe: '#1f7f86', hand: '', takte: [['H', 'V', 'V'], ['AA', 'AA', 'V', 'V'], ['V', 'V', 'AA', 'AA'], ['V', 'V', 'H']] },
+    { note: 4, farbe: '#1f7f86', hand: '', takte: [['AA', 'AA', 'H'], ['AA', 'AA', 'H'], ['H', 'V', 'AA'], ['V', 'AA', 'V', 'V']] },
+    { note: 3, farbe: '#e07b2e', hand: 'RLRLR RRLRRL RLLRRL RRLRLR', takte: [['V', 'V', 'AA', 'V'], ['V', 'AA', 'V', 'AA'], ['AA', 'V', 'V', 'AA'], ['V', 'AA', 'AA', 'V']] },
+    { note: 2, farbe: '#e07b2e', hand: 'RLRLRRL RLRRLRL RLRRLRL RRLRLRL', takte: [['AA', 'AA', 'V', 'AA'], ['AA', 'V', 'AA', 'AA'], ['AA', 'V', 'AA', 'AA'], ['V', 'AA', 'AA', 'AA']] },
+    { note: 1, farbe: '#8c2332', hand: 'RRL RRLRRL RLRRRL RLRL', takte: [['V', 'Vp', 'AA', 'Vp'], ['V', 'AA', 'V', 'AA'], ['AA', 'V', 'V', 'AA'], ['V', 'V', 'AA', 'Vp']] },
+  ],
   bpm: 80,
+  zeilen() { return this.klasse === 6 ? this.ZEILEN6 : this.ZEILEN5; },
+  /* Adressen und Speicher: Klasse 5 wie bisher ohne Kürzel */
+  adresse(note) { return this.klasse === 6 ? `#/pruefung/k6${note ? `-${note}` : ''}` : `#/pruefung${note ? `/${note}` : ''}`; },
 
   /* Zeichnung: 5 Linien, obere Stimme Hals nach oben, untere nach unten */
   B: 46,                // Breite eines Schlags
@@ -29,7 +47,9 @@ const Pruefungsseite = {
 
   merken(s, w) { try { localStorage.setItem(`musiktrainer-pruefung-${s}`, String(w)); } catch { /* privat */ } },
   lies(s) { try { return localStorage.getItem(`musiktrainer-pruefung-${s}`); } catch { return null; } },
-  bester(note) { return Number(this.lies(`best-${note}`)) || 0; },
+  bester(note, klasse = this.klasse) { return Number(this.lies(`best-${klasse === 6 ? 'k6-' : ''}${note}`)) || 0; },
+  bestMerken(note, w) { this.merken(`best-${this.klasse === 6 ? 'k6-' : ''}${note}`, w); },
+  geuebt() { return this.ZEILEN5.filter(z => this.bester(z.note, 5)).length + this.ZEILEN6.filter(z => this.bester(z.note, 6)).length; },
 
   /* Alle Noten einer Zeile: { zeit (Schläge ab Zeile), stimme 'o'|'u', takt, b (Baustein), i } */
   noten(z) {
@@ -61,6 +81,8 @@ const Pruefungsseite = {
     s += '<rect x="10" y="30" width="3.4" height="20" class="nb"/><rect x="17" y="30" width="3.4" height="20" class="nb"/>';
     s += '<text x="36" y="38" class="nt pz-takt">4</text><text x="36" y="58" class="nt pz-takt">4</text>';
     let n = 0;
+    const hand = (z.hand || '').replace(/[^RL]/g, '');
+    const buchstabe = x => (hand[n] ? `<g class="pz-hand ${hand[n]}"><rect x="${x - 6.5}" y="-17" width="13" height="14" rx="2.5"/><text x="${x}" y="-6.2">${hand[n]}</text></g>` : '');
     z.takte.forEach((takt, ti) => {
       let pos = 0;
       takt.forEach(roh => {
@@ -68,13 +90,16 @@ const Pruefungsseite = {
         const unten = roh.endsWith('_');
         const y = unten ? this.Y_UNTEN : this.Y_OBEN;
         const x = this.taktX(ti) + this.RAND + pos * this.B;
-        const g = inhalt => `<g class="pz-n" data-n="${n++}">${inhalt}</g>`;
+        const g = inhalt => { const h = buchstabe(x2n); return `${h}<g class="pz-n" data-n="${n++}">${inhalt}</g>`; };
+        let x2n = x;
         if (b === 'G') s += g(kopf(x, y, true));
         else if (b === 'H') s += g(kopf(x, y, true) + hals(x, y, unten));
         else if (b === 'V') s += g(kopf(x, y) + hals(x, y, unten));
         else if (b === 'AA') {
           const x2 = x + this.B / 2;
-          s += g(kopf(x, y) + hals(x, y, unten)) + g(kopf(x2, y) + hals(x2, y, unten));
+          s += g(kopf(x, y) + hals(x, y, unten));
+          x2n = x2;
+          s += g(kopf(x2, y) + hals(x2, y, unten));
           s += unten ? `<rect x="${x - 7.4}" y="${y + 25}" width="${x2 - x + 1.6}" height="5" class="nb"/>`
             : `<rect x="${x + 5}" y="${y - 31}" width="${x2 - x + 1.6}" height="5" class="nb"/>`;
         } else if (b === 'Vp') {
@@ -87,16 +112,21 @@ const Pruefungsseite = {
     });
     // Schlussstrich
     s += `<line x1="${ende - 7}" x2="${ende - 7}" y1="20" y2="60" class="nh"/><rect x="${ende - 4}" y="20" width="4" height="40" class="nb"/>`;
-    const hoehe = gross ? (this.zweiStimmen(z) ? 116 : 92) : 92;
-    return `<svg class="notenbild pz-zeile${gross ? ' gross' : ''}" viewBox="0 -4 ${ende + 6} ${hoehe}" role="img" aria-label="Rhythmus, vier Takte">
+    const oben = hand ? 22 : 4;     // Platz für den Handsatz über den Hälsen
+    const hoehe = (gross ? (this.zweiStimmen(z) ? 116 : 92) : 92) + oben - 4;
+    return `<svg class="notenbild pz-zeile${gross ? ' gross' : ''}" viewBox="0 ${-oben} ${ende + 6} ${hoehe}" role="img" aria-label="Rhythmus, vier Takte">
       ${s}<g class="pz-marken"></g><rect class="pz-kopfzeiger" x="0" y="8" width="3" height="64" rx="1.5" hidden/></svg>`;
   },
 
   zeigen(el, id) {
     this.el = el;
+    this.handPruefen = this.lies('hand') === 'an';
     const b = Number(this.lies('bpm'));
     if (b >= 50 && b <= 140) this.bpm = b;
-    const z = this.ZEILEN.find(r => String(r.note) === id);
+    const m = /^k(6)(?:-(\d))?$/.exec(id || '');
+    this.klasse = m ? 6 : 5;
+    const note = m ? m[2] : id;
+    const z = this.zeilen().find(r => String(r.note) === note);
     if (z) this.ueben(z);
     else this.liste();
   },
@@ -105,14 +135,22 @@ const Pruefungsseite = {
     this.el.innerHTML = `
       <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card pz-seite">
-        <h2>${Icons.raw('drum')}Wähle deine Zeile – und spiel sie vor!</h2>
+        <div class="pz-listenkopf">
+          <h2>${Icons.raw('drum')}Wähle deine Zeile – und spiel sie vor!</h2>
+          <div class="klavier-groesse" role="group" aria-label="Klasse">
+            <a class="knopf" href="#/pruefung" aria-pressed="${this.klasse === 5}">Klasse 5</a>
+            <a class="knopf" href="#/pruefung/k6" aria-pressed="${this.klasse === 6}">Klasse 6</a>
+          </div>
+        </div>
         <p class="hint">Zeile 5 sicher spielen = Note 5, die nächste Zeile = Note 4 … – je schwieriger, desto besser die Note.
-          Du spielst auf den Pads mit: obere Noten auf der <strong>Snare</strong> (klatschen), untere auf der <strong>Bassdrum</strong> (stampfen).
+          ${this.klasse === 6
+            ? 'Du spielst alles auf der <strong>Snare</strong> mit zwei Pads: <strong>R</strong> = rechte Hand, <strong>L</strong> = linke Hand. Übe den Handsatz mit – gewertet wird nur, ob du im Takt bist, außer du schaltest „Handsatz mitbewerten“ ein.'
+            : 'Du spielst auf den Pads mit: obere Noten auf der <strong>Snare</strong> (klatschen), untere auf der <strong>Bassdrum</strong> (stampfen).'}
           Das Metronom zählt einen Takt ein und klickt weiter. Laut mitzählen!</p>
         <div class="pz-liste">
-          ${this.ZEILEN.map(z => {
+          ${this.zeilen().map(z => {
             const best = this.bester(z.note);
-            return `<a class="pz-eintrag" href="#/pruefung/${z.note}">
+            return `<a class="pz-eintrag" href="${this.adresse(z.note)}">
               <span class="pz-nr" style="--farbe:${z.farbe}">${z.note}</span>
               ${this.svg(z)}
               <span class="pz-best">${best ? `Bester Versuch<strong>${best} %</strong>` : 'Noch nicht geübt'}</span>
@@ -125,13 +163,14 @@ const Pruefungsseite = {
   ueben(z) {
     const zwei = this.zweiStimmen(z);
     this.el.innerHTML = `
-      <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Alle Zeilen</a>
+      <a class="zurueck" href="${this.adresse()}">${Icons.raw('back')}Alle Zeilen Klasse ${this.klasse}</a>
       <section class="card pz-seite pz-ueben">
         <div class="pz-kopf">
           <span class="pz-nr gross" style="--farbe:${z.farbe}">${z.note}</span>
           <div>
-            <h2>Zeile für Note ${z.note}</h2>
-            <p class="hint">${zwei ? 'Obere Noten: Snare (klatschen) · untere Noten: Bassdrum (stampfen)' : 'Alle Noten auf der Snare (klatschen)'}
+            <h2>Klasse ${this.klasse} · Zeile für Note ${z.note}</h2>
+            <p class="hint">${this.klasse === 6 ? `Alles auf der Snare: R = rechte Hand, L = linke Hand${z.hand ? ' – der Handsatz zählt nur, wenn „Handsatz mitbewerten“ an ist' : ''}`
+              : zwei ? 'Obere Noten: Snare (klatschen) · untere Noten: Bassdrum (stampfen)' : 'Alle Noten auf der Snare (klatschen)'}
               ${this.bester(z.note) ? ` · Bester Versuch: ${this.bester(z.note)} %` : ''}</p>
           </div>
         </div>
@@ -146,16 +185,22 @@ const Pruefungsseite = {
             <button type="button" class="sz-pm" data-pm="4" aria-label="Schneller">+</button>
           </div>
           <span class="metro-punkte pz-punkte" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          ${this.klasse === 6 && z.hand ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
         <p class="pz-status" aria-live="polite">Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.</p>
         <div class="pz-ergebnis" hidden></div>
-        <div class="pz-pads${zwei ? ' zwei' : ''}">
-          ${zwei ? `<button type="button" class="sz-pad pz-pad" data-stimme="u" data-fam="bass"><span class="sz-pad-name">Bassdrum<small>stampfen · F</small></span></button>` : ''}
-          <button type="button" class="sz-pad pz-pad" data-stimme="o" data-fam="snare"><span class="sz-pad-name">Snare<small>klatschen · ${zwei ? 'J' : 'Leertaste'}</small></span></button>
+        <div class="pz-pads${zwei || this.klasse === 6 ? ' zwei' : ''}">
+          ${this.klasse === 6
+            ? `<button type="button" class="sz-pad pz-pad" data-pad="L" data-stimme="o" data-fam="snare"><span class="sz-pad-name pz-hand-gross">L<small>linke Hand · F</small></span></button>
+               <button type="button" class="sz-pad pz-pad" data-pad="R" data-stimme="o" data-fam="snare"><span class="sz-pad-name pz-hand-gross">R<small>rechte Hand · J</small></span></button>`
+            : `${zwei ? `<button type="button" class="sz-pad pz-pad" data-pad="u" data-stimme="u" data-fam="bass"><span class="sz-pad-name">Bassdrum<small>stampfen · F</small></span></button>` : ''}
+               <button type="button" class="sz-pad pz-pad" data-pad="o" data-stimme="o" data-fam="snare"><span class="sz-pad-name">Snare<small>klatschen · ${zwei ? 'J' : 'Leertaste'}</small></span></button>`}
         </div>
       </section>`;
     this.z = z;
     this.zwei = zwei;
+    const handKnopf = this.el.querySelector('#pz-hand');
+    handKnopf?.addEventListener('change', () => { this.handPruefen = handKnopf.checked; this.merken('hand', handKnopf.checked ? 'an' : 'aus'); });
     this.zustand = 'bereit';
     const ort = this.el.querySelector('.pz-ueben');
     ort.querySelector('#pz-los').addEventListener('click', () => (this.zustand === 'bereit' ? this.durchlauf(true) : this.abbrechen()));
@@ -167,15 +212,16 @@ const Pruefungsseite = {
       ort.querySelector('#pz-bpm').textContent = this.bpm;
     }));
     ort.querySelectorAll('.pz-pad').forEach(p => {
-      p.addEventListener('pointerdown', e => { e.preventDefault(); this.schlag(p.dataset.stimme); });
+      p.addEventListener('pointerdown', e => { e.preventDefault(); this.schlag(p.dataset.stimme, p.dataset.pad); });
       p.addEventListener('pointerup', () => Ton.audio());
       p.addEventListener('contextmenu', e => e.preventDefault());
     });
     const taste = e => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.repeat || e.target.closest?.('input, select')) return;
       const k = e.key.toLowerCase();
-      if (e.code === 'Space' || k === 'j') { e.preventDefault(); this.schlag('o'); }
-      else if (k === 'f' && this.zwei) { e.preventDefault(); this.schlag('u'); }
+      if (e.code === 'Space' || k === 'j') { e.preventDefault(); this.schlag('o', this.klasse === 6 ? 'R' : 'o'); }
+      else if (k === 'f' && this.klasse === 6) { e.preventDefault(); this.schlag('o', 'L'); }
+      else if (k === 'f' && this.zwei) { e.preventDefault(); this.schlag('u', 'u'); }
     };
     document.addEventListener('keydown', taste);
     App.beimAufraeumen(() => {
@@ -186,13 +232,13 @@ const Pruefungsseite = {
   },
 
   /* Ein Schlag auf ein Pad: klingt immer; während der Aufnahme wird die Zeit gemerkt */
-  schlag(stimme) {
+  schlag(stimme, padId = stimme) {
     if (!this.el?.isConnected) return;
     Drums.spielen(stimme === 'u' ? 'b' : 's');
-    const pad = this.el.querySelector(`.pz-pad[data-stimme="${stimme}"]`);
+    const pad = this.el.querySelector(`.pz-pad[data-pad="${padId}"]`);
     if (pad) { pad.classList.remove('schlag'); void pad.offsetWidth; pad.classList.add('schlag'); }
     if (this.zustand === 'spielen' || this.zustand === 'zaehlen') {
-      this.tipps.push({ zeit: (Ton.jetzt() - Ton.verzoegerung() - this.beginn) / this.schlagDauer, stimme });
+      this.tipps.push({ zeit: (Ton.jetzt() - Ton.verzoegerung() - this.beginn) / this.schlagDauer, stimme, hand: padId });
     }
   },
 
@@ -271,6 +317,8 @@ const Pruefungsseite = {
     const fenster = Math.min(0.4, 300 / ms);
     const voll = 50 / ms;
     const noten = this.noten(this.z);
+    const hand = (this.z.hand || '').replace(/[^RL]/g, '');
+    const mitHand = this.klasse === 6 && this.handPruefen && hand.length > 0;
     const frei = this.tipps.filter(t => t.zeit > -0.5 && t.zeit < 16.5).map(t => ({ ...t, frei: true }));
     noten.forEach(n => {
       let best = null;
@@ -285,12 +333,14 @@ const Pruefungsseite = {
       const a = Math.abs(n.d);
       n.wert = a <= voll ? 1 : Math.max(0, 1 - (a - voll) / (fenster - voll));
       n.status = a <= voll * 1.4 ? 'genau' : 'knapp';
+      if (mitHand && hand[n.i] && best.hand !== hand[n.i]) { n.wert /= 2; n.status = 'hand'; }
     });
     const zuViel = frei.filter(t => t.frei);
     const summe = noten.reduce((s, n) => s + n.wert, 0);
     const prozent = Math.round(100 * summe / (noten.length + zuViel.length));
     const getroffen = noten.filter(n => n.status !== 'fehlt');
     const genau = noten.filter(n => n.status === 'genau').length;
+    const falscheHand = noten.filter(n => n.status === 'hand').length;
     const schnitt = getroffen.length ? getroffen.reduce((s, n) => s + n.d, 0) / getroffen.length * ms : 0;
     const proTakt = [0, 1, 2, 3].map(t => {
       const nt = noten.filter(n => n.takt === t);
@@ -311,7 +361,7 @@ const Pruefungsseite = {
       frei.map(t => `<circle cx="${this.x(Math.max(0, Math.min(15.99, t.zeit)))}" cy="${yMarke[t.stimme]}" r="3.2" class="pz-marke${t.frei ? ' zuviel' : ''}"/>`).join('');
 
     const alt = this.bester(this.z.note);
-    if (prozent > alt) this.merken(`best-${this.z.note}`, prozent);
+    if (prozent > alt) this.bestMerken(this.z.note, prozent);
     const lob = prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
       : prozent >= 75 ? 'Gut! Noch ein paar Mal, dann sitzt es.'
       : prozent >= 50 ? 'Schon ordentlich – übe weiter, gern etwas langsamer.'
@@ -325,8 +375,10 @@ const Pruefungsseite = {
         <h3>${lob}${prozent > alt && alt ? ' <span class="rekord">Neuer Bestwert!</span>' : ''}</h3>
         <ul>
           <li><span class="pz-punkt genau"></span>${genau} von ${noten.length} Noten genau getroffen</li>
-          ${getroffen.length - genau ? `<li><span class="pz-punkt knapp"></span>${getroffen.length - genau} knapp daneben</li>` : ''}
-          ${noten.length - getroffen.length ? `<li><span class="pz-punkt fehlt"></span>${noten.length - getroffen.length} verpasst oder falsches Pad</li>` : ''}
+          ${getroffen.length - genau - falscheHand ? `<li><span class="pz-punkt knapp"></span>${getroffen.length - genau - falscheHand} knapp daneben</li>` : ''}
+          ${falscheHand ? `<li><span class="pz-punkt hand"></span>${falscheHand} mit der falschen Hand</li>` : ''}
+          ${mitHand && !falscheHand && getroffen.length ? `<li>${Icons.raw('check')}Handsatz stimmt</li>` : ''}
+          ${noten.length - getroffen.length ? `<li><span class="pz-punkt fehlt"></span>${noten.length - getroffen.length} ${this.zwei ? 'verpasst oder falsches Pad' : 'verpasst'}</li>` : ''}
           ${zuViel.length ? `<li><span class="pz-punkt zuviel"></span>${zuViel.length} Schl${zuViel.length === 1 ? 'ag' : 'äge'} zu viel</li>` : ''}
           ${getroffen.length ? `<li>${Icons.raw('timer')}${richtung}</li>` : ''}
           ${prozent < 95 && proTakt[schwach] < 0.9 ? `<li>${Icons.raw('target')}Übe besonders Takt ${schwach + 1}</li>` : ''}

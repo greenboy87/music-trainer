@@ -901,3 +901,17 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
   .pz-noten { overflow-x: auto; }
   .pz-ueben .notenbild.pz-zeile { min-width: 640px; }
 }
+.pz-listenkopf { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin-bottom: .6rem; }
+.pz-listenkopf h2 { margin: 0; }
+.pz-listenkopf .knopf { border-radius: 0; margin-left: -1px; min-height: 2.5rem; }
+.pz-listenkopf .knopf:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); margin-left: 0; }
+.pz-listenkopf .knopf:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.pz-listenkopf .knopf[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); position: relative; z-index: 1; }
+.pz-hand { font-size: 13px; font-weight: 700; fill: var(--muted); text-anchor: middle; }
+.pz-hand-gross { font-size: clamp(1.8rem, 5vw, 2.8rem); line-height: 1; }
+.pz-hand-gross small { font-size: .9rem; }
+.pz-hand rect { fill: #f0874a; }
+.pz-hand.L rect { fill: #3fbfae; }
+.pz-hand text { font-size: 10px; font-weight: 800; fill: #fff; text-anchor: middle; }
+.pz-n[data-wert="hand"] { color: #c084fc; }
+.pz-punkt.hand { background: #c084fc; }
