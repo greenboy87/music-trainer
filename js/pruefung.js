@@ -87,7 +87,7 @@ const Pruefungsseite = {
     });
     // Schlussstrich
     s += `<line x1="${ende - 7}" x2="${ende - 7}" y1="20" y2="60" class="nh"/><rect x="${ende - 4}" y="20" width="4" height="40" class="nb"/>`;
-    const hoehe = gross ? 118 : 92;
+    const hoehe = gross ? (this.zweiStimmen(z) ? 116 : 92) : 92;
     return `<svg class="notenbild pz-zeile${gross ? ' gross' : ''}" viewBox="0 -4 ${ende + 6} ${hoehe}" role="img" aria-label="Rhythmus, vier Takte">
       ${s}<g class="pz-marken"></g><rect class="pz-kopfzeiger" x="0" y="8" width="3" height="64" rx="1.5" hidden/></svg>`;
   },
@@ -302,10 +302,12 @@ const Pruefungsseite = {
     // Noten einfärben, Schläge unter dem System markieren
     const ort = this.el.querySelector('.pz-ueben');
     noten.forEach(n => ort.querySelector(`.pz-noten .pz-n[data-n="${n.i}"]`)?.setAttribute('data-wert', n.status));
-    const yMarke = { o: 98, u: 106 };
-    ort.querySelector('.pz-noten .pz-marken').innerHTML =
-      `<text x="4" y="${yMarke.o + 3}" class="pz-marke-text">${this.zwei ? 'Snare' : 'Deine Schläge'}</text>` +
-      (this.zwei ? `<text x="4" y="${yMarke.u + 3}" class="pz-marke-text">Bass</text>` : '') +
+    // Eine Stimme: Punkte dicht unter dem System, Beschriftung darüber; zwei Stimmen: unter den
+    // Hälsen der Bassdrum, die kurzen Namen links daneben
+    const yMarke = this.zwei ? { o: 95, u: 105 } : { o: 80 };
+    ort.querySelector('.pz-noten .pz-marken').innerHTML = (this.zwei
+      ? `<text x="4" y="${yMarke.o + 3}" class="pz-marke-text">Snare</text><text x="4" y="${yMarke.u + 3}" class="pz-marke-text">Bass</text>`
+      : `<text x="4" y="${yMarke.o - 7}" class="pz-marke-text">Deine Schläge</text>`) +
       frei.map(t => `<circle cx="${this.x(Math.max(0, Math.min(15.99, t.zeit)))}" cy="${yMarke[t.stimme]}" r="3.2" class="pz-marke${t.frei ? ' zuviel' : ''}"/>`).join('');
 
     const alt = this.bester(this.z.note);
