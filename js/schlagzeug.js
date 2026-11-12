@@ -255,9 +255,23 @@ const Schlagzeugseite = {
   namen: true,
 
   /* Drumcomputer */
-  SPUREN: ['crash', 'ride', 'ho', 'hh', 'clap', 's', 't1', 'bh', 'bt', 'b'],
+  /* Reihenfolge und Farben wie bei Step-Sequenzern auf dem Tablet: Bassdrum oben, je Spur eine Farbe */
+  SPUREN: ['b', 's', 'clap', 'hh', 'ho', 'crash', 'ride', 't1', 'bh', 'bt'],
   SPUR_NAMEN: { crash: 'Becken', ride: 'Ride', ho: 'Hi-Hat offen', hh: 'Hi-Hat', clap: 'Klatschen', s: 'Snare', t1: 'Tom', bh: 'Bongo hoch', bt: 'Bongo tief', b: 'Bassdrum' },
-  SPUR_KURZ: { crash: 'Becken', ride: 'Ride', ho: 'HH auf', hh: 'Hi-Hat', clap: 'Klatsch', s: 'Snare', t1: 'Tom', bh: 'Bongo ↑', bt: 'Bongo ↓', b: 'Bass' },
+  SPUR_KURZ: { crash: 'Becken', ride: 'Ride', ho: 'HH offen', hh: 'Hi-Hat', clap: 'Klatschen', s: 'Snare', t1: 'Tom', bh: 'Bongo ↑', bt: 'Bongo ↓', b: 'Bass' },
+  SPUR_FARBE: { b: '#e055d2', s: '#eaa93c', clap: '#eaa93c', hh: '#4fd3dc', ho: '#4fd3dc', crash: '#62a8ff', ride: '#62a8ff', t1: '#5ed65e', bh: '#a46cf5', bt: '#a46cf5' },
+  SPUR_ICON: {
+    b: '<circle cx="12" cy="11" r="8"/><circle cx="12" cy="11" r="3"/><path d="M6.5 17.5 4.5 21.5M17.5 17.5l2 4"/>',
+    s: '<ellipse cx="12" cy="8" rx="9" ry="3"/><path d="M3 8v7.5c0 1.7 4 3 9 3s9-1.3 9-3V8"/><path d="M6.5 10.6v7M10 11v7.4M14 11v7.4M17.5 10.6v7"/>',
+    clap: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4a1.5 1.5 0 0 1 3 0v8M14 11.5V5.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5A6.5 6.5 0 0 1 4 16.5L3 13a1.5 1.5 0 0 1 2.6-1.4L8 14"/>',
+    hh: '<ellipse cx="12" cy="8" rx="9.5" ry="2"/><ellipse cx="12" cy="11" rx="9.5" ry="2"/><path d="M12 13v8M8.5 21h7"/>',
+    ho: '<ellipse cx="12" cy="4.5" rx="9.5" ry="2"/><ellipse cx="12" cy="12" rx="9.5" ry="2"/><path d="M12 6.5V10M12 14v7M8.5 21h7"/>',
+    crash: '<ellipse cx="12" cy="8" rx="10" ry="2.3" transform="rotate(-12 12 8)"/><path d="M12 10.5V21M8 21l4-3 4 3"/>',
+    ride: '<ellipse cx="12" cy="9" rx="10.5" ry="2.4"/><path d="M9.8 7a2.2 1.3 0 0 1 4.4 0"/><path d="M12 11.5V21M8 21l4-3 4 3"/>',
+    t1: '<ellipse cx="12" cy="5.5" rx="7" ry="2.5"/><path d="M5 5.5v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-12"/><path d="M8.5 7.8v11.5M15.5 7.8v11.5"/>',
+    bh: '<ellipse cx="8" cy="8" rx="5" ry="1.8"/><path d="M3 8l1.6 10h6.8L13 8"/><ellipse cx="17.5" cy="9.5" rx="3.6" ry="1.4" fill="currentColor"/><path d="M13.9 9.5l1 7.5h5.2l1-7.5"/>',
+    bt: '<ellipse cx="8" cy="8" rx="5" ry="1.8" fill="currentColor"/><path d="M3 8l1.6 10h6.8L13 8"/><ellipse cx="17.5" cy="9.5" rx="3.6" ry="1.4"/><path d="M13.9 9.5l1 7.5h5.2l1-7.5"/>',
+  },
   SILBEN: ['', 'e', '+', 'e'],
   VORLAGEN: {
     rock: { name: 'Rock', bpm: 100, beat: { hh: 'x.x.x.x.x.x.x.x.', s: '....x.......x...', b: 'x.......x.x.....', crash: 'x...............' } },
@@ -576,8 +590,9 @@ const Schlagzeugseite = {
         <div class="sz-gitter" role="grid" aria-label="Beat: 16 Sechzehntel je Instrument">
           <span class="sz-ecke"></span>${kopf}
           ${this.SPUREN.map(k => `
-            <button type="button" class="sz-spur" data-spur="${k}" data-fam="${Drums.FAMILIE[k]}" title="${this.SPUR_NAMEN[k]} anhören" aria-label="${this.SPUR_NAMEN[k]} anhören"><span class="lang">${this.SPUR_NAMEN[k]}</span><span class="kurz">${this.SPUR_KURZ[k]}</span></button>
-            ${this.beat[k].map((an, i) => `<button type="button" class="sz-zelle${an ? ' an' : ''}" data-k="${k}" data-i="${i}" data-fam="${Drums.FAMILIE[k]}" aria-pressed="${an}" aria-label="${this.SPUR_NAMEN[k]}, Sechzehntel ${i + 1}"></button>`).join('')}`).join('')}
+            <button type="button" class="sz-spur" data-spur="${k}" style="--farbe:${this.SPUR_FARBE[k]}" title="${this.SPUR_NAMEN[k]} anhören" aria-label="${this.SPUR_NAMEN[k]} anhören">
+              <svg viewBox="0 0 24 24" aria-hidden="true">${this.SPUR_ICON[k]}</svg><span>${this.SPUR_KURZ[k]}</span></button>
+            ${this.beat[k].map((an, i) => `<button type="button" class="sz-zelle${an ? ' an' : ''}" data-k="${k}" data-i="${i}" style="--farbe:${this.SPUR_FARBE[k]}" aria-pressed="${an}" aria-label="${this.SPUR_NAMEN[k]}, Sechzehntel ${i + 1}"></button>`).join('')}`).join('')}
         </div>
       </div>
       <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger kannst du über mehrere Kästchen streichen. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
