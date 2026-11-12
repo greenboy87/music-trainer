@@ -160,7 +160,7 @@ const Pruefungsseite = {
         <div class="pz-pruefung-start">
           <button type="button" class="primary" id="pz-pruefung">${Icons.raw('trophy')}Prüfung starten</button>
           <span class="hint">Beginnt mit der Zeile für Note 5. Pro Zeile hast du ${this.VERSUCHE} Versuche – ab ${this.BESTANDEN} % ist sie bestanden
-            und es geht zur nächsten. Tempo ${this.PRUEF_BPM} BPM, kein Vorspielen. Am Ende steht deine Note da, gespeichert wird nichts.</span>
+            und es geht zur nächsten. Tempo ${this.PRUEF_BPM} BPM, kein Vorspielen. Abbrechen geht nur beim Einzählen – danach zählt es als Versuch. Am Ende steht deine Note da, gespeichert wird nichts.</span>
         </div>
         <div class="pz-liste">
           ${this.zeilen().map(z => {
@@ -303,6 +303,7 @@ const Pruefungsseite = {
     this.beginn = start + 4 * this.schlagDauer;
     this.tipps = [];
     this.mitspielen = mitspielen;
+    this.abgebrochen = false;
     // Mit Cursor gespielt: Rückmeldung ja, aber kein bester Versuch
     this.mitCursor = mitspielen && this.cursorAn && !this.pruefung;
     for (let i = 0; i < 20; i++) Metronom.klick(start + i * this.schlagDauer, i % 4 === 0);
@@ -336,7 +337,10 @@ const Pruefungsseite = {
       // SVG kennt .hidden nicht – das Attribut selbst entfernen
       // Cursor: beim Vorspielen immer, beim Mitspielen nur zum Üben (Schalter), in der Prüfung nie
       const mitCursor = !mitspielen || (this.cursorAn && !this.pruefung);
-      if (b >= 0) this.zustand = 'spielen';
+      if (b >= 0 && this.zustand !== 'spielen') {
+        this.zustand = 'spielen';
+        if (this.pruefung && mitspielen) los.innerHTML = '■ Abbrechen (zählt als Versuch)';
+      }
       if (b >= 0 && mitCursor) { zeiger.removeAttribute('hidden'); zeiger.setAttribute('x', this.x(Math.min(b, 15.99)) - 1.5); }
       // Vorspielen: die Note, die gerade klingt, leuchtet
       if (!mitspielen) {
@@ -353,12 +357,18 @@ const Pruefungsseite = {
     this.raf = requestAnimationFrame(malen);
   },
 
+  /* Abbrechen: beim Einzählen frei; in der Prüfung nach dem Einzählen zählt es als
+     nicht bestandener Versuch – ausgewertet wird, was bis dahin gespielt war */
   abbrechen() {
+    const zaehlt = this.pruefung && this.mitspielen && this.zustand === 'spielen';
     cancelAnimationFrame(this.raf);
     Ton.stopp();
     this.zustand = 'bereit';
     this.knoepfeZurueck();
-    this.el.querySelector('.pz-status').textContent = 'Abgebrochen. Tippe auf „Los“, wenn du bereit bist.';
+    if (zaehlt) { this.abgebrochen = true; this.auswerten(); return; }
+    this.el.querySelector('.pz-status').textContent = this.pruefung
+      ? 'Beim Einzählen abgebrochen – zählt nicht als Versuch.'
+      : 'Abgebrochen. Tippe auf „Los“, wenn du bereit bist.';
   },
 
   knoepfeZurueck() {
@@ -433,8 +443,9 @@ const Pruefungsseite = {
     const alt = this.pruefung || this.mitCursor ? Infinity : this.bester(this.z.note);
     if (prozent > alt) this.bestMerken(this.z.note, prozent);
     const pr = this.pruefung;
-    const ok = prozent >= this.BESTANDEN;
-    const lob = pr ? (ok ? `Bestanden! Die Zeile für Note ${this.z.note} sitzt.` : `Noch nicht bestanden – ${this.BESTANDEN} % brauchst du.`)
+    const ok = prozent >= this.BESTANDEN && !this.abgebrochen;
+    const lob = pr && this.abgebrochen ? 'Abgebrochen – zählt als nicht bestandener Versuch.'
+      : pr ? (ok ? `Bestanden! Die Zeile für Note ${this.z.note} sitzt.` : `Noch nicht bestanden – ${this.BESTANDEN} % brauchst du.`)
       : this.mitCursor ? (prozent >= 75 ? 'Gut! Jetzt probier es ohne Übungsmodus.' : 'Weiter üben – gern etwas langsamer.')
       : prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
       : prozent >= 75 ? 'Gut! Noch ein paar Mal, dann sitzt es.'
