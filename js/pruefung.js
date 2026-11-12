@@ -56,6 +56,13 @@ const Pruefungsseite = {
   lies(s) { try { return localStorage.getItem(`musiktrainer-pruefung-${s}`); } catch { return null; } },
   bester(note, klasse = this.klasse) { return Number(this.lies(`best-${klasse === 6 ? 'k6-' : ''}${note}`)) || 0; },
   bestMerken(note, w) { this.merken(`best-${this.klasse === 6 ? 'k6-' : ''}${note}`, w); },
+  /* Sterne beim Üben (wie in den Spielen 1–6) aus der Genauigkeit */
+  STERNE_AB: [55, 70, 80, 88, 95],   // ab diesen Prozent 2, 3, 4, 5, 6 Sterne
+  sterne(prozent) { return prozent > 0 ? 1 + this.STERNE_AB.filter(g => prozent >= g).length : 0; },
+  sterneSumme() {
+    return this.ZEILEN5.reduce((s, z) => s + this.sterne(this.bester(z.note, 5)), 0)
+      + this.ZEILEN6.reduce((s, z) => s + this.sterne(this.bester(z.note, 6)), 0);
+  },
   geuebt() { return this.ZEILEN5.filter(z => this.bester(z.note, 5)).length + this.ZEILEN6.filter(z => this.bester(z.note, 6)).length; },
 
   /* Alle Noten einer Zeile: { zeit (Schläge ab Zeile), stimme 'o'|'u', takt, b (Baustein), i } */
@@ -170,7 +177,7 @@ const Pruefungsseite = {
             return `<a class="pz-eintrag" href="${this.adresse(z.note)}">
               <span class="pz-nr" style="--farbe:${z.farbe}">${z.note}</span>
               ${this.svg(z)}
-              <span class="pz-best">${best ? `Bester Versuch<strong>${best} %</strong>` : 'Noch nicht geübt'}</span>
+              <span class="pz-best">${best ? `<span class="pz-sterne">${sterneHtml(this.sterne(best))}</span>Bester Versuch ${best} %` : 'Noch nicht geübt'}</span>
             </a>`;
           }).join('')}
         </div>
@@ -230,7 +237,7 @@ const Pruefungsseite = {
           ${this.klasse === 6 && z.hand ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand-zeigen" ${this.handZeigen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz zeigen</label>` : ''}
           ${this.klasse === 6 && z.hand && !pr ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
-        ${pr ? '' : `<p class="pz-uebungshinweis"${this.cursorAn ? '' : ' hidden'}>${Icons.raw('target')}Achtung, Übungsmodus: Deine Versuche zählen nicht – so sammelst du keinen Bestwert.</p>`}
+        ${pr ? '' : `<p class="pz-uebungshinweis"${this.cursorAn ? '' : ' hidden'}>${Icons.raw('target')}Achtung, Übungsmodus: Deine Versuche zählen nicht – so sammelst du keine Sterne.</p>`}
         <p class="pz-status" aria-live="polite">${pr ? `Tippe auf „Versuch ${pr.versuch} starten“: ein Takt wird eingezählt, dann spielst du.` : 'Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.'}</p>
         <div class="pz-ergebnis" hidden></div>
         <div class="pz-pads${zwei || this.klasse === 6 ? ' zwei' : ''}">
@@ -479,10 +486,11 @@ const Pruefungsseite = {
     const erg = ort.querySelector('.pz-ergebnis');
     erg.hidden = false;
     erg.innerHTML = `
-      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Übungsmodus – dieser Versuch zählt nicht. Schalte den Übungsmodus aus, damit er zählt.</p>` : ''}
+      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Übungsmodus – dieser Versuch zählt nicht, keine Sterne. Schalte den Übungsmodus aus, damit er zählt.</p>` : ''}
       <div class="pz-prozent" style="--wert:${prozent}"><strong>${prozent} %</strong><span>genau</span></div>
       <div class="pz-auswertung">
         <h3>${lob}${prozent > alt && alt ? ' <span class="rekord">Neuer Bestwert!</span>' : ''}</h3>
+        ${!pr && !this.mitCursor ? `<div class="pz-sterne gross">${sterneHtml(this.sterne(prozent))}</div>` : ''}
         <ul>
           <li><span class="pz-punkt genau"></span>${genau} von ${noten.length} Noten genau getroffen</li>
           ${getroffen.length - genau - falscheHand ? `<li><span class="pz-punkt knapp"></span>${getroffen.length - genau - falscheHand} knapp daneben</li>` : ''}
@@ -493,12 +501,34 @@ const Pruefungsseite = {
           ${getroffen.length ? `<li>${Icons.raw('timer')}${richtung}</li>` : ''}
           ${prozent < 95 && proTakt[schwach] < 0.9 ? `<li>${Icons.raw('target')}Übe besonders Takt ${schwach + 1}</li>` : ''}
         </ul>
-        ${pr ? '<div class="pz-pruef-weiter"></div>' : `<p class="hint">${this.bpm} BPM${prozent >= 90 && this.bpm < 100 ? ' – probier es auch etwas schneller.' : ''}</p>`}
+        ${pr ? '<div class="pz-pruef-weiter"></div>' : `<p class="hint">${this.bpm} BPM${prozent >= 90 && this.bpm < 100 ? ' – probier es auch etwas schneller.' : ''}</p>
+        <div class="pz-pruef-weiter">
+          <button type="button" id="pz-nochmal">${Icons.raw('reset')}Nochmal spielen</button>
+          ${this.naechsteZeile() ? `<a class="knopf primary" href="${this.adresse(this.naechsteZeile().note)}">Weiter zur Zeile für Note ${this.naechsteZeile().note}${Icons.raw('next')}</a>` : ''}
+        </div>`}
       </div>`;
     erg.classList.toggle('bestanden', !!pr && ok);
     erg.classList.toggle('durchgefallen', !!pr && !ok);
     if (pr) this.pruefungWeiter(prozent, ok);
-    else this.el.querySelector('.pz-status').textContent = 'Nochmal? Tippe auf „Los“.';
+    else {
+      this.el.querySelector('.pz-status').textContent = 'Nochmal? Tippe auf „Los“.';
+      erg.querySelector('#pz-nochmal').addEventListener('click', () => this.durchlauf(true));
+      if (!this.mitCursor) this.sterneZeigen(erg);
+    }
+  },
+
+  /* Die nächste, schwerere Zeile (Note 5 → 4 …), bei Note 1 keine */
+  naechsteZeile() {
+    const z = this.zeilen();
+    return z[z.indexOf(this.z) + 1] || null;
+  },
+
+  /* Sterne nacheinander aufleuchten lassen, mit aufsteigendem Ton – wie am Ende der Spiele */
+  sterneZeigen(erg) {
+    const felder = [...erg.querySelectorAll('.pz-sterne.gross .stern.an')];
+    felder.forEach(f => f.classList.remove('an'));
+    const leiter = [72, 74, 76, 79, 81, 84];
+    felder.forEach((f, i) => App.spaeter(() => { f.classList.add('an'); Ton.klavier(leiter[i], 0, 0.35, 0.12); }, 250 + i * 220));
   },
 
   /* Nach einem Prüfungsversuch: nächste Zeile, nochmal oder Ende */

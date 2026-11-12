@@ -11,8 +11,8 @@ Knopf „Vollbild“ (`js/vollbild.js`).
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`, `#/pruefung`, `#/pruefung/k6`):
 Toms fünf Zeilen je Klasse (Note 5 bis 1) zum Mitspielen auf den Pads – Klasse 5
 Snare und Bassdrum, Klasse 6 nur Snare mit R/L und Handsatz (optional mitbewertet).
-Bewusst kein Spiel in `SPIELE`: keine Sterne, nichts an den Server, nur der
-beste Versuch je Zeile im Browser – darum auch nicht in `MT_SPIELE`.
+Bewusst kein Spiel in `SPIELE`: nichts an den Server, nur der beste Versuch
+je Zeile im Browser (Sterne daraus über `STERNE_AB`, nur lokal) – darum auch nicht in `MT_SPIELE`.
 „Prüfung starten“: Leiter ab Note 5, je Zeile 3 Versuche, bestanden ab 80 %,
 Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM6`),
 `BESTANDEN`, `VERSUCHE`, Endnote am Ende, nichts gespeichert. Einrichtung des

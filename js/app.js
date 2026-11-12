@@ -433,7 +433,7 @@ const App = {
               <span class="spiel-icon">${Icons.raw('drum')}</span>
               <span class="spiel-titel">Prüfungszeilen Klasse 5 und 6</span>
               <span class="hint">Wähle deine Zeile (Note 5 bis 1) und spiel sie auf den Pads mit – am Ende siehst du, wie genau du warst.</span>
-              <span class="spiel-sterne">${Icons.raw('target')} ${Pruefungsseite.geuebt()} / 10 geübt</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme()} / 60</span>
             </a>` : ''}
         </div>`).join('')}`;
     const feld = document.getElementById('name');

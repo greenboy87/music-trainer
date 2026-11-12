@@ -984,3 +984,11 @@ body.hat-vollbild { overflow: hidden; }
 .pz-einzaehler span.schlag { animation: pz-zaehl .45s ease-out; }
 @keyframes pz-zaehl { from { transform: scale(1.35); opacity: .4; } 40% { opacity: 1; } to { transform: scale(1); } }
 .pz-noten.ohne-hand .pz-hand { display: none; }
+/* Sterne bei den Prüfungszeilen */
+.pz-sterne { display: inline-flex; gap: 1px; margin-right: .3rem; }
+.pz-sterne .stern .icon { width: .85rem; height: .85rem; margin: 0; }
+.pz-best .pz-sterne { display: flex; justify-content: flex-end; margin: 0 0 .15rem; }
+@media (max-width: 620px) { .pz-best .pz-sterne { justify-content: flex-start; } }
+.pz-sterne.gross { display: flex; gap: .2rem; margin: 0 0 .5rem; }
+.pz-sterne.gross .stern .icon { width: 1.6rem; height: 1.6rem; }
+.pz-sterne.gross .stern.an { animation: aufploppen .45s cubic-bezier(.3, 1.6, .5, 1) both; }
