@@ -246,7 +246,7 @@ const App = {
     this.kontoLeiste();
     document.getElementById('btn-theme').addEventListener('click', () => Theme.toggle());
     // Im Klick den Ton freigeben – auf dem iPad klingt sonst die erste Taste nicht sofort
-    document.getElementById('btn-klavier').addEventListener('click', () => Ton.audio());
+    ['btn-klavier', 'btn-schlagzeug'].forEach(id => document.getElementById(id).addEventListener('click', () => Ton.audio()));
     if (Konto.angemeldet()) Konto.abgleichen().then(() => { if (!this.runde && Konto.angemeldet()) this.route(); });
     document.addEventListener('keydown', e => this.taste(e));
     window.addEventListener('hashchange', () => this.route());
@@ -283,20 +283,26 @@ const App = {
     }
     else if (art === 'spiel' && spiel) this.zeigeSpiel(spiel);
     else if (art === 'klavier') Klavierseite.zeigen(this.el);
+    else if (art === 'schlagzeug') Schlagzeugseite.zeigen(this.el, id);
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
-    this.klavierKnopf(art === 'klavier', pfad);
+    this.werkzeugKnoepfe(art, pfad);
     window.scrollTo(0, 0);
   },
 
-  /* Der Knopf „Klavier“ oben öffnet das Klavier; auf der Klavierseite führt er dorthin
-     zurück, wo man vorher war (die Adresse ohne Anmeldedaten), sonst zur Startseite */
-  klavierKnopf(an, pfad) {
-    if (!an) this.vorKlavier = pfad || '#/';
-    const k = document.getElementById('btn-klavier');
-    k.classList.toggle('aktiv', an);
-    k.href = an ? this.vorKlavier || '#/' : '#/klavier';
-    k.title = an ? 'Zurück zum music-trainer' : 'Klavier zum freien Spielen';
+  /* Die Knöpfe „Klavier“ und „Schlagzeug“ oben öffnen die Seite zum freien Spielen; dort
+     führt derselbe Knopf zurück, wo man vorher war (die Adresse ohne Anmeldedaten), sonst
+     zur Startseite. Von Klavier zu Schlagzeug gewechselt, bleibt das Ziel dasselbe. */
+  werkzeugKnoepfe(art, pfad) {
+    const werkzeuge = { klavier: 'Klavier zum freien Spielen', schlagzeug: 'Schlagzeug zum freien Spielen' };
+    if (!(art in werkzeuge)) this.vorWerkzeug = pfad || '#/';
+    Object.entries(werkzeuge).forEach(([w, titel]) => {
+      const k = document.getElementById(`btn-${w}`);
+      const an = art === w;
+      k.classList.toggle('aktiv', an);
+      k.href = an ? this.vorWerkzeug || '#/' : `#/${w}`;
+      k.title = an ? 'Zurück zum music-trainer' : titel;
+    });
   },
 
   /* ---------- Anmeldung ---------- */
