@@ -915,3 +915,22 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .pz-hand text { font-size: 10px; font-weight: 800; fill: #fff; text-anchor: middle; }
 .pz-n[data-wert="hand"] { color: #c084fc; }
 .pz-punkt.hand { background: #c084fc; }
+
+/* ---------- Vollbild für Klavier und Schlagzeug (js/vollbild.js) ---------- */
+.vollbild-knopf { min-height: 2.6rem; }
+body.hat-vollbild { overflow: hidden; }
+.card.vollbild {
+  position: fixed; inset: 0; z-index: 1000; margin: 0; border-radius: 0; border: 0;
+  display: flex; flex-direction: column; overflow: auto; overscroll-behavior: contain;
+  background: var(--page-bg); background-color: var(--bg);
+  padding: max(1rem, env(safe-area-inset-top)) max(1.2rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1.2rem, env(safe-area-inset-left));
+}
+/* Klavier: die Tasten nehmen den ganzen restlichen Platz */
+.klavier-seite.vollbild .klaviatur { flex: 1 1 auto; height: auto; min-height: 180px; margin-bottom: calc(-1 * max(1rem, env(safe-area-inset-bottom))); border-radius: 0; }
+/* Schlagzeug: Inhalt mittig, Drumset und Pads so groß, wie die Höhe erlaubt */
+.sz-seite.vollbild .sz-inhalt { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+.sz-seite.vollbild .sz-set-rahmen { width: min(100%, calc((100vh - 230px) * 1.8)); max-width: none; }
+.sz-seite.vollbild .sz-pads { width: min(100%, calc((100vh - 300px) * 3.2)); max-width: none; }
+.sz-seite.vollbild .sz-gitter { --zeile: clamp(30px, 6.4vh, 64px); }
+.sz-seite.vollbild .sz-hinweis { display: none; }
+@media (max-width: 520px) { .vollbild-knopf span { display: none; } .vollbild-knopf .icon { margin-right: 0; } }

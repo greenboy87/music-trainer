@@ -347,6 +347,7 @@ const Schlagzeugseite = {
         <div class="klavier-kopf">
           <h2>${Icons.raw('drum')}Schlagzeug</h2>
           <div class="sz-kopf-rechts">
+            ${Vollbild.knopf()}
             <button type="button" class="small sz-laeuft" id="sz-mini-stopp" hidden title="Drumcomputer anhalten (Leertaste)">■ Beat stoppen</button>
             <div class="klavier-groesse sz-reiter" role="tablist" aria-label="Ansicht">
               ${Object.entries(this.REITER).map(([id, name]) => `<button type="button" role="tab" data-reiter="${id}">${name}</button>`).join('')}
@@ -357,6 +358,7 @@ const Schlagzeugseite = {
         <div class="sz-inhalt"></div>
       </section>`;
     this.inhalt = el.querySelector('.sz-inhalt');
+    Vollbild.binden(el.querySelector('.sz-seite'));
     this.metroAn = false;
     this.uhr = new Taktuhr(() => this.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i));
     this.leiste = new Tempoleiste(el.querySelector('.sz-metro'), {

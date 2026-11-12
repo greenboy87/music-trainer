@@ -101,6 +101,7 @@ const Klavierseite = {
         <div class="klavier-kopf">
           <h2>${Icons.raw('piano')}Klavier</h2>
           <div class="klavier-einstellungen">
+            ${Vollbild.knopf()}
             <label class="klavier-klang">Klang
               <select id="k-klang">${Object.entries(Ton.KLAENGE).map(([id, name]) =>
                 `<option value="${id}"${id === this.klang ? ' selected' : ''}>${name}</option>`).join('')}</select>
@@ -124,6 +125,7 @@ const Klavierseite = {
         <div class="klaviatur${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>
       </section>`;
     this.tastenEl = el.querySelector('.klaviatur');
+    Vollbild.binden(el.querySelector('.klavier-seite'));
     // Metronom zum Üben im Takt, Tempo merkt sich der Browser
     let bpm = 80;
     try { bpm = Number(localStorage.getItem('musiktrainer-klavier-bpm')) || 80; } catch { /* privates Fenster */ }
