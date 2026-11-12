@@ -284,6 +284,7 @@ const App = {
     else if (art === 'spiel' && spiel) this.zeigeSpiel(spiel);
     else if (art === 'klavier') Klavierseite.zeigen(this.el);
     else if (art === 'schlagzeug') Schlagzeugseite.zeigen(this.el, id);
+    else if (art === 'pruefung') Pruefungsseite.zeigen(this.el, id);
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
     this.werkzeugKnoepfe(art, pfad);
@@ -427,6 +428,13 @@ const App = {
               <span class="hint">${s.text}</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Fortschritt.sterneVon(s)} / ${s.stufen.length * Bewertung.MAX}</span>
             </a>`).join('')}
+          ${b === 'Rhythmus' ? `
+            <a class="card spiel-karte" href="#/pruefung" style="--farbe:#5eead4">
+              <span class="spiel-icon">${Icons.raw('drum')}</span>
+              <span class="spiel-titel">Prüfungszeilen Klasse 5</span>
+              <span class="hint">Wähle deine Zeile (Note 5 bis 1) und spiel sie auf den Pads mit – am Ende siehst du, wie genau du warst.</span>
+              <span class="spiel-sterne">${Icons.raw('target')} ${Pruefungsseite.ZEILEN.filter(z => Pruefungsseite.bester(z.note)).length} / 5 geübt</span>
+            </a>` : ''}
         </div>`).join('')}`;
     const feld = document.getElementById('name');
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });

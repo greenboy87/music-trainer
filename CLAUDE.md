@@ -6,7 +6,11 @@ freien Spielen (`js/klavierseite.js`, `#/klavier`) und ein Schlagzeug
 (`js/schlagzeug.js`, `#/schlagzeug` mit den Reitern Pads, Drumset und
 Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt).
 Beide haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
-Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Einrichtung des
+Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr.
+Prüfungszeilen Klasse 5 (`js/pruefung.js`, `#/pruefung`): Toms fünf Zeilen
+zum Vorklatschen (Note 5 bis 1) zum Mitspielen auf Snare- und Bassdrum-Pad.
+Bewusst kein Spiel in `SPIELE`: keine Sterne, nichts an den Server, nur der
+beste Versuch je Zeile im Browser – darum auch nicht in `MT_SPIELE`. Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
 ## Versionsnummer nach jeder CSS/JS-Änderung hochzählen
