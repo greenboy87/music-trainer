@@ -35,6 +35,12 @@ const Pruefungsseite = {
     { note: 1, farbe: '#8c2332', hand: 'RRL RRLRRL RLRRRL RLRL', takte: [['V', 'Vp', 'AA', 'Vp'], ['V', 'AA', 'V', 'AA'], ['AA', 'V', 'V', 'AA'], ['V', 'V', 'AA', 'Vp']] },
   ],
   bpm: 80,
+  /* Prüfung: Leiter ab der Zeile für Note 5, je Zeile bis zu 3 Versuche, bestanden ab
+     BESTANDEN %, festes Tempo. Nichts wird gespeichert – jede Prüfung beginnt neu. */
+  PRUEF_BPM: 80,
+  BESTANDEN: 80,
+  VERSUCHE: 3,
+  pruefung: null,       // { i: Zeile in der Leiter, versuch, ergebnis: [{ note, prozent, versuch, ok }] }
   zeilen() { return this.klasse === 6 ? this.ZEILEN6 : this.ZEILEN5; },
   /* Adressen und Speicher: Klasse 5 wie bisher ohne Kürzel */
   adresse(note) { return this.klasse === 6 ? `#/pruefung/k6${note ? `-${note}` : ''}` : `#/pruefung${note ? `/${note}` : ''}`; },
@@ -122,9 +128,10 @@ const Pruefungsseite = {
 
   zeigen(el, id) {
     this.el = el;
+    this.pruefung = null;
     this.handPruefen = this.lies('hand') === 'an';
     const b = Number(this.lies('bpm'));
-    if (b >= 50 && b <= 140) this.bpm = b;
+    this.bpm = b >= 50 && b <= 140 ? b : 80;
     const m = /^k(6)(?:-(\d))?$/.exec(id || '');
     this.klasse = m ? 6 : 5;
     const note = m ? m[2] : id;
@@ -149,6 +156,11 @@ const Pruefungsseite = {
             ? 'Du spielst alles auf der <strong>Snare</strong> mit zwei Pads: <strong>R</strong> = rechte Hand, <strong>L</strong> = linke Hand. Übe den Handsatz mit – gewertet wird nur, ob du im Takt bist, außer du schaltest „Handsatz mitbewerten“ ein.'
             : 'Du spielst auf den Pads mit: obere Noten auf der <strong>Snare</strong> (klatschen), untere auf der <strong>Bassdrum</strong> (stampfen).'}
           Das Metronom zählt einen Takt ein und klickt weiter. Laut mitzählen!</p>
+        <div class="pz-pruefung-start">
+          <button type="button" class="primary" id="pz-pruefung">${Icons.raw('trophy')}Prüfung starten</button>
+          <span class="hint">Beginnt mit der Zeile für Note 5. Pro Zeile hast du ${this.VERSUCHE} Versuche – ab ${this.BESTANDEN} % ist sie bestanden
+            und es geht zur nächsten. Tempo ${this.PRUEF_BPM} BPM, kein Vorspielen. Am Ende steht deine Note da, gespeichert wird nichts.</span>
+        </div>
         <div class="pz-liste">
           ${this.zeilen().map(z => {
             const best = this.bester(z.note);
@@ -160,36 +172,57 @@ const Pruefungsseite = {
           }).join('')}
         </div>
       </section>`;
+    this.el.querySelector('#pz-pruefung').addEventListener('click', () => this.pruefungStarten());
+  },
+
+  pruefungStarten() {
+    Ton.audio();
+    this.pruefung = { i: 0, versuch: 1, ergebnis: [] };
+    this.ueben(this.zeilen()[0]);
+  },
+
+  /* Leiste über der Zeile: alle fünf Stufen, bestandene abgehakt, die aktuelle hervorgehoben */
+  leiter() {
+    const p = this.pruefung;
+    return `<ol class="pz-leiter" aria-label="Prüfung: Fortschritt">${this.zeilen().map((z, i) => {
+      const e = p.ergebnis.find(r => r.note === z.note && r.ok);
+      const art = e ? 'ok' : i === p.i ? 'jetzt' : 'offen';
+      return `<li class="${art}" style="--farbe:${z.farbe}"><span>${e ? Icons.raw('check') : z.note}</span>Note ${z.note}</li>`;
+    }).join('')}</ol>`;
   },
 
   ueben(z) {
+    const pr = this.pruefung;
     const zwei = this.zweiStimmen(z);
     this.el.innerHTML = `
-      <a class="zurueck" href="${this.adresse()}">${Icons.raw('back')}Alle Zeilen Klasse ${this.klasse}</a>
-      <section class="card pz-seite pz-ueben">
+      <a class="zurueck" href="${this.adresse()}">${Icons.raw('back')}${pr ? 'Prüfung abbrechen' : `Alle Zeilen Klasse ${this.klasse}`}</a>
+      <section class="card pz-seite pz-ueben${pr ? ' pz-im-test' : ''}">
+        ${pr ? this.leiter() : ''}
         <div class="pz-kopf">
           <span class="pz-nr gross" style="--farbe:${z.farbe}">${z.note}</span>
           <div>
-            <h2>Klasse ${this.klasse} · Zeile für Note ${z.note}</h2>
+            <h2>${pr ? `Prüfung Klasse ${this.klasse} · Zeile für Note ${z.note}` : `Klasse ${this.klasse} · Zeile für Note ${z.note}`}</h2>
             <p class="hint">${this.klasse === 6 ? `Alles auf der Snare: R = rechte Hand, L = linke Hand${z.hand ? ' – der Handsatz zählt nur, wenn „Handsatz mitbewerten“ an ist' : ''}`
               : zwei ? 'Obere Noten: Snare (klatschen) · untere Noten: Bassdrum (stampfen)' : 'Alle Noten auf der Snare (klatschen)'}
-              ${this.bester(z.note) ? ` · Bester Versuch: ${this.bester(z.note)} %` : ''}</p>
+              ${pr ? ` · <strong>Versuch ${pr.versuch} von ${this.VERSUCHE}</strong> · ab ${this.BESTANDEN} % bestanden`
+                : this.bester(z.note) ? ` · Bester Versuch: ${this.bester(z.note)} %` : ''}</p>
           </div>
         </div>
         <div class="pz-noten">${this.svg(z, { gross: true })}</div>
         <div class="pz-steuerung">
-          <button type="button" class="primary pz-los" id="pz-los">${Icons.raw('play')}Los – ich spiele</button>
-          <button type="button" id="pz-hoeren">${Icons.raw('volume')}Vorspielen</button>
-          <div class="sz-tempo" role="group" aria-label="Tempo">
+          <button type="button" class="primary pz-los" id="pz-los">${Icons.raw('play')}${pr ? `Versuch ${pr.versuch} starten` : 'Los – ich spiele'}</button>
+          <button type="button" id="pz-hoeren"${pr ? ' hidden' : ''}>${Icons.raw('volume')}Vorspielen</button>
+          ${pr ? `<span class="sz-bpm-wert">${this.PRUEF_BPM} BPM</span>` : ''}
+          <div class="sz-tempo" role="group" aria-label="Tempo"${pr ? ' hidden' : ''}>
             <span>Tempo</span>
             <button type="button" class="sz-pm" data-pm="-4" aria-label="Langsamer">−</button>
             <span class="sz-bpm-wert"><span id="pz-bpm">${this.bpm}</span> BPM</span>
             <button type="button" class="sz-pm" data-pm="4" aria-label="Schneller">+</button>
           </div>
           <span class="metro-punkte pz-punkte" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          ${this.klasse === 6 && z.hand ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
+          ${this.klasse === 6 && z.hand && !pr ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
-        <p class="pz-status" aria-live="polite">Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.</p>
+        <p class="pz-status" aria-live="polite">${pr ? `Tippe auf „Versuch ${pr.versuch} starten“: ein Takt wird eingezählt, dann spielst du.` : 'Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.'}</p>
         <div class="pz-ergebnis" hidden></div>
         <div class="pz-pads${zwei || this.klasse === 6 ? ' zwei' : ''}">
           ${this.klasse === 6
@@ -201,6 +234,9 @@ const Pruefungsseite = {
       </section>`;
     this.z = z;
     this.zwei = zwei;
+    this.tempoUeben = this.tempoUeben ?? this.bpm;
+    this.bpm = pr ? this.PRUEF_BPM : this.tempoUeben;
+    this.gleicheAdresse();
     const handKnopf = this.el.querySelector('#pz-hand');
     handKnopf?.addEventListener('change', () => { this.handPruefen = handKnopf.checked; this.merken('hand', handKnopf.checked ? 'an' : 'aus'); });
     this.zustand = 'bereit';
@@ -209,7 +245,7 @@ const Pruefungsseite = {
     ort.querySelector('#pz-hoeren').addEventListener('click', () => (this.zustand === 'bereit' ? this.durchlauf(false) : this.abbrechen()));
     ort.querySelectorAll('[data-pm]').forEach(b => b.addEventListener('click', () => {
       if (this.zustand !== 'bereit') return;
-      this.bpm = Math.max(52, Math.min(140, this.bpm + Number(b.dataset.pm)));
+      this.bpm = this.tempoUeben = Math.max(52, Math.min(140, this.bpm + Number(b.dataset.pm)));
       this.merken('bpm', this.bpm);
       ort.querySelector('#pz-bpm').textContent = this.bpm;
     }));
@@ -225,9 +261,14 @@ const Pruefungsseite = {
       else if (k === 'f' && this.klasse === 6) { e.preventDefault(); this.schlag('o', 'L'); }
       else if (k === 'f' && this.zwei) { e.preventDefault(); this.schlag('u', 'u'); }
     };
+    // Nächste Zeile der Prüfung: alten Hörer erst abmelden
+    if (this.taste) document.removeEventListener('keydown', this.taste);
+    this.taste = taste;
     document.addEventListener('keydown', taste);
     App.beimAufraeumen(() => {
       document.removeEventListener('keydown', taste);
+      this.taste = null;
+      this.tempoUeben = null;
       cancelAnimationFrame(this.raf);
       this.zustand = 'weg';
     });
@@ -308,7 +349,7 @@ const Pruefungsseite = {
 
   knoepfeZurueck() {
     const ort = this.el.querySelector('.pz-ueben');
-    ort.querySelector('#pz-los').innerHTML = `${Icons.raw('play')}Los – ich spiele`;
+    ort.querySelector('#pz-los').innerHTML = `${Icons.raw('play')}${this.pruefung ? `Versuch ${this.pruefung.versuch} starten` : 'Los – ich spiele'}`;
     ort.querySelector('#pz-hoeren').innerHTML = `${Icons.raw('volume')}Vorspielen`;
     ort.querySelectorAll('#pz-los, #pz-hoeren, [data-pm]').forEach(b => { b.disabled = false; });
     ort.querySelectorAll('.pz-punkte i').forEach(p => p.classList.remove('an'));
@@ -333,7 +374,7 @@ const Pruefungsseite = {
     const voll = 50 / ms;
     const noten = this.noten(this.z);
     const hand = (this.z.hand || '').replace(/[^RL]/g, '');
-    const mitHand = this.klasse === 6 && this.handPruefen && hand.length > 0;
+    const mitHand = this.klasse === 6 && this.handPruefen && hand.length > 0 && !this.pruefung;
     const frei = this.tipps.filter(t => t.zeit > -0.5 && t.zeit < 16.5).map(t => ({ ...t, frei: true }));
     noten.forEach(n => {
       let best = null;
@@ -375,9 +416,12 @@ const Pruefungsseite = {
       : `<text x="4" y="${yMarke.o - 7}" class="pz-marke-text">Deine Schläge</text>`) +
       frei.map(t => `<circle cx="${this.x(Math.max(0, Math.min(15.99, t.zeit)))}" cy="${yMarke[t.stimme]}" r="3.2" class="pz-marke${t.frei ? ' zuviel' : ''}"/>`).join('');
 
-    const alt = this.bester(this.z.note);
+    const alt = this.pruefung ? Infinity : this.bester(this.z.note);
     if (prozent > alt) this.bestMerken(this.z.note, prozent);
-    const lob = prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
+    const pr = this.pruefung;
+    const ok = prozent >= this.BESTANDEN;
+    const lob = pr ? (ok ? `Bestanden! Die Zeile für Note ${this.z.note} sitzt.` : `Noch nicht bestanden – ${this.BESTANDEN} % brauchst du.`)
+      : prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
       : prozent >= 75 ? 'Gut! Noch ein paar Mal, dann sitzt es.'
       : prozent >= 50 ? 'Schon ordentlich – übe weiter, gern etwas langsamer.'
       : 'Nimm ein langsameres Tempo und zähl laut mit.';
@@ -398,8 +442,86 @@ const Pruefungsseite = {
           ${getroffen.length ? `<li>${Icons.raw('timer')}${richtung}</li>` : ''}
           ${prozent < 95 && proTakt[schwach] < 0.9 ? `<li>${Icons.raw('target')}Übe besonders Takt ${schwach + 1}</li>` : ''}
         </ul>
-        <p class="hint">${this.bpm} BPM${prozent >= 90 && this.bpm < 100 ? ' – probier es auch etwas schneller.' : ''}</p>
+        ${pr ? '<div class="pz-pruef-weiter"></div>' : `<p class="hint">${this.bpm} BPM${prozent >= 90 && this.bpm < 100 ? ' – probier es auch etwas schneller.' : ''}</p>`}
       </div>`;
-    this.el.querySelector('.pz-status').textContent = 'Nochmal? Tippe auf „Los“.';
+    erg.classList.toggle('bestanden', !!pr && ok);
+    erg.classList.toggle('durchgefallen', !!pr && !ok);
+    if (pr) this.pruefungWeiter(prozent, ok);
+    else this.el.querySelector('.pz-status').textContent = 'Nochmal? Tippe auf „Los“.';
+  },
+
+  /* Nach einem Prüfungsversuch: nächste Zeile, nochmal oder Ende */
+  pruefungWeiter(prozent, ok) {
+    const p = this.pruefung;
+    const z = this.z;
+    p.ergebnis.push({ note: z.note, prozent, versuch: p.versuch, ok });
+    const ort = this.el.querySelector('.pz-pruef-weiter');
+    const los = this.el.querySelector('#pz-los');
+    const status = this.el.querySelector('.pz-status');
+    const naechste = this.zeilen()[p.i + 1];
+    if (ok && naechste) {
+      los.hidden = true;
+      status.textContent = `Bestanden im ${p.versuch}. Versuch!`;
+      ort.innerHTML = `<button type="button" class="primary" id="pz-naechste">Weiter zur Zeile für Note ${naechste.note}${Icons.raw('next')}</button>
+        <button type="button" id="pz-aufhoeren">Hier aufhören – Note ${z.note}</button>`;
+      ort.querySelector('#pz-naechste').addEventListener('click', () => { p.i++; p.versuch = 1; this.ueben(naechste); window.scrollTo(0, 0); });
+      ort.querySelector('#pz-aufhoeren').addEventListener('click', () => this.pruefungEnde());
+    } else if (ok || p.versuch >= this.VERSUCHE) {
+      los.hidden = true;
+      status.textContent = ok ? 'Alle Zeilen bestanden!' : `Alle ${this.VERSUCHE} Versuche gespielt.`;
+      ort.innerHTML = `<button type="button" class="primary" id="pz-ende">Zur Endnote${Icons.raw('next')}</button>`;
+      ort.querySelector('#pz-ende').addEventListener('click', () => this.pruefungEnde());
+    } else {
+      p.versuch++;
+      const rest = this.VERSUCHE - p.versuch + 1;
+      status.textContent = `Noch ${rest} Versuch${rest === 1 ? '' : 'e'} für diese Zeile.`;
+      los.innerHTML = `${Icons.raw('play')}Versuch ${p.versuch} starten`;
+      this.el.querySelector('.pz-kopf .hint strong').textContent = `Versuch ${p.versuch} von ${this.VERSUCHE}`;
+    }
+  },
+
+  /* Prüfung und Endnote laufen unter der Adresse der Liste: ein Link dorthin löst dann
+     kein hashchange aus – die Seite selbst neu aufbauen */
+  gleicheAdresse() {
+    this.el.querySelectorAll('a[href^="#/pruefung"]').forEach(a => a.addEventListener('click', e => {
+      if (a.getAttribute('href') !== location.hash) return;
+      e.preventDefault();
+      App.route();
+    }));
+  },
+
+  /* Endnote: die schwerste bestandene Zeile, keine bestanden = 6. Nichts wird gespeichert. */
+  pruefungEnde() {
+    const p = this.pruefung;
+    const bestanden = p.ergebnis.filter(r => r.ok);
+    const note = bestanden.length ? Math.min(...bestanden.map(r => r.note)) : 6;
+    const wort = Bewertung.NOTEN[note];
+    if (this.taste) { document.removeEventListener('keydown', this.taste); this.taste = null; }
+    this.el.innerHTML = `
+      <a class="zurueck" href="${this.adresse()}">${Icons.raw('back')}Alle Zeilen Klasse ${this.klasse}</a>
+      <section class="card pz-seite pz-endnote">
+        <p class="hint">Prüfung Klasse ${this.klasse} · ${this.PRUEF_BPM} BPM</p>
+        <div class="pz-endnote-zahl" style="--farbe:${(this.zeilen().find(z => z.note === note) || { farbe: '#6b7280' }).farbe}">${note}</div>
+        <h2>Endnote ${note} <span>${wort}</span></h2>
+        <ul class="pz-endnote-liste">
+          ${this.zeilen().map(z => {
+            const v = p.ergebnis.filter(r => r.note === z.note);
+            if (!v.length) return `<li class="offen"><span class="pz-nr" style="--farbe:${z.farbe}">${z.note}</span> nicht gespielt</li>`;
+            const ok = v.find(r => r.ok);
+            return `<li class="${ok ? 'ok' : 'nein'}"><span class="pz-nr" style="--farbe:${z.farbe}">${z.note}</span>
+              ${ok ? `${Icons.raw('check')}bestanden im ${ok.versuch}. Versuch` : `${Icons.raw('x')}nicht bestanden`}
+              <span class="hint">${v.map(r => `${r.prozent} %`).join(' · ')}</span></li>`;
+          }).join('')}
+        </ul>
+        <div class="btn-row mitte">
+          <button type="button" class="primary" id="pz-neu">${Icons.raw('reset')}Prüfung neu starten</button>
+          <a class="knopf" href="${this.adresse()}">Weiter üben</a>
+        </div>
+      </section>`;
+    this.el.querySelector('#pz-neu').addEventListener('click', () => this.pruefungStarten());
+    this.gleicheAdresse();
+    window.scrollTo(0, 0);
+    Ton.audio();
+    if (note <= 2) [72, 76, 79, 84].forEach((m, i) => Ton.klavier(m, i * 0.1, 0.5, 0.13));
   },
 };

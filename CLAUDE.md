@@ -12,7 +12,9 @@ Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`, `#/pruefung`, `#/pruefung/k6`)
 Toms fünf Zeilen je Klasse (Note 5 bis 1) zum Mitspielen auf den Pads – Klasse 5
 Snare und Bassdrum, Klasse 6 nur Snare mit R/L und Handsatz (optional mitbewertet).
 Bewusst kein Spiel in `SPIELE`: keine Sterne, nichts an den Server, nur der
-beste Versuch je Zeile im Browser – darum auch nicht in `MT_SPIELE`. Einrichtung des
+beste Versuch je Zeile im Browser – darum auch nicht in `MT_SPIELE`.
+„Prüfung starten“: Leiter ab Note 5, je Zeile 3 Versuche, bestanden ab 80 %,
+fest 80 BPM (`PRUEF_BPM`, `BESTANDEN`, `VERSUCHE`), Endnote am Ende, nichts gespeichert. Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
 ## Versionsnummer nach jeder CSS/JS-Änderung hochzählen
