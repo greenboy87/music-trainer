@@ -221,7 +221,7 @@ const Pruefungsseite = {
             <button type="button" class="sz-pm" data-pm="4" aria-label="Schneller">+</button>
           </div>
           <span class="metro-punkte pz-punkte" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          ${pr ? '' : `<label class="schalter" title="Beim Vorspielen läuft der Cursor immer mit, in der Prüfung nie"><input type="checkbox" role="switch" id="pz-cursor" ${this.cursorAn ? 'checked' : ''}><span class="schalter-bahn"></span>Cursor beim Mitspielen</label>`}
+          ${pr ? '' : `<label class="schalter" title="Beim Vorspielen läuft der Cursor immer mit, in der Prüfung nie"><input type="checkbox" role="switch" id="pz-cursor" ${this.cursorAn ? 'checked' : ''}><span class="schalter-bahn"></span>Cursor beim Mitspielen <span class="sz-tk">(wird nicht gewertet)</span></label>`}
           ${this.klasse === 6 && z.hand && !pr ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
         <p class="pz-status" aria-live="polite">${pr ? `Tippe auf „Versuch ${pr.versuch} starten“: ein Takt wird eingezählt, dann spielst du.` : 'Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.'}</p>
@@ -298,6 +298,8 @@ const Pruefungsseite = {
     this.beginn = start + 4 * this.schlagDauer;
     this.tipps = [];
     this.mitspielen = mitspielen;
+    // Mit Cursor gespielt: Rückmeldung ja, aber kein bester Versuch
+    this.mitCursor = mitspielen && this.cursorAn && !this.pruefung;
     for (let i = 0; i < 20; i++) Metronom.klick(start + i * this.schlagDauer, i % 4 === 0);
     const noten = this.noten(this.z);
     if (!mitspielen) noten.forEach(n => Drums.spielen(n.stimme === 'u' ? 'b' : 's', this.beginn + n.zeit * this.schlagDauer, n.zeit % 1 ? 0.85 : 1));
@@ -423,11 +425,12 @@ const Pruefungsseite = {
       : `<text x="4" y="${yMarke.o - 7}" class="pz-marke-text">Deine Schläge</text>`) +
       frei.map(t => `<circle cx="${this.x(Math.max(0, Math.min(15.99, t.zeit)))}" cy="${yMarke[t.stimme]}" r="3.2" class="pz-marke${t.frei ? ' zuviel' : ''}"/>`).join('');
 
-    const alt = this.pruefung ? Infinity : this.bester(this.z.note);
+    const alt = this.pruefung || this.mitCursor ? Infinity : this.bester(this.z.note);
     if (prozent > alt) this.bestMerken(this.z.note, prozent);
     const pr = this.pruefung;
     const ok = prozent >= this.BESTANDEN;
     const lob = pr ? (ok ? `Bestanden! Die Zeile für Note ${this.z.note} sitzt.` : `Noch nicht bestanden – ${this.BESTANDEN} % brauchst du.`)
+      : this.mitCursor ? (prozent >= 75 ? 'Gut! Jetzt probier es ohne Cursor.' : 'Weiter üben – gern etwas langsamer.')
       : prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
       : prozent >= 75 ? 'Gut! Noch ein paar Mal, dann sitzt es.'
       : prozent >= 50 ? 'Schon ordentlich – übe weiter, gern etwas langsamer.'
@@ -436,6 +439,7 @@ const Pruefungsseite = {
     const erg = ort.querySelector('.pz-ergebnis');
     erg.hidden = false;
     erg.innerHTML = `
+      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Mit Cursor gespielt – nicht gewertet. Schalte den Cursor aus, damit der Versuch zählt.</p>` : ''}
       <div class="pz-prozent" style="--wert:${prozent}"><strong>${prozent} %</strong><span>genau</span></div>
       <div class="pz-auswertung">
         <h3>${lob}${prozent > alt && alt ? ' <span class="rekord">Neuer Bestwert!</span>' : ''}</h3>
