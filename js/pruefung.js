@@ -130,6 +130,7 @@ const Pruefungsseite = {
     this.el = el;
     this.pruefung = null;
     this.handPruefen = this.lies('hand') === 'an';
+    this.cursorAn = this.lies('cursor') !== 'aus';
     const b = Number(this.lies('bpm'));
     this.bpm = b >= 50 && b <= 140 ? b : 80;
     const m = /^k(6)(?:-(\d))?$/.exec(id || '');
@@ -220,6 +221,7 @@ const Pruefungsseite = {
             <button type="button" class="sz-pm" data-pm="4" aria-label="Schneller">+</button>
           </div>
           <span class="metro-punkte pz-punkte" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          ${pr ? '' : `<label class="schalter" title="Beim Vorspielen läuft der Cursor immer mit, in der Prüfung nie"><input type="checkbox" role="switch" id="pz-cursor" ${this.cursorAn ? 'checked' : ''}><span class="schalter-bahn"></span>Cursor beim Mitspielen</label>`}
           ${this.klasse === 6 && z.hand && !pr ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
         <p class="pz-status" aria-live="polite">${pr ? `Tippe auf „Versuch ${pr.versuch} starten“: ein Takt wird eingezählt, dann spielst du.` : 'Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.'}</p>
@@ -237,6 +239,8 @@ const Pruefungsseite = {
     this.tempoUeben = this.tempoUeben ?? this.bpm;
     this.bpm = pr ? this.PRUEF_BPM : this.tempoUeben;
     this.gleicheAdresse();
+    const cursorKnopf = this.el.querySelector('#pz-cursor');
+    cursorKnopf?.addEventListener('change', () => { this.cursorAn = cursorKnopf.checked; this.merken('cursor', cursorKnopf.checked ? 'an' : 'aus'); });
     const handKnopf = this.el.querySelector('#pz-hand');
     handKnopf?.addEventListener('change', () => { this.handPruefen = handKnopf.checked; this.merken('hand', handKnopf.checked ? 'an' : 'aus'); });
     this.zustand = 'bereit';
@@ -323,7 +327,10 @@ const Pruefungsseite = {
         else if (ganz < 16) status.textContent = `${mitspielen ? 'Spiel mit!' : 'Hör zu und zähl mit:'} Takt ${Math.floor(ganz / 4) + 1} · ${ganz % 4 + 1}`;
       }
       // SVG kennt .hidden nicht – das Attribut selbst entfernen
-      if (b >= 0) { this.zustand = 'spielen'; zeiger.removeAttribute('hidden'); zeiger.setAttribute('x', this.x(Math.min(b, 15.99)) - 1.5); }
+      // Cursor: beim Vorspielen immer, beim Mitspielen nur zum Üben (Schalter), in der Prüfung nie
+      const mitCursor = !mitspielen || (this.cursorAn && !this.pruefung);
+      if (b >= 0) this.zustand = 'spielen';
+      if (b >= 0 && mitCursor) { zeiger.removeAttribute('hidden'); zeiger.setAttribute('x', this.x(Math.min(b, 15.99)) - 1.5); }
       // Vorspielen: die Note, die gerade klingt, leuchtet
       if (!mitspielen) {
         const jetzt = noten.filter(n => b >= n.zeit && b < n.zeit + n.dauer).map(n => n.i);
