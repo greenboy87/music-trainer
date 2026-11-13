@@ -9,7 +9,8 @@ Beide haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
 Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen
 Knopf „Vollbild“ (`js/vollbild.js`).
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
-`#/pruefung/k5` Modus wählen (Spielen, Übungsmodus, Prüfung) → `#/pruefung/k5-liste`:
+`#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne
+auch in Liste und Zeile umschaltbar) → `#/pruefung/k5-liste`:
 Toms fünf Zeilen je Klasse (Note 5 bis 1) zum Mitspielen auf den Pads – Klasse 5
 Snare und Bassdrum, Klasse 6 nur Snare mit R/L und Handsatz (optional mitbewertet).
 Bewusst kein Spiel in `SPIELE`: nichts an den Server, nur der beste Versuch

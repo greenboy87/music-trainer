@@ -180,6 +180,28 @@ const Pruefungsseite = {
       </section>`;
   },
 
+  /* Umschalter Üben | Sterne sammeln – derselbe in der Liste und bei jeder Zeile */
+  umschalter() {
+    return `<div class="klavier-groesse pz-umschalter" role="group" aria-label="Modus">
+      <button type="button" data-um="ueben" aria-pressed="${this.cursorAn}">${Icons.raw('target')}Üben</button>
+      <button type="button" data-um="sterne" aria-pressed="${!this.cursorAn}">${Icons.raw('star')}Sterne sammeln</button>
+    </div>`;
+  },
+  modusText() {
+    return this.cursorAn
+      ? `${Icons.raw('target')}<span><strong>Üben:</strong> Der Cursor läuft mit. Das zählt nicht – keine Sterne.</span>`
+      : `${Icons.raw('star')}<span><strong>Sterne sammeln:</strong> Kein Cursor. Jede Zeile zählt.</span>`;
+  },
+  umschalterBinden() {
+    this.el.querySelectorAll('[data-um]').forEach(b => b.addEventListener('click', () => {
+      if (this.zustand === 'zaehlen' || this.zustand === 'spielen') return;
+      this.cursorAn = b.dataset.um === 'ueben';
+      this.merken('cursor', this.cursorAn ? 'an' : 'aus');
+      this.el.querySelectorAll('[data-um]').forEach(k => k.setAttribute('aria-pressed', String((k.dataset.um === 'ueben') === this.cursorAn)));
+      this.el.querySelectorAll('.pz-modus').forEach(m => { m.classList.toggle('uebung', this.cursorAn); m.innerHTML = this.modusText(); });
+    }));
+  },
+
   /* Dann bewusst entscheiden: mit Sternen spielen, Übungsmodus mit Cursor oder Prüfung */
   moduswahl() {
     const tempo = this.klasse === 6 ? `ab ${this.PRUEF_BPM6} BPM, schneller darfst du` : `${this.PRUEF_BPM} BPM`;
@@ -188,25 +210,25 @@ const Pruefungsseite = {
       <section class="card spiel-intro pz-seite" style="--farbe:#5eead4">
         <span class="spiel-icon gross">${Icons.raw('drum')}</span>
         <h2>Rhythmus Prüfung Klasse ${this.klasse}</h2>
-        <p class="hint">Wie möchtest du spielen? Den Übungsmodus kannst du bei jeder Zeile auch später noch an- und ausschalten.</p>
+        <p class="hint">Was möchtest du machen?</p>
         <div class="stufen pz-modi">
-          <button type="button" class="stufe" data-modus="spielen">
-            <span class="stufe-nr">${Icons.raw('star')}Zeilen spielen</span>
-            <span class="stufe-name">Mit Sternen</span>
-            <span class="hint">Jede Zeile wird gewertet: bis zu 6 Sterne, dein bester Versuch zählt. Kein Cursor – du liest selbst mit.</span>
-          </button>
           <button type="button" class="stufe" data-modus="uebung">
-            <span class="stufe-nr">${Icons.raw('target')}Übungsmodus</span>
-            <span class="stufe-name">Mit Cursor, ohne Sterne</span>
-            <span class="hint">Ein Cursor läuft über die Noten und zeigt dir, wo du gerade bist. Dafür werden <strong>keine Punkte und Sterne</strong> gezählt – nur zum Üben.</span>
+            <span class="stufe-nr">${Icons.raw('target')}1 · Üben</span>
+            <span class="stufe-name">Mit Cursor</span>
+            <span class="hint">Ein Cursor zeigt dir, wo du bist. <strong>Zählt nicht</strong> – keine Sterne.</span>
+          </button>
+          <button type="button" class="stufe" data-modus="spielen">
+            <span class="stufe-nr">${Icons.raw('star')}2 · Sterne sammeln</span>
+            <span class="stufe-name">Ohne Cursor</span>
+            <span class="hint">Jede Zeile zählt: bis zu 6 Sterne für deinen besten Versuch.</span>
           </button>
           <button type="button" class="stufe" data-modus="pruefung">
-            <span class="stufe-nr">${Icons.raw('trophy')}Prüfung</span>
-            <span class="stufe-name">Deine Endnote</span>
-            <span class="hint">Ab der Zeile für Note 5, je Zeile ${this.VERSUCHE} Versuche, ab ${this.BESTANDEN} % bestanden. Tempo ${tempo}, kein Vorspielen, kein Cursor.
-              Abbrechen geht nur beim Einzählen. Gespeichert wird nichts.</span>
+            <span class="stufe-nr">${Icons.raw('trophy')}3 · Prüfung</span>
+            <span class="stufe-name">Deine Note</span>
+            <span class="hint">Ab Zeile 5 aufwärts, ${this.VERSUCHE} Versuche pro Zeile. Tempo ${tempo}.</span>
           </button>
         </div>
+        <p class="pz-wechsel">${Icons.raw('reset')}<span>Zwischen <strong>Üben</strong> und <strong>Sterne sammeln</strong> kannst du jederzeit wechseln – auch bei jeder Zeile über den Noten.</span></p>
       </section>`;
     this.el.querySelectorAll('[data-modus]').forEach(b => b.addEventListener('click', () => {
       const m = b.dataset.modus;
@@ -226,10 +248,7 @@ const Pruefungsseite = {
             ? 'Alles auf der <strong>Snare</strong> mit zwei Pads: <strong>R</strong> = rechte Hand, <strong>L</strong> = linke Hand. Übe den Handsatz mit – gewertet wird nur, ob du im Takt bist, außer du schaltest „Handsatz mitbewerten“ ein.'
             : 'Obere Noten auf der <strong>Snare</strong> (klatschen), untere auf der <strong>Bassdrum</strong> (stampfen).'}
           Laut mitzählen!</p>
-        <p class="pz-modus${this.cursorAn ? ' uebung' : ''}">${this.cursorAn
-          ? `${Icons.raw('target')}<span><strong>Übungsmodus:</strong> Der Cursor läuft mit, es werden keine Sterne gezählt.</span>`
-          : `${Icons.raw('star')}<span><strong>Zeilen spielen:</strong> Jede Zeile wird gewertet, du sammelst Sterne.</span>`}
-          <a href="${this.wahlAdresse()}">Modus wechseln</a></p>
+        <div class="pz-modusleiste">${this.umschalter()}<p class="pz-modus${this.cursorAn ? ' uebung' : ''}">${this.modusText()}</p></div>
         <div class="pz-liste">
           ${this.zeilen().map(z => {
             const best = this.bester(z.note);
@@ -241,6 +260,7 @@ const Pruefungsseite = {
           }).join('')}
         </div>
       </section>`;
+    this.umschalterBinden();
   },
 
   pruefungStarten() {
@@ -291,11 +311,11 @@ const Pruefungsseite = {
             <button type="button" class="sz-pm" data-pm="4" aria-label="Schneller">+</button>
           </div>
           <span class="metro-punkte pz-punkte" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          ${pr ? '' : `<label class="schalter" title="Übungsmodus: Der Cursor läuft beim Mitspielen mit, der Versuch zählt aber nicht. Beim Vorspielen läuft der Cursor immer mit, in der Prüfung nie."><input type="checkbox" role="switch" id="pz-cursor" ${this.cursorAn ? 'checked' : ''}><span class="schalter-bahn"></span>Übungsmodus <span class="sz-tk">(Cursor läuft mit)</span></label>`}
+          ${pr ? '' : this.umschalter()}
           ${this.klasse === 6 && z.hand ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand-zeigen" ${this.handZeigen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz zeigen</label>` : ''}
           ${this.klasse === 6 && z.hand && !pr ? `<label class="schalter"><input type="checkbox" role="switch" id="pz-hand" ${this.handPruefen ? 'checked' : ''}><span class="schalter-bahn"></span>Handsatz mitbewerten</label>` : ''}
         </div>
-        ${pr ? '' : `<p class="pz-uebungshinweis"${this.cursorAn ? '' : ' hidden'}>${Icons.raw('target')}Achtung, Übungsmodus: Deine Versuche zählen nicht – so sammelst du keine Sterne.</p>`}
+        ${pr ? '' : `<p class="pz-modus${this.cursorAn ? ' uebung' : ''}">${this.modusText()}</p>`}
         <p class="pz-status" aria-live="polite">${pr ? `Tippe auf „Versuch ${pr.versuch} starten“: ein Takt wird eingezählt, dann spielst du.` : 'Tippe auf „Los“: ein Takt wird eingezählt, dann spielst du mit.'}</p>
         <div class="pz-ergebnis" hidden></div>
         <div class="pz-pads${zwei || this.klasse === 6 ? ' zwei' : ''}">
@@ -309,12 +329,7 @@ const Pruefungsseite = {
     this.z = z;
     this.zwei = zwei;
     this.gleicheAdresse();
-    const cursorKnopf = this.el.querySelector('#pz-cursor');
-    cursorKnopf?.addEventListener('change', () => {
-      this.cursorAn = cursorKnopf.checked;
-      this.merken('cursor', cursorKnopf.checked ? 'an' : 'aus');
-      this.el.querySelector('.pz-uebungshinweis').hidden = !this.cursorAn;
-    });
+    this.umschalterBinden();
     const zeigeKnopf = this.el.querySelector('#pz-hand-zeigen');
     zeigeKnopf?.addEventListener('change', () => {
       this.handZeigen = zeigeKnopf.checked;
@@ -394,7 +409,7 @@ const Pruefungsseite = {
     const los = ort.querySelector('#pz-los'), hoeren = ort.querySelector('#pz-hoeren');
     (mitspielen ? los : hoeren).innerHTML = '■ Abbrechen';
     (mitspielen ? hoeren : los).disabled = true;
-    ort.querySelectorAll('[data-pm]').forEach(b => { b.disabled = true; });
+    ort.querySelectorAll('[data-pm], [data-um]').forEach(b => { b.disabled = true; });
     const status = ort.querySelector('.pz-status');
     const punkte = [...ort.querySelectorAll('.pz-punkte i')];
     const zeiger = ort.querySelector('.pz-noten .pz-kopfzeiger');
@@ -463,7 +478,7 @@ const Pruefungsseite = {
     const ort = this.el.querySelector('.pz-ueben');
     ort.querySelector('#pz-los').innerHTML = `${Icons.raw('play')}${this.pruefung ? `Versuch ${this.pruefung.versuch} starten` : 'Los – ich spiele'}`;
     ort.querySelector('#pz-hoeren').innerHTML = `${Icons.raw('volume')}Vorspielen`;
-    ort.querySelectorAll('#pz-los, #pz-hoeren, [data-pm]').forEach(b => { b.disabled = false; });
+    ort.querySelectorAll('#pz-los, #pz-hoeren, [data-pm], [data-um]').forEach(b => { b.disabled = false; });
     ort.querySelectorAll('.pz-punkte i').forEach(p => p.classList.remove('an'));
     ort.querySelector('.pz-noten .pz-kopfzeiger').setAttribute('hidden', '');
     ort.querySelector('.pz-einzaehler').hidden = true;
@@ -535,7 +550,7 @@ const Pruefungsseite = {
     const ok = prozent >= this.BESTANDEN && !this.abgebrochen;
     const lob = pr && this.abgebrochen ? 'Abgebrochen – zählt als nicht bestandener Versuch.'
       : pr ? (ok ? `Bestanden! Die Zeile für Note ${this.z.note} sitzt.` : `Noch nicht bestanden – ${this.BESTANDEN} % brauchst du.`)
-      : this.mitCursor ? (prozent >= 75 ? 'Gut! Jetzt probier es ohne Übungsmodus.' : 'Weiter üben – gern etwas langsamer.')
+      : this.mitCursor ? (prozent >= 75 ? 'Gut! Jetzt probier es bei „Sterne sammeln“.' : 'Weiter üben – gern etwas langsamer.')
       : prozent >= 90 ? 'Super – das sitzt! Bereit für die Prüfung.'
       : prozent >= 75 ? 'Gut! Noch ein paar Mal, dann sitzt es.'
       : prozent >= 50 ? 'Schon ordentlich – übe weiter, gern etwas langsamer.'
@@ -544,7 +559,7 @@ const Pruefungsseite = {
     const erg = ort.querySelector('.pz-ergebnis');
     erg.hidden = false;
     erg.innerHTML = `
-      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Übungsmodus – dieser Versuch zählt nicht, keine Sterne. Schalte den Übungsmodus aus, damit er zählt.</p>` : ''}
+      ${this.mitCursor ? `<p class="pz-nicht-gewertet">${Icons.raw('target')}Üben – dieser Versuch zählt nicht, keine Sterne. Wechsle zu „Sterne sammeln“, damit er zählt.</p>` : ''}
       <div class="pz-prozent" style="--wert:${prozent}"><strong>${prozent} %</strong><span>genau</span></div>
       <div class="pz-auswertung">
         <h3>${lob}${prozent > alt && alt ? ' <span class="rekord">Neuer Bestwert!</span>' : ''}</h3>

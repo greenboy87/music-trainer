@@ -1003,3 +1003,12 @@ body.hat-vollbild { overflow: hidden; }
 .pz-modus.uebung .icon { color: var(--yellow); }
 .pz-modus a { margin-left: auto; color: var(--accent); font-weight: 700; }
 .spiel-intro.pz-seite h2 { justify-content: center; }
+/* Üben | Sterne sammeln */
+.pz-umschalter button { display: inline-flex; align-items: center; gap: .35rem; }
+.pz-umschalter button .icon { margin: 0; width: 1rem; height: 1rem; }
+.pz-umschalter button[data-um="ueben"][aria-pressed="true"] { background: color-mix(in srgb, var(--yellow) 22%, transparent); border-color: var(--yellow); }
+.pz-modusleiste { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin: .4rem 0 .2rem; }
+.pz-modusleiste .pz-modus { flex: 1 1 260px; margin: 0; }
+.pz-ueben .pz-modus { margin: .7rem 0 0; }
+.pz-wechsel { display: flex; align-items: center; justify-content: center; gap: .45rem; margin: 1rem 0 0; color: var(--muted); font-size: .9rem; }
+.pz-wechsel .icon { margin: 0; }
