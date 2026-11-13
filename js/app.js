@@ -409,8 +409,8 @@ const App = {
                 <input type="text" id="name" maxlength="24" placeholder="Dein Vorname" value="${esc(name)}">
               </label>
               ${Konto.verfuegbar() ? `<a class="knopf primary" href="#/anmelden">Anmelden</a>` : ''}
+              <button type="button" class="beamer-qr-knopf" id="btn-beamer-qr" aria-label="QR-Code am Beamer zeigen" title="QR-Code am Beamer – die Klasse scannt und spielt ohne Anmeldung">${Icons.raw('qr')}</button>
             </div>`}
-          <button type="button" class="small beamer-qr-knopf" id="btn-beamer-qr" title="Großer QR-Code am Beamer – die Klasse scannt und spielt ohne Anmeldung">${Icons.raw('expand')}QR-Code für die Klasse</button>
         </div>
         <div class="gesamt">
           <div class="gesamt-zahl">${Icons.raw('star')}${gesamt}</div>
@@ -439,7 +439,7 @@ const App = {
         </div>`).join('')}`;
     const feld = document.getElementById('name');
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });
-    document.getElementById('btn-beamer-qr').addEventListener('click', () => this.beamerQr());
+    document.getElementById('btn-beamer-qr')?.addEventListener('click', () => this.beamerQr());
   },
 
   /* QR-Code am Beamer: die Klasse scannt und spielt ohne Anmeldung. Die QR-Bibliothek

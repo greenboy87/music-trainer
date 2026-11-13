@@ -1014,7 +1014,9 @@ body.hat-vollbild { overflow: hidden; }
 .pz-wechsel .icon { margin: 0; }
 
 /* QR-Code für die Klasse am Beamer (Startseite) */
-.beamer-qr-knopf { margin-top: .8rem; }
+.beamer-qr-knopf { padding: .5rem; color: var(--muted); }
+.beamer-qr-knopf .icon { margin: 0; }
+.beamer-qr-knopf:hover { color: var(--text); }
 .beamer-qr {
   position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 1rem; padding: 1.5rem; text-align: center; background: var(--page-bg); background-color: var(--bg); overflow: auto;
