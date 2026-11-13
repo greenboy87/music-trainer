@@ -236,8 +236,11 @@ const Schlagzeugseite = {
   reiter: 'pads',
 
   /* Pads: Klang je Pad und Taste */
-  pads: ['hh', 's', 'b'],
-  PAD_TASTEN: ['a', 's', 'd'],
+  /* Pads 0–2: die drei Grund-Pads (A S D). Pads 3–5 kommen in der Ansicht „6 Pads“ dazu
+     und stehen oben (Q W E) – wie beim Schlagzeug: Becken und Toms über Hi-Hat, Snare, Bassdrum */
+  pads: ['hh', 's', 'b', 'crash', 't1', 't3'],
+  PAD_TASTEN: ['a', 's', 'd', 'q', 'w', 'e'],
+  padAnzahl: 3,
 
   /* Drumset: Teile mit Taste (wie im Drumset der Rhythmus-Werkstatt) */
   SET: [
@@ -300,7 +303,8 @@ const Schlagzeugseite = {
   laden() {
     try {
       const p = JSON.parse(this.lies('pads'));
-      if (Array.isArray(p) && p.length === 3 && p.every(k => k in Drums.KLAENGE)) this.pads = p;
+      if (Array.isArray(p) && p.length >= 3 && p.every(k => k in Drums.KLAENGE)) p.forEach((k, i) => { if (i < 6) this.pads[i] = k; });
+      this.padAnzahl = this.lies('pad-anzahl') === '6' ? 6 : 3;
       const a = JSON.parse(this.lies('set'));
       if (a && typeof a === 'object') this.SET.forEach(({ k }) => { if (typeof a[k] === 'boolean') this.setAn[k] = a[k]; });
       this.hhOffen = this.lies('hh-offen') === 'an';
@@ -420,7 +424,7 @@ const Schlagzeugseite = {
     if (k === 'm' && !e.target.closest?.('input')) { e.preventDefault(); this.metronom(!this.metroAn); return; }
     if (this.reiter === 'pads') {
       const i = this.PAD_TASTEN.indexOf(k);
-      if (i >= 0) { e.preventDefault(); this.padSchlag(i); }
+      if (i >= 0 && i < this.padAnzahl) { e.preventDefault(); this.padSchlag(i); }
     } else if (this.reiter === 'drumset') {
       if (k === '3') { e.preventDefault(); this.setSchlag('hh', true); return; }
       const t = this.SET.find(s => s.taste === k);
@@ -439,9 +443,17 @@ const Schlagzeugseite = {
   /* ---------- Pads ---------- */
   padsZeigen() {
     const optionen = sel => Object.entries(Drums.KLAENGE).map(([k, n]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${n}</option>`).join('');
+    // Bei 6 Pads oben Becken/Toms (3–5), unten die Grund-Pads (0–2)
+    const reihe = this.padAnzahl === 6 ? [3, 4, 5, 0, 1, 2] : [0, 1, 2];
     this.inhalt.innerHTML = `
-      <div class="sz-pads">
-        ${this.pads.map((k, i) => `
+      <div class="sz-pads-kopf">
+        <div class="klavier-groesse" role="group" aria-label="Anzahl der Pads">
+          <button type="button" data-anzahl="3" aria-pressed="${this.padAnzahl === 3}">3 Pads</button>
+          <button type="button" data-anzahl="6" aria-pressed="${this.padAnzahl === 6}">6 Pads</button>
+        </div>
+      </div>
+      <div class="sz-pads${this.padAnzahl === 6 ? ' sechs' : ''}">
+        ${reihe.map(i => [this.pads[i], i]).map(([k, i]) => `
           <div class="sz-pad-feld">
             <button type="button" class="sz-pad" data-pad="${i}" data-fam="${Drums.FAMILIE[k]}" aria-label="${Drums.KLAENGE[k]} spielen">
               <span class="sz-pad-name">${Drums.KLAENGE[k]}</span>
@@ -453,6 +465,11 @@ const Schlagzeugseite = {
           </div>`).join('')}
       </div>
       <p class="hint sz-hinweis">Tippe auf die Pads – auch mit mehreren Fingern gleichzeitig. Unter jedem Pad stellst du den Klang ein.</p>`;
+    this.inhalt.querySelectorAll('[data-anzahl]').forEach(b => b.addEventListener('click', () => {
+      this.padAnzahl = Number(b.dataset.anzahl);
+      this.merken('pad-anzahl', String(this.padAnzahl));
+      this.padsZeigen();
+    }));
     this.inhalt.querySelectorAll('.sz-pad').forEach(p => {
       p.addEventListener('pointerdown', e => { e.preventDefault(); this.padSchlag(Number(p.dataset.pad)); });
       p.addEventListener('click', e => { if (e.detail === 0) this.padSchlag(Number(p.dataset.pad)); });

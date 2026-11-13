@@ -1036,3 +1036,10 @@ body.hat-vollbild { overflow: hidden; }
 #btn-vollbild { padding: .45rem; }
 #btn-vollbild .icon { margin: 0; }
 #btn-vollbild[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); }
+/* Pads: 3 oder 6 */
+.sz-pads-kopf { display: flex; justify-content: center; margin-bottom: .9rem; }
+.sz-pads.sechs { row-gap: clamp(.8rem, 2.4vw, 1.6rem); max-width: 720px; }
+.sz-seite.vollbild .sz-pads.sechs { width: min(100%, calc((100vh - 330px) * 1.45)); }
+.sz-pads.sechs { max-width: 640px; }
+.sz-pads.sechs .sz-pad { aspect-ratio: 5 / 4; }
+.sz-pads.sechs .sz-pad-feld { gap: .4rem; }
