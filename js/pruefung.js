@@ -92,7 +92,7 @@ const Pruefungsseite = {
   taktX(ti) { return this.X0 + ti * (this.RAND + 4 * this.B + 8); },
   x(zeit) { const ti = Math.min(3, Math.floor(zeit / 4)); return this.taktX(ti) + this.RAND + (zeit - ti * 4) * this.B; },
 
-  svg(z, { gross = false } = {}) {
+  svg(z, { gross = false, ohneHand = false } = {}) {
     const kopf = (x, y, hohl) => `<ellipse cx="${x}" cy="${y}" rx="6.4" ry="4.6" transform="rotate(-20 ${x} ${y})" class="${hohl ? 'nk-hohl' : 'nk'}"/>`;
     const hals = (x, y, unten) => unten
       ? `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 30}" class="nh"/>`
@@ -103,7 +103,7 @@ const Pruefungsseite = {
     s += '<rect x="10" y="30" width="3.4" height="20" class="nb"/><rect x="17" y="30" width="3.4" height="20" class="nb"/>';
     s += '<text x="36" y="38" class="nt pz-takt">4</text><text x="36" y="58" class="nt pz-takt">4</text>';
     let n = 0;
-    const hand = (z.hand || '').replace(/[^RL]/g, '');
+    const hand = ohneHand ? '' : (z.hand || '').replace(/[^RL]/g, '');
     const buchstabe = x => (hand[n] ? `<g class="pz-hand ${hand[n]}"><rect x="${x - 6.5}" y="-17" width="13" height="14" rx="2.5"/><text x="${x}" y="-6.2">${hand[n]}</text></g>` : '');
     z.takte.forEach((takt, ti) => {
       let pos = 0;
@@ -254,7 +254,7 @@ const Pruefungsseite = {
             const best = this.bester(z.note);
             return `<a class="pz-eintrag" href="${this.adresse(z.note)}">
               <span class="pz-nr" style="--farbe:${z.farbe}">${z.note}</span>
-              ${this.svg(z)}
+              ${this.svg(z, { ohneHand: true })}
               <span class="pz-best">${best ? `<span class="pz-sterne">${sterneHtml(this.sterne(best))}</span>Bester Versuch ${best} %` : 'Noch nicht geübt'}</span>
             </a>`;
           }).join('')}
