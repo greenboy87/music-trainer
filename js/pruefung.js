@@ -165,7 +165,7 @@ const Pruefungsseite = {
       <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card spiel-intro pz-seite" style="--farbe:#5eead4">
         <span class="spiel-icon gross">${Icons.raw('drum')}</span>
-        <h2>Prüfungszeilen</h2>
+        <h2>Rhythmus Prüfung</h2>
         <p class="hint">Wähle deine Zeile – und spiel sie vor! Zeile 5 sicher spielen = Note 5, die nächste Zeile = Note 4 …
           je schwieriger, desto besser die Note. Du spielst auf den Pads mit, das Metronom zählt einen Takt ein.</p>
         <div class="stufen">
@@ -184,10 +184,10 @@ const Pruefungsseite = {
   moduswahl() {
     const tempo = this.klasse === 6 ? `ab ${this.PRUEF_BPM6} BPM, schneller darfst du` : `${this.PRUEF_BPM} BPM`;
     this.el.innerHTML = `
-      <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungszeilen</a>
+      <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Rhythmus Prüfung</a>
       <section class="card spiel-intro pz-seite" style="--farbe:#5eead4">
         <span class="spiel-icon gross">${Icons.raw('drum')}</span>
-        <h2>Prüfungszeilen Klasse ${this.klasse}</h2>
+        <h2>Rhythmus Prüfung Klasse ${this.klasse}</h2>
         <p class="hint">Wie möchtest du spielen? Den Übungsmodus kannst du bei jeder Zeile auch später noch an- und ausschalten.</p>
         <div class="stufen pz-modi">
           <button type="button" class="stufe" data-modus="spielen">

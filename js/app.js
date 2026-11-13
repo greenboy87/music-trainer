@@ -431,7 +431,7 @@ const App = {
           ${b === 'Rhythmus' ? `
             <a class="card spiel-karte" href="#/pruefung" style="--farbe:#5eead4">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
-              <span class="spiel-titel">Prüfungszeilen Klasse 5 und 6</span>
+              <span class="spiel-titel">Rhythmus Prüfung Klasse 5 und 6</span>
               <span class="hint">Wähle deine Zeile (Note 5 bis 1) und spiel sie auf den Pads mit – am Ende siehst du, wie genau du warst.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme()} / 60</span>
             </a>` : ''}
