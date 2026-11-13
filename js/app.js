@@ -245,6 +245,7 @@ const App = {
     Theme.updateButton();
     this.kontoLeiste();
     document.getElementById('btn-theme').addEventListener('click', () => Theme.toggle());
+    Vollbild.leisteEinrichten();
     // Im Klick den Ton freigeben – auf dem iPad klingt sonst die erste Taste nicht sofort
     ['btn-klavier', 'btn-schlagzeug'].forEach(id => document.getElementById(id).addEventListener('click', () => Ton.audio()));
     if (Konto.angemeldet()) Konto.abgleichen().then(() => { if (!this.runde && Konto.angemeldet()) this.route(); });

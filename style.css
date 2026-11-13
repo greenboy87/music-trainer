@@ -94,6 +94,9 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; }
+/* Kein Zoomen durch Doppeltippen (stört beim schnellen Tippen in den Spielen);
+   mit zwei Fingern vergrößern geht weiterhin */
+html { touch-action: manipulation; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--page-bg) fixed;
@@ -1029,3 +1032,7 @@ body.hat-vollbild { overflow: hidden; }
 .beamer-qr-adresse { font-size: clamp(2rem, 6vw, 4.2rem); font-weight: 800; letter-spacing: .02em; color: var(--accent); }
 .beamer-qr-zu { position: absolute; top: 1rem; right: 1rem; width: 3rem; height: 3rem; padding: 0; border-radius: 50%; }
 .beamer-qr-zu .icon { margin: 0; }
+
+#btn-vollbild { padding: .45rem; }
+#btn-vollbild .icon { margin: 0; }
+#btn-vollbild[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); }

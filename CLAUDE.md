@@ -7,7 +7,8 @@ freien Spielen (`js/klavierseite.js`, `#/klavier`) und ein Schlagzeug
 Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt).
 Beide haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
 Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen
-Knopf „Vollbild“ (`js/vollbild.js`).
+Knopf „Vollbild“ (`js/vollbild.js`); dazu oben in der Leiste ein Vollbild-Knopf für den
+ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
 `#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne
 auch in Liste und Zeile umschaltbar) → `#/pruefung/k5-liste`:
