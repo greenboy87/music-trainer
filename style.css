@@ -1012,3 +1012,18 @@ body.hat-vollbild { overflow: hidden; }
 .pz-ueben .pz-modus { margin: .7rem 0 0; }
 .pz-wechsel { display: flex; align-items: center; justify-content: center; gap: .45rem; margin: 1rem 0 0; color: var(--muted); font-size: .9rem; }
 .pz-wechsel .icon { margin: 0; }
+
+/* QR-Code für die Klasse am Beamer (Startseite) */
+.beamer-qr-knopf { margin-top: .8rem; }
+.beamer-qr {
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; padding: 1.5rem; text-align: center; background: var(--page-bg); background-color: var(--bg); overflow: auto;
+}
+.beamer-qr h2 { display: flex; align-items: center; gap: .5rem; margin: 0; font-size: clamp(1.6rem, 4vw, 2.6rem); }
+.beamer-qr h2 .icon { color: var(--accent); width: 1em; height: 1em; }
+.beamer-qr p { margin: 0; color: var(--muted); font-size: clamp(1rem, 2.2vw, 1.4rem); }
+.beamer-qr-bild { width: min(62vh, 82vw); aspect-ratio: 1; padding: 3%; background: #fff; border-radius: 18px; box-shadow: var(--shadow); }
+.beamer-qr-bild img, .beamer-qr-bild canvas { width: 100% !important; height: auto !important; display: block; }
+.beamer-qr-adresse { font-size: clamp(2rem, 6vw, 4.2rem); font-weight: 800; letter-spacing: .02em; color: var(--accent); }
+.beamer-qr-zu { position: absolute; top: 1rem; right: 1rem; width: 3rem; height: 3rem; padding: 0; border-radius: 50%; }
+.beamer-qr-zu .icon { margin: 0; }

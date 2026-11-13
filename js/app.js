@@ -410,6 +410,7 @@ const App = {
               </label>
               ${Konto.verfuegbar() ? `<a class="knopf primary" href="#/anmelden">Anmelden</a>` : ''}
             </div>`}
+          <button type="button" class="small beamer-qr-knopf" id="btn-beamer-qr" title="Großer QR-Code am Beamer – die Klasse scannt und spielt ohne Anmeldung">${Icons.raw('expand')}QR-Code für die Klasse</button>
         </div>
         <div class="gesamt">
           <div class="gesamt-zahl">${Icons.raw('star')}${gesamt}</div>
@@ -438,6 +439,49 @@ const App = {
         </div>`).join('')}`;
     const feld = document.getElementById('name');
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });
+    document.getElementById('btn-beamer-qr').addEventListener('click', () => this.beamerQr());
+  },
+
+  /* QR-Code am Beamer: die Klasse scannt und spielt ohne Anmeldung. Die QR-Bibliothek
+     liegt im Projekt (js/vendor, wie im School-Tool) und wird erst beim ersten Öffnen geladen. */
+  OEFFENTLICH: 'https://greenboy87.github.io/music-trainer/',
+  KURZ: 'is.gd/rsamusik',
+  qrLaden() {
+    if (window.QRCode) return Promise.resolve();
+    return this.qrLaedt ||= new Promise((ok, fehler) => {
+      const sk = document.createElement('script');
+      sk.src = 'js/vendor/qrcode.min.js';
+      sk.onload = ok;
+      sk.onerror = fehler;
+      document.head.appendChild(sk);
+    });
+  },
+
+  async beamerQr() {
+    document.querySelector('.beamer-qr')?.remove();
+    const ebene = document.createElement('div');
+    ebene.className = 'beamer-qr';
+    ebene.setAttribute('role', 'dialog');
+    ebene.setAttribute('aria-label', 'QR-Code zum music-trainer');
+    ebene.innerHTML = `
+      <button type="button" class="beamer-qr-zu" aria-label="Schließen (Esc)" title="Schließen (Esc)">${Icons.raw('x')}</button>
+      <h2>${Icons.raw('music')}music-trainer</h2>
+      <p>QR-Code scannen oder die Adresse eintippen – und los. Eine Anmeldung brauchst du nicht.</p>
+      <div class="beamer-qr-bild"></div>
+      <div class="beamer-qr-adresse">${this.KURZ}</div>`;
+    document.body.appendChild(ebene);
+    document.body.classList.add('hat-vollbild');
+    const zu = () => { ebene.remove(); document.body.classList.remove('hat-vollbild'); document.removeEventListener('keydown', esc); };
+    const esc = e => { if (e.key === 'Escape') zu(); };
+    document.addEventListener('keydown', esc);
+    ebene.querySelector('.beamer-qr-zu').addEventListener('click', zu);
+    this.beimAufraeumen(zu);
+    try {
+      await this.qrLaden();
+      new QRCode(ebene.querySelector('.beamer-qr-bild'), { text: this.OEFFENTLICH, width: 720, height: 720, correctLevel: QRCode.CorrectLevel.M });
+    } catch {
+      ebene.querySelector('.beamer-qr-bild').textContent = 'Der QR-Code konnte nicht geladen werden – die Adresse unten geht trotzdem.';
+    }
   },
 
   /* „Meine Note“: die Aufgaben, die die Lehrkraft für die Note ausgewählt hat.
