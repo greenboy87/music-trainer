@@ -44,7 +44,13 @@ const Pruefungsseite = {
   pruefung: null,       // { i: Zeile in der Leiter, versuch, ergebnis: [{ note, prozent, versuch, ok }] }
   zeilen() { return this.klasse === 6 ? this.ZEILEN6 : this.ZEILEN5; },
   /* Adressen und Speicher: Klasse 5 wie bisher ohne Kürzel */
-  adresse(note) { return this.klasse === 6 ? `#/pruefung/k6${note ? `-${note}` : ''}` : `#/pruefung${note ? `/${note}` : ''}`; },
+  /* Adressen: #/pruefung (Klasse wählen) → #/pruefung/k5 (Modus wählen) → #/pruefung/k5-liste
+     (Zeilen) → #/pruefung/3 bzw. #/pruefung/k6-3 (eine Zeile; Klasse 5 wie früher ohne Kürzel) */
+  adresse(note) {
+    if (note) return this.klasse === 6 ? `#/pruefung/k6-${note}` : `#/pruefung/${note}`;
+    return `#/pruefung/k${this.klasse}-liste`;
+  },
+  wahlAdresse() { return `#/pruefung/k${this.klasse}`; },
 
   /* Zeichnung: 5 Linien, obere Stimme Hals nach oben, untere nach unten */
   B: 46,                // Breite eines Schlags
@@ -142,35 +148,88 @@ const Pruefungsseite = {
     this.handZeigen = this.lies('hand-zeigen') !== 'aus';
     const b = Number(this.lies('bpm'));
     this.bpm = b >= 50 && b <= 140 ? b : 80;
-    const m = /^k(6)(?:-(\d))?$/.exec(id || '');
-    this.klasse = m ? 6 : 5;
-    const note = m ? m[2] : id;
-    const z = this.zeilen().find(r => String(r.note) === note);
+    const m = /^k([56])(?:-(\d|liste))?$/.exec(id || '');
+    this.klasse = m ? Number(m[1]) : 5;
+    if (!id) return this.einstieg();
+    if (m && !m[2]) return this.moduswahl();
+    if (m && m[2] === 'liste') return this.liste();
+    const z = this.zeilen().find(r => String(r.note) === (m ? m[2] : id));
     if (z) this.ueben(z);
-    else this.liste();
+    else this.einstieg();
+  },
+
+  /* Einstieg wie bei den Spielen: erst die Klasse */
+  einstieg() {
+    const summe = zeilen => zeilen.reduce((s, z) => s + this.sterne(this.bester(z.note, zeilen === this.ZEILEN6 ? 6 : 5)), 0);
+    this.el.innerHTML = `
+      <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
+      <section class="card spiel-intro pz-seite" style="--farbe:#5eead4">
+        <span class="spiel-icon gross">${Icons.raw('drum')}</span>
+        <h2>Prüfungszeilen</h2>
+        <p class="hint">Wähle deine Zeile – und spiel sie vor! Zeile 5 sicher spielen = Note 5, die nächste Zeile = Note 4 …
+          je schwieriger, desto besser die Note. Du spielst auf den Pads mit, das Metronom zählt einen Takt ein.</p>
+        <div class="stufen">
+          ${[[5, 'Klatschen und Stampfen', 'Snare und Bassdrum', this.ZEILEN5], [6, 'Snare mit Handsatz', 'rechte und linke Hand', this.ZEILEN6]].map(([k, name, info, zeilen]) => `
+            <a class="knopf stufe" href="#/pruefung/k${k}">
+              <span class="stufe-nr">Klasse ${k}</span>
+              <span class="stufe-name">${name}</span>
+              <span class="stufe-sterne">${Icons.raw('star')} ${summe(zeilen)} / 30</span>
+              <span class="hint">5 Zeilen · ${info}</span>
+            </a>`).join('')}
+        </div>
+      </section>`;
+  },
+
+  /* Dann bewusst entscheiden: mit Sternen spielen, Übungsmodus mit Cursor oder Prüfung */
+  moduswahl() {
+    const tempo = this.klasse === 6 ? `ab ${this.PRUEF_BPM6} BPM, schneller darfst du` : `${this.PRUEF_BPM} BPM`;
+    this.el.innerHTML = `
+      <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungszeilen</a>
+      <section class="card spiel-intro pz-seite" style="--farbe:#5eead4">
+        <span class="spiel-icon gross">${Icons.raw('drum')}</span>
+        <h2>Prüfungszeilen Klasse ${this.klasse}</h2>
+        <p class="hint">Wie möchtest du spielen? Den Übungsmodus kannst du bei jeder Zeile auch später noch an- und ausschalten.</p>
+        <div class="stufen pz-modi">
+          <button type="button" class="stufe" data-modus="spielen">
+            <span class="stufe-nr">${Icons.raw('star')}Zeilen spielen</span>
+            <span class="stufe-name">Mit Sternen</span>
+            <span class="hint">Jede Zeile wird gewertet: bis zu 6 Sterne, dein bester Versuch zählt. Kein Cursor – du liest selbst mit.</span>
+          </button>
+          <button type="button" class="stufe" data-modus="uebung">
+            <span class="stufe-nr">${Icons.raw('target')}Übungsmodus</span>
+            <span class="stufe-name">Mit Cursor, ohne Sterne</span>
+            <span class="hint">Ein Cursor läuft über die Noten und zeigt dir, wo du gerade bist. Dafür werden <strong>keine Punkte und Sterne</strong> gezählt – nur zum Üben.</span>
+          </button>
+          <button type="button" class="stufe" data-modus="pruefung">
+            <span class="stufe-nr">${Icons.raw('trophy')}Prüfung</span>
+            <span class="stufe-name">Deine Endnote</span>
+            <span class="hint">Ab der Zeile für Note 5, je Zeile ${this.VERSUCHE} Versuche, ab ${this.BESTANDEN} % bestanden. Tempo ${tempo}, kein Vorspielen, kein Cursor.
+              Abbrechen geht nur beim Einzählen. Gespeichert wird nichts.</span>
+          </button>
+        </div>
+      </section>`;
+    this.el.querySelectorAll('[data-modus]').forEach(b => b.addEventListener('click', () => {
+      const m = b.dataset.modus;
+      if (m === 'pruefung') return this.pruefungStarten();
+      this.cursorAn = m === 'uebung';
+      this.merken('cursor', this.cursorAn ? 'an' : 'aus');
+      location.hash = this.adresse();
+    }));
   },
 
   liste() {
     this.el.innerHTML = `
-      <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
+      <a class="zurueck" href="${this.wahlAdresse()}">${Icons.raw('back')}Klasse ${this.klasse}: Modus wählen</a>
       <section class="card pz-seite">
-        <div class="pz-listenkopf">
-          <h2>${Icons.raw('drum')}Wähle deine Zeile – und spiel sie vor!</h2>
-          <div class="klavier-groesse" role="group" aria-label="Klasse">
-            <a class="knopf" href="#/pruefung" aria-pressed="${this.klasse === 5}">Klasse 5</a>
-            <a class="knopf" href="#/pruefung/k6" aria-pressed="${this.klasse === 6}">Klasse 6</a>
-          </div>
-        </div>
-        <p class="hint">Zeile 5 sicher spielen = Note 5, die nächste Zeile = Note 4 … – je schwieriger, desto besser die Note.
-          ${this.klasse === 6
-            ? 'Du spielst alles auf der <strong>Snare</strong> mit zwei Pads: <strong>R</strong> = rechte Hand, <strong>L</strong> = linke Hand. Übe den Handsatz mit – gewertet wird nur, ob du im Takt bist, außer du schaltest „Handsatz mitbewerten“ ein.'
-            : 'Du spielst auf den Pads mit: obere Noten auf der <strong>Snare</strong> (klatschen), untere auf der <strong>Bassdrum</strong> (stampfen).'}
-          Das Metronom zählt einen Takt ein und klickt weiter. Laut mitzählen!</p>
-        <div class="pz-pruefung-start">
-          <button type="button" class="primary" id="pz-pruefung">${Icons.raw('trophy')}Prüfung starten</button>
-          <span class="hint">Beginnt mit der Zeile für Note 5. Pro Zeile hast du ${this.VERSUCHE} Versuche – ab ${this.BESTANDEN} % ist sie bestanden
-            und es geht zur nächsten. ${this.klasse === 6 ? `Tempo ab ${this.PRUEF_BPM6} BPM – schneller darfst du.` : `Tempo ${this.PRUEF_BPM} BPM.`} Kein Vorspielen. Abbrechen geht nur beim Einzählen – danach zählt es als Versuch. Am Ende steht deine Note da, gespeichert wird nichts.</span>
-        </div>
+        <h2>${Icons.raw('drum')}Klasse ${this.klasse} · Wähle deine Zeile</h2>
+        <p class="hint">${this.klasse === 6
+            ? 'Alles auf der <strong>Snare</strong> mit zwei Pads: <strong>R</strong> = rechte Hand, <strong>L</strong> = linke Hand. Übe den Handsatz mit – gewertet wird nur, ob du im Takt bist, außer du schaltest „Handsatz mitbewerten“ ein.'
+            : 'Obere Noten auf der <strong>Snare</strong> (klatschen), untere auf der <strong>Bassdrum</strong> (stampfen).'}
+          Laut mitzählen!</p>
+        <p class="pz-modus${this.cursorAn ? ' uebung' : ''}">${this.cursorAn
+          ? `${Icons.raw('target')}<span><strong>Übungsmodus:</strong> Der Cursor läuft mit, es werden keine Sterne gezählt.</span>`
+          : `${Icons.raw('star')}<span><strong>Zeilen spielen:</strong> Jede Zeile wird gewertet, du sammelst Sterne.</span>`}
+          <a href="${this.wahlAdresse()}">Modus wechseln</a></p>
         <div class="pz-liste">
           ${this.zeilen().map(z => {
             const best = this.bester(z.note);
@@ -182,7 +241,6 @@ const Pruefungsseite = {
           }).join('')}
         </div>
       </section>`;
-    this.el.querySelector('#pz-pruefung').addEventListener('click', () => this.pruefungStarten());
   },
 
   pruefungStarten() {
@@ -208,7 +266,7 @@ const Pruefungsseite = {
     const tempoFest = pr && this.klasse === 5;
     const zwei = this.zweiStimmen(z);
     this.el.innerHTML = `
-      <a class="zurueck" href="${this.adresse()}">${Icons.raw('back')}${pr ? 'Prüfung abbrechen' : `Alle Zeilen Klasse ${this.klasse}`}</a>
+      <a class="zurueck" href="${pr ? this.wahlAdresse() : this.adresse()}">${Icons.raw('back')}${pr ? 'Prüfung abbrechen' : `Alle Zeilen Klasse ${this.klasse}`}</a>
       <section class="card pz-seite pz-ueben${pr ? ' pz-im-test' : ''}">
         ${pr ? this.leiter() : ''}
         <div class="pz-kopf">
@@ -579,7 +637,7 @@ const Pruefungsseite = {
     const wort = Bewertung.NOTEN[note];
     if (this.taste) { document.removeEventListener('keydown', this.taste); this.taste = null; }
     this.el.innerHTML = `
-      <a class="zurueck" href="${this.adresse()}">${Icons.raw('back')}Alle Zeilen Klasse ${this.klasse}</a>
+      <a class="zurueck" href="${this.wahlAdresse()}">${Icons.raw('back')}Klasse ${this.klasse}: Modus wählen</a>
       <section class="card pz-seite pz-endnote">
         <p class="hint">Prüfung Klasse ${this.klasse}${this.klasse === 5 ? ` · ${this.PRUEF_BPM} BPM` : ''}</p>
         <div class="pz-endnote-zahl" style="--farbe:${(this.zeilen().find(z => z.note === note) || { farbe: '#6b7280' }).farbe}">${note}</div>

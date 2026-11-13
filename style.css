@@ -992,3 +992,14 @@ body.hat-vollbild { overflow: hidden; }
 .pz-sterne.gross { display: flex; gap: .2rem; margin: 0 0 .5rem; }
 .pz-sterne.gross .stern .icon { width: 1.6rem; height: 1.6rem; }
 .pz-sterne.gross .stern.an { animation: aufploppen .45s cubic-bezier(.3, 1.6, .5, 1) both; }
+/* Prüfungszeilen: Einstieg und Moduswahl */
+.pz-modi .stufe { justify-content: flex-start; }
+.pz-modi .stufe-nr { display: inline-flex; align-items: center; gap: .35rem; }
+.pz-modi .stufe-nr .icon { margin: 0; width: 1rem; height: 1rem; }
+.pz-modi .stufe .hint { line-height: 1.4; }
+.pz-modus { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .7rem; margin: .3rem 0 .2rem; padding: .55rem .8rem; border-radius: var(--radius-sm); background: var(--active-soft); font-size: .92rem; }
+.pz-modus.uebung { background: color-mix(in srgb, var(--yellow) 16%, transparent); }
+.pz-modus .icon { margin: 0; color: var(--accent); }
+.pz-modus.uebung .icon { color: var(--yellow); }
+.pz-modus a { margin-left: auto; color: var(--accent); font-weight: 700; }
+.spiel-intro.pz-seite h2 { justify-content: center; }
