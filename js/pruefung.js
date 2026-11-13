@@ -546,6 +546,14 @@ const Pruefungsseite = {
 
     const alt = this.pruefung || this.mitCursor ? Infinity : this.bester(this.z.note);
     if (prozent > alt) this.bestMerken(this.z.note, prozent);
+    // Gewertete Durchgänge (Sterne sammeln) gehen wie bei den Spielen ins Konto und damit ins
+    // School-Tool: Spiel „rhythmus-pruefung“, Stufe 0–4 = Klasse 5 Note 5–1, 5–9 = Klasse 6.
+    // Üben (Cursor) und die Prüfung selbst melden nichts.
+    if (!this.pruefung && !this.mitCursor && this.mitspielen) {
+      const stufe = (this.klasse === 6 ? 5 : 0) + (5 - this.z.note);
+      Fortschritt.eintragen('rhythmus-pruefung', stufe, Math.max(1, this.sterne(prozent)), prozent,
+        getroffen.length, noten.length, Math.round(20 * this.schlagDauer));
+    }
     const pr = this.pruefung;
     const ok = prozent >= this.BESTANDEN && !this.abgebrochen;
     const lob = pr && this.abgebrochen ? 'Abgebrochen – zählt als nicht bestandener Versuch.'

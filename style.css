@@ -1043,3 +1043,11 @@ body.hat-vollbild { overflow: hidden; }
 .sz-pads.sechs { max-width: 640px; }
 .sz-pads.sechs .sz-pad { aspect-ratio: 5 / 4; }
 .sz-pads.sechs .sz-pad-feld { gap: .4rem; }
+/* Stufen in Gruppen (Rhythmus-Detektiv: Klasse 5 · Klasse 6 · Profi) */
+.stufen-gruppe {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: .8rem; margin: .8rem 0 .1rem;
+  font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; color: var(--farbe);
+}
+.stufen-gruppe:first-child { margin-top: 0; }
+.stufen-gruppe::before, .stufen-gruppe::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+:root[data-theme="light"] .stufen-gruppe { color: color-mix(in srgb, var(--farbe) 55%, #1e1633); }

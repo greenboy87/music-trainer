@@ -548,10 +548,14 @@ const App = {
         <h2>${spiel.titel}</h2>
         <p class="hint">${spiel.text}</p>
         <div class="stufen">
-          ${stufenReihe(spiel).map((i, platz) => {
+          ${stufenReihe(spiel).map((i, platz, reihe) => {
             const st = spiel.stufen[i];
             const b = Fortschritt.bester(spiel.id, i);
-            return `<button type="button" class="stufe" data-stufe="${i}">
+            // Stufen wie „Klasse 5 · 3“ (Rhythmus-Detektiv): vor jeder neuen Gruppe eine Überschrift mit Trennlinie
+            const gruppe = n => (st.info && / · /.test(spiel.stufen[n].name) ? spiel.stufen[n].name.split(' · ')[0] : '');
+            const g = gruppe(i);
+            const kopf = g && (platz === 0 || gruppe(reihe[platz - 1]) !== g) ? `<h3 class="stufen-gruppe">${esc(g)}</h3>` : '';
+            return `${kopf}<button type="button" class="stufe" data-stufe="${i}">
               <span class="stufe-nr">${st.info ? st.name : `Stufe ${platz + 1}`}</span>
               <span class="stufe-name">${st.info || st.name}</span>
               <span class="stufe-sterne">${sterneHtml(b.sterne)}</span>
