@@ -36,7 +36,9 @@ const Pruefungsseite = {
   ],
   bpm: 80,
   /* Prüfung: Leiter ab der Zeile für Note 5, je Zeile bis zu 3 Versuche, bestanden ab
-     BESTANDEN %, festes Tempo. Nichts wird gespeichert – jede Prüfung beginnt neu. */
+     BESTANDEN %, festes Tempo. Jede Prüfung beginnt neu. Am Ende geht die Endnote angemeldeter
+     Kinder als eigenes Spiel „rhythmus-pruefung-note“ an den Server (Stufe 0 = Klasse 5, 1 = Klasse 6),
+     getrennt von „Sterne sammeln“ (rhythmus-pruefung). */
   PRUEF_BPM: 80,        // Klasse 5: fest
   PRUEF_BPM6: 72,       // Klasse 6: mindestens, schneller darf man
   BESTANDEN: 80,
@@ -265,7 +267,7 @@ const Pruefungsseite = {
 
   pruefungStarten() {
     Ton.audio();
-    this.pruefung = { i: 0, versuch: 1, ergebnis: [], bpm: this.klasse === 6 ? this.PRUEF_BPM6 : this.PRUEF_BPM };
+    this.pruefung = { i: 0, versuch: 1, ergebnis: [], bpm: this.klasse === 6 ? this.PRUEF_BPM6 : this.PRUEF_BPM, start: Date.now() };
     this.ueben(this.zeilen()[0]);
   },
 
@@ -652,12 +654,21 @@ const Pruefungsseite = {
     }));
   },
 
-  /* Endnote: die schwerste bestandene Zeile, keine bestanden = 6. Nichts wird gespeichert. */
+  /* Endnote: die schwerste bestandene Zeile, keine bestanden = 6. Angemeldet wird sie gespeichert:
+     Sterne = 7 − Note (wie bei den Spielen), Punkte = Schnitt der bestandenen Zeilen in Prozent,
+     richtig = bestandene Zeilen von 5. Das School-Tool zeigt die beste Prüfung, der Verlauf jede. */
   pruefungEnde() {
     const p = this.pruefung;
     const bestanden = p.ergebnis.filter(r => r.ok);
     const note = bestanden.length ? Math.min(...bestanden.map(r => r.note)) : 6;
     const wort = Bewertung.NOTEN[note];
+    const angemeldet = Konto.angemeldet();
+    if (angemeldet && !p.gemeldet) {
+      p.gemeldet = true;
+      const punkte = bestanden.length ? Math.round(bestanden.reduce((s, r) => s + r.prozent, 0) / bestanden.length) : 0;
+      Fortschritt.eintragen('rhythmus-pruefung-note', this.klasse === 6 ? 1 : 0, 7 - note, punkte,
+        bestanden.length, this.zeilen().length, Math.min(900, Math.round((Date.now() - p.start) / 1000)));
+    }
     if (this.taste) { document.removeEventListener('keydown', this.taste); this.taste = null; }
     this.el.innerHTML = `
       <a class="zurueck" href="${this.wahlAdresse()}">${Icons.raw('back')}Klasse ${this.klasse}: Modus wählen</a>
@@ -665,6 +676,7 @@ const Pruefungsseite = {
         <p class="hint">Prüfung Klasse ${this.klasse}${this.klasse === 5 ? ` · ${this.PRUEF_BPM} BPM` : ''}</p>
         <div class="pz-endnote-zahl" style="--farbe:${(this.zeilen().find(z => z.note === note) || { farbe: '#6b7280' }).farbe}">${note}</div>
         <h2>Endnote ${note} <span>${wort}</span></h2>
+        <p class="hint pz-gespeichert">${angemeldet ? `${Icons.raw('check')}Deine Note ist gespeichert – deine Lehrkraft sieht sie.` : 'Du bist nicht angemeldet – die Note wird nicht gespeichert.'}</p>
         <ul class="pz-endnote-liste">
           ${this.zeilen().map(z => {
             const v = p.ergebnis.filter(r => r.note === z.note);

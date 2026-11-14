@@ -17,10 +17,11 @@ Snare und Bassdrum, Klasse 6 nur Snare mit R/L und Handsatz (optional mitbewerte
 Kein Spiel in `SPIELE` (eigene Seiten), aber „Sterne sammeln“ meldet wie ein Spiel:
 `Fortschritt.eintragen('rhythmus-pruefung', stufe …)`, Stufe 0–4 = Klasse 5 Note 5–1,
 5–9 = Klasse 6; Sterne über `STERNE_AB`. In `MT_SPIELE` im School-Tool eingetragen.
-Üben (Cursor) und die Prüfung melden nichts.
+Die Prüfung meldet am Ende die Endnote als eigenes Spiel `rhythmus-pruefung-note`
+(Stufe 0 = Klasse 5, 1 = Klasse 6, Sterne = 7 − Note). Üben (Cursor) meldet nichts.
 „Prüfung starten“: Leiter ab Note 5, je Zeile 3 Versuche, bestanden ab 80 %,
 Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM6`),
-`BESTANDEN`, `VERSUCHE`, Endnote am Ende, nichts gespeichert. Einrichtung des
+`BESTANDEN`, `VERSUCHE`, Endnote am Ende (gespeichert, s. o.). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
 ## Versionsnummer nach jeder CSS/JS-Änderung hochzählen

@@ -1061,3 +1061,5 @@ body.hat-vollbild { overflow: hidden; }
 .pw-auge:hover { background: var(--hover); color: var(--text); }
 .pw-auge .icon { margin: 0; width: 1.3rem; height: 1.3rem; }
 .pw-auge[aria-pressed="true"] { color: var(--accent); }
+.pz-gespeichert { display: flex; align-items: center; justify-content: center; gap: .35rem; margin: -.4rem 0 1rem; }
+.pz-gespeichert .icon { color: var(--green); margin: 0; }
