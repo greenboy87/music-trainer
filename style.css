@@ -1051,3 +1051,13 @@ body.hat-vollbild { overflow: hidden; }
 .stufen-gruppe:first-child { margin-top: 0; }
 .stufen-gruppe::before, .stufen-gruppe::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 :root[data-theme="light"] .stufen-gruppe { color: color-mix(in srgb, var(--farbe) 55%, #1e1633); }
+/* Anmeldung: Auge zum Zeigen des Passworts */
+.pw-feld { position: relative; display: block; }
+.pw-feld input { padding-right: 3.2rem; }
+.pw-auge {
+  position: absolute; top: 50%; right: .3rem; transform: translateY(-50%);
+  width: 2.6rem; height: 2.6rem; padding: 0; border: 0; background: transparent; color: var(--muted);
+}
+.pw-auge:hover { background: var(--hover); color: var(--text); }
+.pw-auge .icon { margin: 0; width: 1.3rem; height: 1.3rem; }
+.pw-auge[aria-pressed="true"] { color: var(--accent); }

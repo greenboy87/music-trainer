@@ -352,7 +352,10 @@ const App = {
           <label>Benutzername
             <input type="text" id="a-name" maxlength="45" required autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="z. B. PandaGeige42"></label>
           <label>Passwort
-            <input type="password" id="a-pw" maxlength="30" required autocapitalize="none" autocorrect="off"></label>
+            <span class="pw-feld">
+              <input type="password" id="a-pw" maxlength="30" required autocapitalize="none" autocorrect="off" spellcheck="false">
+              <button type="button" class="pw-auge" id="a-pw-auge" aria-label="Passwort zeigen" title="Passwort zeigen" aria-pressed="false">${Icons.raw('auge')}</button>
+            </span></label>
           <p class="fehler" id="anmelde-fehler" aria-live="polite"></p>
           <button type="submit" class="primary">Los geht's</button>
         </form>
@@ -361,6 +364,17 @@ const App = {
     const form = document.getElementById('anmelde-form');
     const fehler = document.getElementById('anmelde-fehler');
     document.getElementById('a-name').focus();
+    // Auge: Passwort zeigen oder wieder verstecken
+    const pw = document.getElementById('a-pw'), auge = document.getElementById('a-pw-auge');
+    auge.addEventListener('click', () => {
+      const zeigen = pw.type === 'password';
+      pw.type = zeigen ? 'text' : 'password';
+      auge.innerHTML = Icons.raw(zeigen ? 'augeZu' : 'auge');
+      auge.setAttribute('aria-pressed', String(zeigen));
+      auge.title = zeigen ? 'Passwort verstecken' : 'Passwort zeigen';
+      auge.setAttribute('aria-label', auge.title);
+      pw.focus();
+    });
     // Name und Passwort sofort aus der Adresse nehmen, damit das Passwort nicht im Verlauf bleibt
     if (linkName) history.replaceState(null, '', location.pathname + location.search + '#/anmelden');
     form.addEventListener('submit', async e => {
