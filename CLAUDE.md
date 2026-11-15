@@ -74,6 +74,14 @@ Wrangler). Nach Änderungen am Worker daran erinnern, ihn neu einzufügen.
 `normName()` im Worker und `Benutzername.normal()` in `js/konto.js` müssen
 gleich bleiben.
 
+## Minispiele nutzen dieselben Konten
+
+Die Minispiele (`~/github-projekte/Minispiele`, greenboy87.github.io/minispiele) melden
+sich mit denselben Pseudonymen über diesen Worker an (`Minispiele/shared/konto.js`,
+gleicher localStorage-Schlüssel `musiktrainer-konto`). Ihre Runden landen in `verlauf`
+und `fortschritt` mit Spielnamen `mini-…` (stehen nicht in `MT_SPIELE`). Für ihre Seite
+„Mein Stand“ gibt es `GET /api/meinverlauf?praefix=mini-` (nur eigene Runden).
+
 ## Testen ohne Cloudflare
 
 `test/attrappe.js` (siehe ANLEITUNG.md) – führt den echten Worker mit sql.js

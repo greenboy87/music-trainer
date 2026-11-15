@@ -29,6 +29,7 @@ const ERLAUBTE_HERKUNFT = [
   'http://localhost:8771',      // School-Tool lokal
   'http://127.0.0.1:8771',
   'http://localhost:8773',      // School-Tool, zweites Testfenster
+  'http://localhost:8765',      // Minispiele lokal (mit Attrappe)
 ];
 
 const TAG = 86400;
@@ -219,6 +220,20 @@ async function fortschrittVon(env, schuelerId) {
   const daten = {};
   results.forEach(r => { (daten[r.spiel] ||= {})[r.stufe] = { sterne: r.sterne, punkte: r.punkte }; });
   return daten;
+}
+
+/* Eigene Runden eines Kindes für die Seite „Mein Stand“ der Minispiele
+   (greenboy87.github.io/minispiele). Die Minispiele melden ihre Runden wie die
+   Spiele des music-trainers, mit Spielnamen „mini-…“. Gelesen werden nur die
+   eigenen Runden mit diesem Anfang, höchstens 3000 – ein paar hundert KB. */
+async function eigenerVerlauf(env, wer, praefix) {
+  await spaltenSichern(env);
+  const p = /^[a-z-]{1,20}$/.test(praefix || '') ? praefix : 'mini-';
+  const { results } = await env.DB.prepare(
+    `SELECT spiel, stufe, sterne, punkte, zeit, richtig, von, dauer FROM verlauf
+     WHERE schueler_id = ? AND spiel >= ? AND spiel < ? ORDER BY zeit DESC LIMIT 3000`
+  ).bind(wer.id, p, p + '~').all();
+  return { verlauf: results };
 }
 
 /* ---------- Kinder ---------- */
@@ -446,6 +461,8 @@ async function verteilen(request, env) {
     await besuch(env, wer.id).run();
     return { fortschritt: await fortschrittVon(env, wer.id), beste3: await bestenVon(env, wer.id), benotung };
   }
+  if (m === 'GET' && pfad === '/api/meinverlauf')
+    return eigenerVerlauf(env, await markePruefen(env, request, 'schueler'), url.searchParams.get('praefix'));
   if (m === 'POST' && pfad === '/api/ergebnisse')
     return ergebnisseSpeichern(env, await markePruefen(env, request, 'schueler'), body);
 
