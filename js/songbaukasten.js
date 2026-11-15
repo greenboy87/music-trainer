@@ -1,7 +1,8 @@
 /* Songbaukasten (#/songbaukasten): eigene kleine Songs in Kästchen bauen.
 
-   Oben das Raster für Töne (unten tief, oben hoch, je Stufe der Tonleiter eine
-   Farbe), darunter drei Spuren Schlagzeug: Becken, Snare, Bassdrum. Antippen
+   Oben das Raster für Töne (unten tief, oben hoch, Grundtöne etwas betont),
+   darunter drei Spuren Schlagzeug: Hi-Hat, Snare, Bassdrum – mit denselben
+   Icons wie im Drumcomputer, alles in den Farben der Seite. Antippen
    setzt oder löscht ein Kästchen, Ziehen malt weiter. Die Einstellungen
    bestimmen Länge (Takte), Schläge je Takt, Teilung der Schläge, Tonleiter,
    Grundton mit Lage und Umfang (Oktaven).
@@ -13,7 +14,7 @@
 
    Gespeichert wird nur: { v: 1, takte, schlaege, teile, tonleiter, grundton,
    lage, umfang, bpm, klang, noten: [[schritt, zeile], …], drums: [[schritt, spur], …] }
-   – zeile 0 = tiefster Ton, spur 0 = Becken, 1 = Snare, 2 = Bassdrum. */
+   – zeile 0 = tiefster Ton, spur 0 = Hi-Hat, 1 = Snare, 2 = Bassdrum. */
 const Songbaukasten = {
   TONLEITERN: {
     dur: { name: 'Dur', stufen: [0, 2, 4, 5, 7, 9, 11] },
@@ -25,9 +26,9 @@ const Songbaukasten = {
   NAMEN: ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'as', 'a', 'b', 'h'],
   LAGEN: { 3: 'tief', 4: 'mittel', 5: 'hoch' },
   SPUREN: [
-    { k: 'crash', name: 'Becken', form: 'raute' },
-    { k: 's', name: 'Snare', form: 'dreieck' },
-    { k: 'b', name: 'Bass', form: 'kreis' },
+    { k: 'hh', name: 'Hi-Hat' },
+    { k: 's', name: 'Snare' },
+    { k: 'b', name: 'Bass' },
   ],
   GRENZEN: { takte: [1, 16], schlaege: [2, 6], teile: [1, 4], umfang: [1, 3] },
   KEY: 'musiktrainer-songbaukasten',
@@ -50,11 +51,6 @@ const Songbaukasten = {
     const o = Math.floor(m / 12) - 1;
     const n = this.NAMEN[m % 12];
     return o >= 3 ? n + "'".repeat(o - 3) : n.toUpperCase() + (o === 1 ? '₁' : '');
-  },
-  /* Farbe je Stufe der Tonleiter – der Grundton immer rot, dann im Farbkreis weiter */
-  farbe(z) {
-    const l = this.leiter().length;
-    return `hsl(${Math.round((z % l) / l * 330)} 85% 62%)`;
   },
 
   pruefen(s) {
@@ -253,14 +249,14 @@ const Songbaukasten = {
       html += `<div class="sb-name${grund ? ' grund' : ''}">${this.name(m)}</div>`;
       for (let s = 0; s < S; s++) {
         const an = this.noten.has(`${s}:${z}`);
-        html += `<div class="sb-z ton ${spalte(s)}${grund ? ' grundzeile' : ''}${an ? ' an' : ''}" data-s="${s}" data-z="${z}"${an ? ` style="--f:${this.farbe(z)}"` : ''}></div>`;
+        html += `<div class="sb-z ton ${spalte(s)}${grund ? ' grundzeile' : ''}${an ? ' an' : ''}" data-s="${s}" data-z="${z}"></div>`;
       }
     }
     this.SPUREN.forEach((sp, i) => {
-      html += `<div class="sb-name drum${i === 0 ? ' erste' : ''}">${sp.name}</div>`;
+      html += `<div class="sb-name drum${i === 0 ? ' erste' : ''}" title="${sp.name}"><svg viewBox="0 0 24 24" aria-hidden="true">${Schlagzeugseite.SPUR_ICON[sp.k]}</svg><span>${sp.name}</span></div>`;
       for (let s = 0; s < S; s++) {
         const an = this.drums.has(`${s}:${i}`);
-        html += `<div class="sb-z drum ${sp.form} ${spalte(s)}${i === 0 ? ' erste' : ''}${an ? ' an' : ''}" data-s="${s}" data-d="${i}"></div>`;
+        html += `<div class="sb-z drum ${spalte(s)}${i === 0 ? ' erste' : ''}${an ? ' an' : ''}" data-s="${s}" data-d="${i}"></div>`;
       }
     });
     html += '<div class="sb-lauf" hidden></div>';
@@ -284,7 +280,6 @@ const Songbaukasten = {
     if (set.has(schl) === an) return false;
     if (an) set.add(schl); else set.delete(schl);
     k.classList.toggle('an', an);
-    if (!d) k.style.setProperty('--f', an ? this.farbe(Number(k.dataset.z)) : '');
     if (an && !this.laeuft) {
       // Zum Hören kurz anspielen
       if (d) Drums.spielen(this.SPUREN[k.dataset.d].k, undefined, 0.8);

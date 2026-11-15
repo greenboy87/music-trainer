@@ -1070,40 +1070,38 @@ body.hat-vollbild { overflow: hidden; }
 .sb-stopp-zeichen { margin-right: .4rem; }
 .sb-metro { flex: 1 1 320px; }
 .sb-metro .metro-leiste { margin: 0; }
-/* Raster: links eine Spalte mit Namen, dann die Schritte; bei vielen Schritten waagrecht scrollen */
-.sb-rahmen { overflow-x: auto; border-radius: 12px; background: #fbfaff; border: 1px solid var(--border); }
+/* Raster wie der Drumcomputer: dunkler Rahmen, gleiche abgerundete Kästchen in der
+   Akzentfarbe; Takte mit Abstand, der erste Teil jedes Schlags etwas heller */
+.sb-rahmen { overflow-x: auto; padding: .6rem; border-radius: var(--radius-sm); background: color-mix(in srgb, #0b0918 55%, transparent); }
+:root[data-theme="light"] .sb-rahmen { background: color-mix(in srgb, #2a2148 8%, transparent); }
 .sb-gitter {
-  --namen: 3.1rem; --hoehe: clamp(16px, 2.6vh, 26px);
-  position: relative; display: grid; user-select: none; -webkit-user-select: none; touch-action: none;
-  grid-template-columns: var(--namen) repeat(var(--spalten), minmax(24px, 1fr));
-  min-width: calc(var(--namen) + var(--spalten) * 24px);
+  --namen: 4.6rem; --hoehe: clamp(15px, 2.5vh, 24px); --leer: rgba(255, 255, 255, .06); --leer-schlag: rgba(255, 255, 255, .11);
+  position: relative; display: grid; gap: 2px; user-select: none; -webkit-user-select: none; touch-action: none;
+  grid-template-columns: var(--namen) repeat(var(--spalten), minmax(20px, 1fr));
+  min-width: calc(var(--namen) + var(--spalten) * 22px);
 }
-.sb-name { position: sticky; left: 0; z-index: 2; background: #f1eefb; color: #6b6290; font-size: .68rem; font-weight: 600;
-  display: flex; align-items: center; justify-content: flex-end; padding-right: .35rem; height: var(--hoehe); border-bottom: 1px solid #e6e1f5; }
-.sb-name.grund { color: #3b2f63; font-weight: 800; }
+:root[data-theme="light"] .sb-gitter { --leer: rgba(42, 33, 72, .07); --leer-schlag: rgba(42, 33, 72, .13); }
+.sb-name { position: sticky; left: 0; z-index: 2; color: var(--muted); font-size: .66rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: flex-end; gap: .3rem; padding-right: .45rem; height: var(--hoehe);
+  background: color-mix(in srgb, var(--bg) 80%, transparent); }
+:root[data-theme="light"] .sb-name { background: color-mix(in srgb, #f4f1fb 92%, transparent); }
+.sb-name.grund { color: var(--text); font-weight: 800; }
 .sb-gitter.ohne-namen .sb-name:not(.drum) { color: transparent; }
-.sb-z { height: var(--hoehe); border-bottom: 1px solid #e6e1f5; border-left: 1px solid #f0edf9; cursor: pointer; position: relative; }
-.sb-z.schlag { border-left-color: #c9c0e8; }
-.sb-z.takt { border-left: 2px solid #8f82c4; }
-.sb-z.getoent { background: #f3f1fa; }
-.sb-z.grundzeile { border-bottom-color: #cfc6ee; }
-.sb-z.ton.an { background: var(--f); border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
-.sb-z.ton.an.klingt, .sb-z.drum.an.klingt::after { filter: brightness(1.25); transform: scale(1.12); }
-.sb-z.ton:hover:not(.an) { background: #ece7fb; }
-/* Drumspuren: höher, mit Form statt Farbfläche */
-.sb-name.drum, .sb-z.drum { height: calc(var(--hoehe) * 1.55); background: #f7f5fd; }
-.sb-name.drum { font-size: .7rem; color: #3b2f63; }
-.sb-name.drum.erste, .sb-z.drum.erste { border-top: 3px solid #d8d1ef; }
-.sb-z.drum::after { content: ''; position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%);
-  background: #d4cde9; border-radius: 50%; transition: transform .08s; }
-.sb-z.drum.schlag::after { width: 40%; }
-.sb-z.drum.an::after { width: min(70%, 22px); }
-.sb-z.drum.raute.an::after { background: #e8b52b; border-radius: 3px; transform: translate(-50%, -50%) rotate(45deg); width: min(56%, 17px); }
-.sb-z.drum.dreieck.an::after { background: #f08a3c; border-radius: 0; clip-path: polygon(50% 5%, 95% 92%, 5% 92%); }
-.sb-z.drum.kreis.an::after { background: #5b7cfa; }
-.sb-z.drum.raute.an.klingt::after { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
-.sb-z.drum.an.klingt::after { transform: translate(-50%, -50%) scale(1.2); }
-.sb-lauf { position: absolute; top: 0; bottom: 0; background: rgba(124, 58, 237, .18); border-left: 2px solid rgba(124, 58, 237, .55); pointer-events: none; z-index: 1; }
+.sb-z { height: var(--hoehe); border-radius: 4px; background: var(--leer); cursor: pointer; transition: background .08s, transform .08s; }
+.sb-z.schlag { background: var(--leer-schlag); }
+.sb-z.takt { margin-left: 5px; }
+.sb-z.grundzeile:not(.an) { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 35%, transparent); }
+.sb-z:hover:not(.an) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.sb-z.an { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent); }
+.sb-z.an.klingt { transform: scale(1.12); filter: brightness(1.2); }
+/* Drumspuren: etwas höher, mit Abstand zum Tonraster */
+.sb-name.drum, .sb-z.drum { height: calc(var(--hoehe) * 1.5); }
+.sb-name.drum.erste, .sb-z.drum.erste { margin-top: .5rem; }
+.sb-name.drum { color: var(--text); font-size: .68rem; justify-content: flex-start; padding-left: .2rem; }
+.sb-name.drum svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--accent); }
+.sb-name.drum span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-lauf { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); pointer-events: none; z-index: 1; }
 .sb-werkzeuge { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .8rem; }
 .sb-info { margin-left: auto; }
 /* Einstellungen wie Zeilen mit − und + */
@@ -1134,5 +1132,6 @@ body.hat-vollbild { overflow: hidden; }
 @media (max-width: 640px) {
   .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }
   .sb-info { margin-left: 0; flex-basis: 100%; }
-  .sb-gitter { --namen: 2.5rem; }
+  .sb-gitter { --namen: 2.4rem; }
+  .sb-name.drum span { display: none; }
 }
