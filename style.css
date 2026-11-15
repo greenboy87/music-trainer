@@ -1077,8 +1077,7 @@ body.hat-vollbild { overflow: hidden; }
 .sb-gitter {
   --namen: 4.6rem; --hoehe: clamp(15px, 2.5vh, 24px); --leer: rgba(255, 255, 255, .06); --leer-schlag: rgba(255, 255, 255, .11);
   position: relative; display: grid; gap: 2px; user-select: none; -webkit-user-select: none; touch-action: none;
-  grid-template-columns: var(--namen) repeat(var(--spalten), minmax(20px, 1fr));
-  min-width: calc(var(--namen) + var(--spalten) * 22px);
+  min-width: calc(var(--namen) + var(--spalten) * 22px + (var(--takte) - 1) * 11px);
 }
 :root[data-theme="light"] .sb-gitter { --leer: rgba(42, 33, 72, .07); --leer-schlag: rgba(42, 33, 72, .13); }
 .sb-name { position: sticky; left: 0; z-index: 2; color: var(--muted); font-size: .66rem; font-weight: 600;
@@ -1089,7 +1088,15 @@ body.hat-vollbild { overflow: hidden; }
 .sb-gitter.ohne-namen .sb-name:not(.drum) { color: transparent; }
 .sb-z { height: var(--hoehe); border-radius: 4px; background: var(--leer); cursor: pointer; transition: background .08s, transform .08s; }
 .sb-z.schlag { background: var(--leer-schlag); }
-.sb-z.takt { margin-left: 5px; }
+/* Takte: eigene schmale Spalte mit einem Strich in der Akzentfarbe, jeder zweite Takt
+   leicht getönt, oben die Taktnummer */
+.sb-trenner { justify-self: center; width: 2px; border-radius: 1px; background: color-mix(in srgb, var(--accent) 70%, transparent); pointer-events: none; }
+.sb-z.getoent:not(.an) { background: color-mix(in srgb, var(--accent) 7%, var(--leer)); }
+.sb-z.getoent.schlag:not(.an) { background: color-mix(in srgb, var(--accent) 9%, var(--leer-schlag)); }
+.sb-taktnr { height: 1.3rem; display: flex; align-items: center; padding-left: .3rem; font-size: .72rem; font-weight: 800;
+  color: var(--accent); border-radius: 4px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sb-taktnr.getoent { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.sb-name.sb-kopf { height: 1.3rem; }
 .sb-z.grundzeile:not(.an) { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 35%, transparent); }
 .sb-z:hover:not(.an) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sb-z.an { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -1114,7 +1121,7 @@ body.hat-vollbild { overflow: hidden; }
 .sb-wert select { min-height: 2.4rem; }
 /* Speichern und Öffnen */
 .sb-speicher { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--border); }
-.sb-speicher > .hint { display: flex; align-items: center; gap: .4rem; }
+.sb-speicher > .hint .icon { vertical-align: -.15em; margin-right: .35rem; }
 .sb-speicher-reihe { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; }
 .sb-speicher h3 { margin: 0 0 .5rem; font-size: 1rem; }
 .sb-knoepfe, .sb-oeffnen, .sb-meine { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }

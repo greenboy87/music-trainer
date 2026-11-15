@@ -250,36 +250,49 @@ const Songbaukasten = {
     this.speicherZeichnen();
   },
 
-  /* Das Raster: oben die Töne (höchster zuerst), dann die drei Schlagzeug-Spuren.
-     Spalten mit Linien je Schlag, kräftiger je Takt; jeder zweite Takt leicht getönt. */
+  /* Das Raster: oben die Takt-Nummern, dann die Töne (höchster zuerst), dann die drei
+     Schlagzeug-Spuren. Zwischen den Takten liegt eine eigene schmale Spalte mit einem
+     durchgehenden Strich – so bleiben alle Kästchen gleich breit. Jeder Schlag beginnt
+     mit einem helleren Kästchen, jeder zweite Takt ist leicht getönt. */
   gitterZeichnen() {
-    const S = this.schritte(), Z = this.zeilen(), { teile, schlaege } = this.song;
+    const S = this.schritte(), Z = this.zeilen(), { teile, schlaege, takte } = this.song;
     const proTakt = teile * schlaege;
-    const spalte = s => {
+    const zeilenGesamt = 1 + Z + this.SPUREN.length;
+    const sp = s => 2 + s + Math.floor(s / proTakt);           // Spalte im Raster (1 = Namen)
+    const klassen = s => {
       const c = [];
       if (s % teile === 0) c.push('schlag');
-      if (s % proTakt === 0) c.push('takt');
       if (Math.floor(s / proTakt) % 2) c.push('getoent');
       return c.join(' ');
     };
-    let html = '';
+    const ort = (spalte, zeile) => `grid-area: ${zeile} / ${spalte}`;
+    let html = `<div class="sb-name sb-kopf" style="${ort(1, 1)}"></div>`;
+    for (let t = 0; t < takte; t++) {
+      html += `<div class="sb-taktnr${t % 2 ? ' getoent' : ''}" style="grid-area: 1 / ${sp(t * proTakt)} / 2 / span ${proTakt}">${t + 1}</div>`;
+      if (t) html += `<div class="sb-trenner" style="grid-area: 1 / ${sp(t * proTakt) - 1} / ${zeilenGesamt + 1} / span 1"></div>`;
+    }
     for (let z = Z - 1; z >= 0; z--) {
+      const zeile = 2 + (Z - 1 - z);
       const grund = z % this.leiter().length === 0;
-      html += `<div class="sb-name${grund ? ' grund' : ''}">${this.zeilenName(z)}</div>`;
+      html += `<div class="sb-name${grund ? ' grund' : ''}" style="${ort(1, zeile)}">${this.zeilenName(z)}</div>`;
       for (let s = 0; s < S; s++) {
         const an = this.noten.has(`${s}:${z}`);
-        html += `<div class="sb-z ton ${spalte(s)}${grund ? ' grundzeile' : ''}${an ? ' an' : ''}" data-s="${s}" data-z="${z}"></div>`;
+        html += `<div class="sb-z ton ${klassen(s)}${grund ? ' grundzeile' : ''}${an ? ' an' : ''}" data-s="${s}" data-z="${z}" style="${ort(sp(s), zeile)}"></div>`;
       }
     }
-    this.SPUREN.forEach((sp, i) => {
-      html += `<div class="sb-name drum${i === 0 ? ' erste' : ''}" title="${sp.name}"><svg viewBox="0 0 24 24" aria-hidden="true">${Schlagzeugseite.SPUR_ICON[sp.k]}</svg><span>${sp.name}</span></div>`;
+    this.SPUREN.forEach((spur, i) => {
+      const zeile = 2 + Z + i;
+      html += `<div class="sb-name drum${i === 0 ? ' erste' : ''}" title="${spur.name}" style="${ort(1, zeile)}"><svg viewBox="0 0 24 24" aria-hidden="true">${Schlagzeugseite.SPUR_ICON[spur.k]}</svg><span>${spur.name}</span></div>`;
       for (let s = 0; s < S; s++) {
         const an = this.drums.has(`${s}:${i}`);
-        html += `<div class="sb-z drum ${spalte(s)}${i === 0 ? ' erste' : ''}${an ? ' an' : ''}" data-s="${s}" data-d="${i}"></div>`;
+        html += `<div class="sb-z drum ${klassen(s)}${i === 0 ? ' erste' : ''}${an ? ' an' : ''}" data-s="${s}" data-d="${i}" style="${ort(sp(s), zeile)}"></div>`;
       }
     });
     html += '<div class="sb-lauf" hidden></div>';
+    const takt = `repeat(${proTakt}, minmax(20px, 1fr))`;
+    this.gitter.style.gridTemplateColumns = `var(--namen) ${Array.from({ length: takte }, () => takt).join(' 9px ')}`;
     this.gitter.style.setProperty('--spalten', S);
+    this.gitter.style.setProperty('--takte', takte);
     this.gitter.style.setProperty('--zeilen', Z);
     this.gitter.innerHTML = html;
     this.lauf = this.gitter.querySelector('.sb-lauf');
