@@ -247,7 +247,7 @@ const App = {
     document.getElementById('btn-theme').addEventListener('click', () => Theme.toggle());
     Vollbild.leisteEinrichten();
     // Im Klick den Ton freigeben – auf dem iPad klingt sonst die erste Taste nicht sofort
-    ['btn-klavier', 'btn-schlagzeug'].forEach(id => document.getElementById(id).addEventListener('click', () => Ton.audio()));
+    ['btn-klavier', 'btn-schlagzeug', 'btn-songbaukasten'].forEach(id => document.getElementById(id).addEventListener('click', () => Ton.audio()));
     if (Konto.angemeldet()) Konto.abgleichen().then(() => { if (!this.runde && Konto.angemeldet()) this.route(); });
     document.addEventListener('keydown', e => this.taste(e));
     window.addEventListener('hashchange', () => this.route());
@@ -285,6 +285,7 @@ const App = {
     else if (art === 'spiel' && spiel) this.zeigeSpiel(spiel);
     else if (art === 'klavier') Klavierseite.zeigen(this.el);
     else if (art === 'schlagzeug') Schlagzeugseite.zeigen(this.el, id);
+    else if (art === 'songbaukasten') Songbaukasten.zeigen(this.el, id);
     else if (art === 'pruefung') Pruefungsseite.zeigen(this.el, id);
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
@@ -296,7 +297,8 @@ const App = {
      führt derselbe Knopf zurück, wo man vorher war (die Adresse ohne Anmeldedaten), sonst
      zur Startseite. Von Klavier zu Schlagzeug gewechselt, bleibt das Ziel dasselbe. */
   werkzeugKnoepfe(art, pfad) {
-    const werkzeuge = { klavier: 'Klavier zum freien Spielen', schlagzeug: 'Schlagzeug zum freien Spielen' };
+    const werkzeuge = { klavier: 'Klavier zum freien Spielen', schlagzeug: 'Schlagzeug zum freien Spielen',
+      songbaukasten: 'Songbaukasten – eigene Songs in Kästchen bauen' };
     if (!(art in werkzeuge)) this.vorWerkzeug = pfad || '#/';
     Object.entries(werkzeuge).forEach(([w, titel]) => {
       const k = document.getElementById(`btn-${w}`);

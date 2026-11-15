@@ -11,11 +11,15 @@
    die 1 höher und lauter. */
 class Taktuhr {
   /* bpm: Funktion, die das aktuelle Tempo liefert; schritt(i, zeit): ein Sechzehntel
-     planen (i = 0 … 15); bild(i): das Sechzehntel ist gerade zu hören */
-  constructor(bpm, schritt, bild) {
+     planen (i = 0 … 15); bild(i): das Sechzehntel ist gerade zu hören.
+     Für den Songbaukasten: teile() Schritte je Schlag (sonst 4), laenge() Schritte
+     bis zum Neubeginn (sonst 16) */
+  constructor(bpm, schritt, bild, { teile = () => 4, laenge = () => 16 } = {}) {
     this.bpm = bpm;
     this.schritt = schritt;
     this.bild = bild;
+    this.teile = teile;
+    this.laenge = laenge;
     this.laeuft = false;
   }
 
@@ -55,8 +59,8 @@ class Taktuhr {
     while (this.zeit < c.currentTime + 0.12) {
       this.schritt(this.i, this.zeit);
       this.marken.push({ i: this.i, zeit: this.zeit });
-      this.zeit += 60 / this.bpm() / 4;
-      this.i = (this.i + 1) % 16;
+      this.zeit += 60 / this.bpm() / this.teile();
+      this.i = (this.i + 1) % this.laenge();
     }
   }
 }

@@ -63,6 +63,18 @@ CREATE TABLE IF NOT EXISTS besuche (
   PRIMARY KEY (schueler_id, tag)
 );
 
+-- Songs aus dem Songbaukasten: nur Noten und Einstellungen (JSON) unter einer
+-- fünfstelligen Nummer. Der Worker legt die Tabelle auch selbst an und löscht
+-- Songs ein Jahr nach dem letzten Öffnen oder zusammen mit dem Kind.
+CREATE TABLE IF NOT EXISTS songs (
+  nummer      INTEGER PRIMARY KEY,        -- 10000 … 99999
+  schueler_id INTEGER NOT NULL,
+  daten       TEXT    NOT NULL,
+  erstellt    INTEGER NOT NULL,
+  geoeffnet   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS songs_kind ON songs (schueler_id, geoeffnet);
+
 -- Fehlversuche, gegen Durchprobieren. Einträge laufen nach 10 Minuten ab.
 CREATE TABLE IF NOT EXISTS sperren (
   schluessel TEXT PRIMARY KEY,

@@ -333,7 +333,7 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 
 /* ---------- Klavier zum freien Spielen (js/klavierseite.js) ---------- */
 #btn-klavier.aktiv, #btn-schlagzeug.aktiv { background: var(--active-soft); border-color: var(--accent); }
-@media (max-width: 520px) { #btn-klavier .nur-breit, #btn-schlagzeug .nur-breit { display: none; } #btn-klavier .icon, #btn-schlagzeug .icon { margin-right: 0; } }
+@media (max-width: 520px) { #btn-klavier .nur-breit, #btn-schlagzeug .nur-breit, #btn-songbaukasten .nur-breit { display: none; } #btn-klavier .icon, #btn-schlagzeug .icon, #btn-songbaukasten .icon { margin-right: 0; } }
 .klavier-kopf { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .7rem 1.2rem; margin-bottom: .9rem; }
 .klavier-kopf h2 { margin: 0; display: flex; align-items: center; }
 .klavier-kopf h2 .icon { color: var(--accent); }
@@ -1063,3 +1063,76 @@ body.hat-vollbild { overflow: hidden; }
 .pw-auge[aria-pressed="true"] { color: var(--accent); }
 .pz-gespeichert { display: flex; align-items: center; justify-content: center; gap: .35rem; margin: -.4rem 0 1rem; }
 .pz-gespeichert .icon { color: var(--green); margin: 0; }
+
+/* ---------- Songbaukasten ---------- */
+.sb-steuer { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: .8rem; }
+.sb-play { min-height: 2.8rem; min-width: 8.5rem; font-size: 1.05rem; }
+.sb-stopp-zeichen { margin-right: .4rem; }
+.sb-metro { flex: 1 1 320px; }
+.sb-metro .metro-leiste { margin: 0; }
+/* Raster: links eine Spalte mit Namen, dann die Schritte; bei vielen Schritten waagrecht scrollen */
+.sb-rahmen { overflow-x: auto; border-radius: 12px; background: #fbfaff; border: 1px solid var(--border); }
+.sb-gitter {
+  --namen: 3.1rem; --hoehe: clamp(16px, 2.6vh, 26px);
+  position: relative; display: grid; user-select: none; -webkit-user-select: none; touch-action: none;
+  grid-template-columns: var(--namen) repeat(var(--spalten), minmax(24px, 1fr));
+  min-width: calc(var(--namen) + var(--spalten) * 24px);
+}
+.sb-name { position: sticky; left: 0; z-index: 2; background: #f1eefb; color: #6b6290; font-size: .68rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: flex-end; padding-right: .35rem; height: var(--hoehe); border-bottom: 1px solid #e6e1f5; }
+.sb-name.grund { color: #3b2f63; font-weight: 800; }
+.sb-gitter.ohne-namen .sb-name:not(.drum) { color: transparent; }
+.sb-z { height: var(--hoehe); border-bottom: 1px solid #e6e1f5; border-left: 1px solid #f0edf9; cursor: pointer; position: relative; }
+.sb-z.schlag { border-left-color: #c9c0e8; }
+.sb-z.takt { border-left: 2px solid #8f82c4; }
+.sb-z.getoent { background: #f3f1fa; }
+.sb-z.grundzeile { border-bottom-color: #cfc6ee; }
+.sb-z.ton.an { background: var(--f); border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.sb-z.ton.an.klingt, .sb-z.drum.an.klingt::after { filter: brightness(1.25); transform: scale(1.12); }
+.sb-z.ton:hover:not(.an) { background: #ece7fb; }
+/* Drumspuren: höher, mit Form statt Farbfläche */
+.sb-name.drum, .sb-z.drum { height: calc(var(--hoehe) * 1.55); background: #f7f5fd; }
+.sb-name.drum { font-size: .7rem; color: #3b2f63; }
+.sb-name.drum.erste, .sb-z.drum.erste { border-top: 3px solid #d8d1ef; }
+.sb-z.drum::after { content: ''; position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  background: #d4cde9; border-radius: 50%; transition: transform .08s; }
+.sb-z.drum.schlag::after { width: 40%; }
+.sb-z.drum.an::after { width: min(70%, 22px); }
+.sb-z.drum.raute.an::after { background: #e8b52b; border-radius: 3px; transform: translate(-50%, -50%) rotate(45deg); width: min(56%, 17px); }
+.sb-z.drum.dreieck.an::after { background: #f08a3c; border-radius: 0; clip-path: polygon(50% 5%, 95% 92%, 5% 92%); }
+.sb-z.drum.kreis.an::after { background: #5b7cfa; }
+.sb-z.drum.raute.an.klingt::after { transform: translate(-50%, -50%) rotate(45deg) scale(1.2); }
+.sb-z.drum.an.klingt::after { transform: translate(-50%, -50%) scale(1.2); }
+.sb-lauf { position: absolute; top: 0; bottom: 0; background: rgba(124, 58, 237, .18); border-left: 2px solid rgba(124, 58, 237, .55); pointer-events: none; z-index: 1; }
+.sb-werkzeuge { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .8rem; }
+.sb-info { margin-left: auto; }
+/* Einstellungen wie Zeilen mit − und + */
+.sb-einstellungen { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; margin-top: .8rem; padding: .4rem 1rem; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); }
+.sb-zeile { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .55rem 0; border-bottom: 1px solid var(--border); }
+.sb-spalte .sb-zeile:last-child { border-bottom: none; }
+.sb-zeile > span { color: var(--muted); }
+.sb-wert { display: flex; align-items: center; gap: .4rem; }
+.sb-wert b { color: var(--accent); min-width: 4.5rem; text-align: right; margin-right: .3rem; }
+.sb-wert select { min-height: 2.4rem; }
+/* Speichern und Öffnen */
+.sb-speicher { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--border); }
+.sb-speicher > .hint { display: flex; align-items: center; gap: .4rem; }
+.sb-speicher-reihe { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; }
+.sb-speicher h3 { margin: 0 0 .5rem; font-size: 1rem; }
+.sb-knoepfe, .sb-oeffnen, .sb-meine { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.sb-oeffnen input { width: 12rem; font-size: 1.05rem; letter-spacing: .08em; }
+.sb-meine { margin-top: .5rem; }
+.sb-nr-klein { color: var(--accent); font-size: 1.05rem; letter-spacing: .05em; }
+.sb-meldung { margin-top: .7rem; }
+.sb-meldung.fehler { color: var(--danger); }
+.sb-nummer { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .8rem; padding: .8rem 1rem; border-radius: 12px; background: var(--active-soft); border: 1px solid var(--accent); }
+.sb-nummer b { font-size: 2.4rem; letter-spacing: .12em; color: var(--accent); line-height: 1; }
+.sb-nummer .hint { flex-basis: 100%; }
+.sb-seite.vollbild .sb-rahmen { flex: 1 1 auto; }
+.sb-seite.vollbild .sb-gitter { --hoehe: clamp(16px, calc((100vh - 290px) / (var(--zeilen) + 4.7)), 40px); }
+.sb-seite.vollbild .sb-speicher, .sb-seite.vollbild .sb-einstellungen { display: none; }
+@media (max-width: 640px) {
+  .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }
+  .sb-info { margin-left: 0; flex-basis: 100%; }
+  .sb-gitter { --namen: 2.5rem; }
+}

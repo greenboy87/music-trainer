@@ -86,8 +86,10 @@ const Ton = {
   /* Ein Ton zum freien Spielen: klingt, solange die Taste gedrückt ist. Gibt eine Funktion
      zum Loslassen zurück. Alle Töne laufen über einen Kompressor, damit Akkorde mit vielen
      Fingern nicht übersteuern. Jeder Oszillator bekommt genau ein stop() – entweder beim
-     Loslassen oder wenn der Ton von selbst ausgeklungen ist. */
-  anschlag(midi, klang = 'klavier') {
+     Loslassen oder wenn der Ton von selbst ausgeklungen ist.
+     zeit: AudioContext-Zeit für vorausgeplante Töne (Songbaukasten), leer = sofort;
+     die Funktion zum Loslassen nimmt dann ebenso einen Zeitpunkt. */
+  anschlag(midi, klang = 'klavier', zeit) {
     const c = this.audio();
     if (this.busAusgang !== this.ausgang) {
       this.bus = c.createDynamicsCompressor();
@@ -99,7 +101,7 @@ const Ton = {
       this.bus.connect(this.ausgang);
       this.busAusgang = this.ausgang;
     }
-    const t = c.currentTime + 0.005;
+    const t = zeit ?? c.currentTime + 0.005;
     const aus = c.createGain();
     aus.connect(this.bus);
     const quellen = [];
@@ -149,11 +151,11 @@ const Ton = {
       quellen.forEach(o => { try { o.stop(wann); } catch { /* egal */ } });
     };
     uhr = setTimeout(() => stoppen(c.currentTime + 0.05), Math.max(0, ende - c.currentTime) * 1000);
-    return () => {
+    return wann => {
       if (los || !loslassen) return;          // Glockenspiel: klingt aus wie angeschlagen
       los = true;
       // Ganz kurzes Tippen klingt trotzdem kurz an
-      const ab = Math.max(c.currentTime, t + 0.09);
+      const ab = Math.max(wann ?? c.currentTime, t + 0.09);
       aus.gain.setTargetAtTime(0, ab, loslassen);
       stoppen(ab + loslassen * 8);
     };

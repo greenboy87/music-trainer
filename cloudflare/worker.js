@@ -9,6 +9,9 @@
 // nach VERLAUF_TAGE gelöscht). Je
 // Klasse dazu die Auswahl der Lehrkraft, welche Spiele und Stufen für die Note
 // zählen – daraus zeigt der music-trainer jedem Kind seine eigene Note.
+// Dazu Songs aus dem Songbaukasten (nur Noten und Einstellungen, unter einer
+// fünfstelligen Nummer, die das Kind sich aufschreibt), gelöscht ein Jahr nach
+// dem letzten Öffnen oder mit dem Kind.
 // IP-Adressen werden nur als gekürzter Prüfwert für die Sperre nach
 // Fehlversuchen gespeichert und nach 10 Minuten gelöscht.
 //
@@ -40,6 +43,8 @@ const SPERRE = 10 * 60;
 const MAX_JE_KIND = 10;         // falsche Passwörter je Pseudonym, dann 10 Minuten Pause
 const MAX_UNBEKANNT = 60;       // unbekannte Pseudonyme je Schul-Adresse
 const MAX_LEHRER = 10;
+const SONG_ZEICHEN = 12000;     // ein Song als JSON, höchstens so lang (16 Takte voll: gut 8000)
+const SONGS_JE_KIND = 100;      // mehr hat niemand – darüber fällt der älteste weg
 
 const jetzt = () => Math.floor(Date.now() / 1000);
 // Kalendertag, grob deutsche Zeit – das School-Tool rechnet die Tage im Verlauf genauso
@@ -164,6 +169,11 @@ async function spaltenSichern(env) {
   // Tage, an denen ein Kind angemeldet war (Seite geöffnet, angemeldet oder gespielt)
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS besuche (
     schueler_id INTEGER NOT NULL, tag INTEGER NOT NULL, PRIMARY KEY (schueler_id, tag))`).run();
+  // Songs aus dem Songbaukasten (seit 15.11.2026)
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS songs (
+    nummer INTEGER PRIMARY KEY, schueler_id INTEGER NOT NULL, daten TEXT NOT NULL,
+    erstellt INTEGER NOT NULL, geoeffnet INTEGER NOT NULL)`).run();
+  await env.DB.prepare('CREATE INDEX IF NOT EXISTS songs_kind ON songs (schueler_id, geoeffnet)').run();
   for (const [tabelle, spalte, typ] of NEUE_SPALTEN) {
     try {
       await env.DB.prepare(`SELECT ${spalte} FROM ${tabelle} LIMIT 0`).all();
@@ -234,6 +244,61 @@ async function eigenerVerlauf(env, wer, praefix) {
      WHERE schueler_id = ? AND spiel >= ? AND spiel < ? ORDER BY zeit DESC LIMIT 3000`
   ).bind(wer.id, p, p + '~').all();
   return { verlauf: results };
+}
+
+/* ---------- Songbaukasten ---------- */
+
+/* Nur prüfen, dass es ein kleiner Song im erwarteten Format ist; was drinsteht,
+   liest allein der Songbaukasten */
+function pruefeSong(daten) {
+  if (!daten || typeof daten !== 'object' || daten.v !== 1 || !Array.isArray(daten.noten) || !Array.isArray(daten.drums))
+    throw new Fehler(400, 'Das ist kein Song aus dem Songbaukasten');
+  const json = JSON.stringify(daten);
+  if (json.length > SONG_ZEICHEN) throw new Fehler(400, 'Der Song ist zu groß');
+  return json;
+}
+
+/* Neu speichern unter einer freien fünfstelligen Nummer, oder – mit nummer –
+   einen eigenen Song überschreiben */
+async function songSpeichern(env, wer, body, nummer) {
+  await spaltenSichern(env);
+  const json = pruefeSong(body.daten);
+  const t = jetzt();
+  const da = await env.DB.prepare('SELECT id FROM schueler WHERE id = ?').bind(wer.id).first();
+  if (!da) throw new Fehler(401, 'Dieses Konto gibt es nicht mehr');
+  if (nummer) {
+    const alt = await env.DB.prepare('SELECT schueler_id FROM songs WHERE nummer = ?').bind(nummer).first();
+    if (!alt) throw new Fehler(404, 'Diesen Song gibt es nicht mehr');
+    if (alt.schueler_id !== wer.id) throw new Fehler(403, 'Das ist nicht dein Song – speichere ihn als neuen Song');
+    await env.DB.prepare('UPDATE songs SET daten = ?, geoeffnet = ? WHERE nummer = ?').bind(json, t, nummer).run();
+    return { nummer };
+  }
+  // Höchstens SONGS_JE_KIND je Kind; Songs, die ein Jahr niemand geöffnet hat, ab und zu löschen
+  const { anzahl } = await env.DB.prepare('SELECT COUNT(*) AS anzahl FROM songs WHERE schueler_id = ?').bind(wer.id).first();
+  if (anzahl >= SONGS_JE_KIND)
+    await env.DB.prepare('DELETE FROM songs WHERE nummer IN (SELECT nummer FROM songs WHERE schueler_id = ? ORDER BY geoeffnet LIMIT ?)')
+      .bind(wer.id, anzahl - SONGS_JE_KIND + 1).run();
+  if (Math.random() < 0.05) await env.DB.prepare('DELETE FROM songs WHERE geoeffnet < ?').bind(t - VERLAUF_TAGE * TAG).run();
+  for (let i = 0; i < 20; i++) {
+    const neu = 10000 + Math.floor(Math.random() * 90000);
+    try {
+      await env.DB.prepare('INSERT INTO songs (nummer, schueler_id, daten, erstellt, geoeffnet) VALUES (?, ?, ?, ?, ?)')
+        .bind(neu, wer.id, json, t, t).run();
+      return { nummer: neu };
+    } catch (e) {
+      if (!/UNIQUE|PRIMARY/i.test(String(e))) throw e;
+    }
+  }
+  throw new Fehler(503, 'Gerade ist keine Nummer frei – bitte nochmal versuchen');
+}
+
+/* Jeder angemeldete kann jeden Song mit seiner Nummer öffnen (zum Weitergeben an Freunde) */
+async function songLaden(env, wer, nummer) {
+  await spaltenSichern(env);
+  const s = await env.DB.prepare('SELECT nummer, schueler_id, daten FROM songs WHERE nummer = ?').bind(nummer).first();
+  if (!s) throw new Fehler(404, `Einen Song mit der Nummer ${nummer} gibt es nicht`);
+  await env.DB.prepare('UPDATE songs SET geoeffnet = ? WHERE nummer = ?').bind(jetzt(), nummer).run();
+  return { nummer: s.nummer, eigener: s.schueler_id === wer.id, daten: JSON.parse(s.daten) };
 }
 
 /* ---------- Kinder ---------- */
@@ -395,6 +460,7 @@ async function klasseLoeschen(env, id) {
   await env.DB.batch([
     env.DB.prepare(`DELETE FROM verlauf WHERE schueler_id IN (${kinder})`).bind(id),
     env.DB.prepare(`DELETE FROM besuche WHERE schueler_id IN (${kinder})`).bind(id),
+    env.DB.prepare(`DELETE FROM songs WHERE schueler_id IN (${kinder})`).bind(id),
     env.DB.prepare(`DELETE FROM fortschritt WHERE schueler_id IN (${kinder})`).bind(id),
     env.DB.prepare('DELETE FROM schueler WHERE klasse_id = ?').bind(id),
     env.DB.prepare('DELETE FROM klassen WHERE id = ?').bind(id),
@@ -438,6 +504,7 @@ async function kindLoeschen(env, id) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM verlauf WHERE schueler_id = ?').bind(id),
     env.DB.prepare('DELETE FROM besuche WHERE schueler_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM songs WHERE schueler_id = ?').bind(id),
     env.DB.prepare('DELETE FROM fortschritt WHERE schueler_id = ?').bind(id),
     env.DB.prepare('DELETE FROM schueler WHERE id = ?').bind(id),
   ]);
@@ -465,6 +532,14 @@ async function verteilen(request, env) {
     return eigenerVerlauf(env, await markePruefen(env, request, 'schueler'), url.searchParams.get('praefix'));
   if (m === 'POST' && pfad === '/api/ergebnisse')
     return ergebnisseSpeichern(env, await markePruefen(env, request, 'schueler'), body);
+
+  if (pfad === '/api/songs' && m === 'POST')
+    return songSpeichern(env, await markePruefen(env, request, 'schueler'), body);
+  if ((teile = pfad.match(/^\/api\/songs\/(\d{5})$/))) {
+    const wer = await markePruefen(env, request, 'schueler');
+    if (m === 'GET') return songLaden(env, wer, +teile[1]);
+    if (m === 'PATCH') return songSpeichern(env, wer, body, +teile[1]);
+  }
 
   if (m === 'POST' && pfad === '/api/lehrer/anmelden') return lehrerAnmelden(env, body, ip);
   if (pfad.startsWith('/api/lehrer/')) {

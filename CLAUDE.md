@@ -5,7 +5,12 @@ Vorzeichen, Hören, Rhythmus), Design wie das School-Tool. Dazu ein Klavier zum
 freien Spielen (`js/klavierseite.js`, `#/klavier`) und ein Schlagzeug
 (`js/schlagzeug.js`, `#/schlagzeug` mit den Reitern Pads, Drumset und
 Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt).
-Beide haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
+Dazu der Songbaukasten (`js/songbaukasten.js`, `#/songbaukasten`, Knopf „Songs“
+oben): Raster für Töne einer Tonleiter, darunter Becken, Snare und Bassdrum; angemeldete
+Kinder speichern Songs im Worker (`/api/songs`, Tabelle `songs`) unter einer fünfstelligen
+Nummer und öffnen sie damit wieder (`#/songbaukasten/48213`). Format `v: 1` siehe Dateikopf;
+ändert es sich, `pruefeSong()` im Worker anpassen.
+Klavier und Schlagzeug haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
 Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen
 Knopf „Vollbild“ (`js/vollbild.js`); dazu oben in der Leiste ein Vollbild-Knopf für den
 ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
