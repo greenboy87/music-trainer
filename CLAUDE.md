@@ -8,7 +8,7 @@ Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt).
 Dazu der Songbaukasten (`js/songbaukasten.js`, `#/songbaukasten`, Knopf „Songs“
 oben): Raster für Töne einer Tonleiter, darunter Hi-Hat, Snare und Bassdrum (Icons wie im Drumcomputer, alles in der Akzentfarbe); angemeldete
 Kinder speichern Songs im Worker (`/api/songs`, Tabelle `songs`) unter einer fünfstelligen
-Nummer und öffnen sie damit wieder (`#/songbaukasten/48213`). Format `v: 1` siehe Dateikopf;
+Nummer und öffnen sie damit wieder (`#/songbaukasten/48213`). Format `v: 1` siehe Dateikopf; Tonleitern in `TONLEITERN` (u. a. HM5); Klänge für Klavier und Songbaukasten in `Ton.KLAENGE`/`Ton.stimmen`, alle etwa gleich laut;
 ändert es sich, `pruefeSong()` im Worker anpassen.
 Klavier und Schlagzeug haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
 Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen

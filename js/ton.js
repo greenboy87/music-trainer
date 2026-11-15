@@ -81,7 +81,9 @@ const Ton = {
   },
 
   /* Klänge der Klavierseite – alle im Browser erzeugt, ohne Aufnahmen */
-  KLAENGE: { klavier: 'Klavier', epiano: 'E-Piano', orgel: 'Orgel', cembalo: 'Cembalo', streicher: 'Streicher', glockenspiel: 'Glockenspiel' },
+  KLAENGE: { klavier: 'Klavier', epiano: 'E-Piano', orgel: 'Orgel', cembalo: 'Cembalo', streicher: 'Streicher',
+    glockenspiel: 'Glockenspiel', marimba: 'Marimba', vibraphon: 'Vibraphon', gitarre: 'Gitarre', harfe: 'Harfe', koto: 'Koto',
+    floete: 'Flöte', blech: 'Blechbläser', synth: 'Synthesizer', synthbass: 'Synth-Bass' },
 
   /* Ein Ton zum freien Spielen: klingt, solange die Taste gedrückt ist. Gibt eine Funktion
      zum Loslassen zurück. Alle Töne laufen über einen Kompressor, damit Akkorde mit vielen
@@ -225,6 +227,108 @@ const Ton = {
         if (f * mal < 15000) w.osz('sine', f * mal, w.huelle([[0, 0], [0.002, 0.22 * anteil], [lang * dauer, 0.0005]]));
       });
       return { ende: t + lang + 0.1, loslassen: null };
+    },
+
+    /* Holzplatte mit Resonanzrohr: Grundton und der 4. Teilton (bei der Marimba so gestimmt),
+       weicher Schlägel, kurz – klingt aus wie angeschlagen */
+    marimba(c, t, f, midi, w) {
+      const lang = Math.min(1.6, Math.max(0.4, 1 + (60 - midi) * 0.02));
+      w.osz('sine', f, w.huelle([[0, 0], [0.004, 0.39], [lang, 0.0005]]));
+      if (f * 4 < 14000) w.osz('sine', f * 4, w.huelle([[0, 0], [0.002, 0.09], [lang * 0.25, 0.0005]]));
+      if (f * 10 < 15000) w.osz('sine', f * 10, w.huelle([[0, 0], [0.001, 0.026], [0.05, 0.0005]]));
+      return { ende: t + lang + 0.1, loslassen: null };
+    },
+
+    /* Metallplatten, lang klingend, mit dem typischen Schweben (Tremolo); Loslassen = Dämpfer */
+    vibraphon(c, t, f, midi, w) {
+      const lang = Math.min(5, Math.max(2, 3.5 + (60 - midi) * 0.03));
+      const trem = w.verst(1);
+      const tiefe = c.createGain();
+      tiefe.gain.value = 0.3;
+      tiefe.connect(trem.gain);
+      w.osz('sine', 5.5, tiefe);
+      w.osz('sine', f, w.huelle([[0, 0], [0.003, 0.17], [lang, 0.0005]], trem));
+      if (f * 4 < 14000) w.osz('sine', f * 4, w.huelle([[0, 0], [0.002, 0.035], [0.4, 0.0005]], trem));
+      return { ende: t + lang + 0.1, loslassen: 0.15 };
+    },
+
+    /* Gezupfte Saite: heller Anschlag, der Klang wird schnell weicher */
+    gitarre(c, t, f, midi, w) {
+      const lang = Math.min(4, Math.max(1.2, 2.5 + (60 - midi) * 0.04));
+      const h = w.huelle([[0, 0], [0.003, 0.69], [0.25, 0.28], [lang, 0.0005]],
+        w.tiefpass(Math.min(f * 10, 9000), Math.max(f * 1.6, 300), 0.6));
+      w.osz('sawtooth', f, w.verst(0.55, h));
+      w.osz('triangle', f * 2, w.verst(0.25, h));
+      return { ende: t + lang + 0.1, loslassen: 0.12 };
+    },
+
+    /* Harfe: weicher als die Gitarre, lang ausklingend – klingt aus wie gezupft */
+    harfe(c, t, f, midi, w) {
+      const lang = Math.min(5, Math.max(1.5, 3 + (60 - midi) * 0.05));
+      const h = w.huelle([[0, 0], [0.004, 0.2], [0.4, 0.094], [lang, 0.0005]],
+        w.tiefpass(Math.min(f * 6, 8000), Math.max(f * 1.5, 300), 1));
+      w.osz('triangle', f, w.verst(1, h));
+      w.osz('sine', f * 2, w.verst(0.3, h));
+      w.osz('sine', f * 3, w.verst(0.1, h));
+      return { ende: t + lang + 0.1, loslassen: null };
+    },
+
+    /* Koto (japanische Wölbbrettzither): hell und etwas näselnd gezupft, die Tonhöhe rutscht
+       beim Anschlag kurz von oben in den Ton, später leichtes Vibrato wie beim Drücken der Saite;
+       klingt aus wie gezupft */
+    koto(c, t, f, midi, w) {
+      const lang = Math.min(3.5, Math.max(1, 2.2 + (60 - midi) * 0.03));
+      const h = w.huelle([[0, 0], [0.002, 1], [0.12, 0.38], [lang, 0.0005]],
+        w.tiefpass(Math.min(f * 14, 11000), Math.max(f * 2.5, 500), 0.35));
+      const vibrato = c.createGain();
+      vibrato.gain.setValueAtTime(0, t);
+      vibrato.gain.setValueAtTime(0, t + 0.35);
+      vibrato.gain.linearRampToValueAtTime(f * 0.008, t + 0.9);
+      w.osz('sine', 5.2, vibrato);
+      [['sawtooth', 1, 0.5], ['square', 2, 0.18], ['sine', 3, 0.12]].forEach(([typ, mal, anteil]) => {
+        if (f * mal > 14000) return;
+        const o = w.osz(typ, f * mal, w.verst(anteil, h));
+        o.frequency.setValueAtTime(f * mal * 1.018, t);
+        o.frequency.exponentialRampToValueAtTime(f * mal, t + 0.06);
+        vibrato.connect(o.frequency);
+      });
+      return { ende: t + lang + 0.1, loslassen: null };
+    },
+
+    /* Flöte: fast reiner Sinus, sanfter Einsatz, später etwas Vibrato; klingt, solange man drückt */
+    floete(c, t, f, midi, w) {
+      const h = w.huelle([[0, 0], [0.07, 0.095]]);
+      const vibrato = c.createGain();
+      vibrato.gain.setValueAtTime(0, t);
+      vibrato.gain.linearRampToValueAtTime(f * 0.006, t + 0.5);
+      w.osz('sine', 5, vibrato);
+      [[1, 'sine', 1], [2, 'sine', 0.18], [3, 'sine', 0.06]].forEach(([mal, typ, anteil]) => {
+        if (f * mal < 14000) vibrato.connect(w.osz(typ, f * mal, w.verst(anteil, h)).frequency);
+      });
+      return { ende: t + 30, loslassen: 0.06 };
+    },
+
+    /* Blechbläser: Sägezahn, der Filter öffnet sich beim Einsatz wie beim Anblasen */
+    blech(c, t, f, midi, w) {
+      const h = w.huelle([[0, 0], [0.04, 0.2]], w.tiefpass(Math.max(f * 1.2, 300), Math.min(f * 5, 6000), 0.09));
+      [-0.003, 0.003].forEach(d => w.osz('sawtooth', f * (1 + d), w.verst(0.5, h)));
+      return { ende: t + 30, loslassen: 0.08 };
+    },
+
+    /* Synthesizer: zwei leicht verstimmte Rechtecke mit Tiefpass, klingt, solange man drückt */
+    synth(c, t, f, midi, w) {
+      const h = w.huelle([[0, 0], [0.01, 0.16], [0.3, 0.11]], w.tiefpass(Math.min(f * 8, 8000), Math.min(f * 3, 5000), 0.3));
+      [-0.006, 0.006].forEach(d => w.osz('square', f * (1 + d), w.verst(0.5, h)));
+      return { ende: t + 30, loslassen: 0.05 };
+    },
+
+    /* Synth-Bass: Sägezahn mit einem Sinus eine Oktave tiefer, der Filter schließt schnell –
+       am besten in der tiefen Lage */
+    synthbass(c, t, f, midi, w) {
+      const h = w.huelle([[0, 0], [0.005, 0.19], [0.25, 0.125]], w.tiefpass(Math.min(f * 12, 5000), Math.max(f * 2, 200), 0.25));
+      w.osz('sawtooth', f, w.verst(0.6, h));
+      w.osz('sine', f / 2, w.verst(0.6, h));
+      return { ende: t + 30, loslassen: 0.04 };
     },
   },
 

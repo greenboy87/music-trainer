@@ -20,6 +20,7 @@ const Songbaukasten = {
     dur: { name: 'Dur', stufen: [0, 2, 4, 5, 7, 9, 11] },
     moll: { name: 'Moll', stufen: [0, 2, 3, 5, 7, 8, 10] },
     penta: { name: 'Pentatonik', stufen: [0, 2, 4, 7, 9] },
+    hm5: { name: 'HM5 (Phrygisch-Dominant)', stufen: [0, 1, 4, 5, 7, 8, 10] },
     chromatisch: { name: 'Chromatisch', stufen: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
   },
   GRUNDTOENE: ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'as', 'a', 'b', 'h'],
@@ -36,6 +37,25 @@ const Songbaukasten = {
   neu() {
     return { v: 1, takte: 4, schlaege: 4, teile: 2, tonleiter: 'dur', grundton: 0, lage: 4, umfang: 2,
       bpm: 100, klang: 'klavier', noten: [], drums: [] };
+  },
+
+  /* Name einer Zeile: bei Tonleitern mit sieben Stufen richtig geschrieben (jede Stufe
+     ein eigener Buchstabe, also in e-HM5 gis statt as), sonst wie auf der Klavierseite */
+  BUCHSTABEN: ['c', 'd', 'e', 'f', 'g', 'a', 'h'],
+  NATUR: [0, 2, 4, 5, 7, 9, 11],
+  GRUND_BUCHSTABE: [0, 0, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6],
+  zeilenName(z) {
+    const m = this.midi(z), l = this.leiter();
+    if (l.length !== 7) return this.name(m);
+    const b = (this.GRUND_BUCHSTABE[this.song.grundton] + z % 7) % 7;
+    let d = (m % 12 - this.NATUR[b] + 12) % 12;
+    if (d > 6) d -= 12;
+    if (Math.abs(d) > 1) return this.name(m);
+    const buchstabe = this.BUCHSTABEN[b];
+    const n = d === 1 ? buchstabe + 'is'
+      : d === -1 ? ({ e: 'es', a: 'as', h: 'b' }[buchstabe] || buchstabe + 'es') : buchstabe;
+    const o = Math.floor((m - d) / 12) - 1;
+    return o >= 3 ? n + "'".repeat(o - 3) : n[0].toUpperCase() + n.slice(1) + (o === 1 ? '₁' : '');
   },
 
   /* ---------- Song: Größe, Töne, Speichern im Browser ---------- */
@@ -244,9 +264,8 @@ const Songbaukasten = {
     };
     let html = '';
     for (let z = Z - 1; z >= 0; z--) {
-      const m = this.midi(z);
       const grund = z % this.leiter().length === 0;
-      html += `<div class="sb-name${grund ? ' grund' : ''}">${this.name(m)}</div>`;
+      html += `<div class="sb-name${grund ? ' grund' : ''}">${this.zeilenName(z)}</div>`;
       for (let s = 0; s < S; s++) {
         const an = this.noten.has(`${s}:${z}`);
         html += `<div class="sb-z ton ${spalte(s)}${grund ? ' grundzeile' : ''}${an ? ' an' : ''}" data-s="${s}" data-z="${z}"></div>`;
