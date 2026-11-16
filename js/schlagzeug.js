@@ -2,22 +2,24 @@
 
    Drei Reiter:
    – Pads: drei große Pads, Klang je Pad wählbar (Hi-Hat, Snare, Bassdrum vorgegeben).
-   – Drumset: ein gezeichnetes Schlagzeug; was man abwählt, wird grau und klingt nicht.
+   – Drumset: von oben gezeichnet wie in GarageBand; was man abwählt, wird grau und klingt nicht.
+     Hi-Hat: Becken antippen = mit dem Stock, Klemme (Clutch) in der Mitte = getreten.
    – Drumcomputer: 16 Sechzehntel in vier Vierergruppen je Instrument, mit Tempo und Vorlagen.
    Der Drumcomputer läuft beim Wechsel des Reiters weiter – so kann man auf den Pads
    oder am Drumset dazu spielen. Die Klänge sind im Browser erzeugt, wie in der
    Rhythmus-Werkstatt (Becken, Bassdrum, Toms aus js/beat.js und js/drumset.js, Snare
-   und Klatschen aus js/audio.js); Bongos und Kuhglocke sind neu. Auswahl, Tempo und
+   und Klatschen aus js/audio.js); Bongos und Kuhglocke sind neu. Nur das Ride ist eine
+   Aufnahme (klaenge/drums/, wie in der Beat-Werkstatt). Auswahl, Tempo und
    Beat merkt sich der Browser. */
 
 /* ---------- Klänge ---------- */
 const Drums = {
   KLAENGE: {
-    hh: 'Hi-Hat', ho: 'Hi-Hat offen', s: 'Snare', b: 'Bassdrum', crash: 'Becken (Crash)', ride: 'Ride',
+    hh: 'Hi-Hat', ho: 'Hi-Hat offen', hp: 'Hi-Hat getreten', s: 'Snare', b: 'Bassdrum', crash: 'Becken (Crash)', ride: 'Ride',
     t1: 'Tom 1', t2: 'Tom 2', t3: 'Standtom', clap: 'Klatschen', bh: 'Bongo hoch', bt: 'Bongo tief', kuh: 'Kuhglocke',
   },
   /* Farbfamilie: Becken gelb, Snare orange, Bassdrum blau, Toms grün, Percussion rosa */
-  FAMILIE: { hh: 'becken', ho: 'becken', crash: 'becken', ride: 'becken', s: 'snare', b: 'bass',
+  FAMILIE: { hh: 'becken', ho: 'becken', hp: 'becken', crash: 'becken', ride: 'becken', s: 'snare', b: 'bass',
     t1: 'tom', t2: 'tom', t3: 'tom', clap: 'perc', bh: 'perc', bt: 'perc', kuh: 'perc' },
   TOM_HZ: { t1: 210, t2: 155, t3: 105 },
   offen: null,          // Hüllkurve der offenen Hi-Hat – die geschlossene würgt sie ab
@@ -43,17 +45,65 @@ const Drums = {
     const c = Ton.audio();
     const ziel = this.ziel();
     const t = zeit ?? c.currentTime + 0.005;
-    if (k === 'hh' || k === 'ho') this.abwuergen(t);
+    if (k === 'hh' || k === 'ho' || k === 'hp') this.abwuergen(t);
     if (k === 'b') this.bassdrum(c, t, ziel, staerke);
     else if (k === 's') this.snare(c, t, ziel, staerke);
     else if (this.TOM_HZ[k]) this.tom(c, t, ziel, k, staerke);
     else if (k === 'clap') this.klatschen(c, t, ziel, staerke);
     else if (k === 'bh' || k === 'bt') this.bongo(c, t, ziel, k === 'bh' ? 400 : 285, staerke);
     else if (k === 'kuh') this.kuhglocke(c, t, ziel, staerke);
+    else if (k === 'ride') this.ride(c, t, ziel, staerke);
     else {
       const g = this.becken(c, t, ziel, k, staerke);
       if (k === 'ho') this.offen = g;
     }
+  },
+
+  /* Ride als echte Aufnahme wie in der Beat-Werkstatt der Rhythmus-Werkstatt: drei Anschläge
+     eines Jazz-Rides (Virtuosity Drums, CC0, siehe quellen.html), abwechselnd gespielt.
+     Geholt beim ersten Aufruf, je Audiokontext einmal dekodiert; der Anschlag wird nach dem
+     Dekodieren gesucht (AAC setzt je nach Browser etwas Stille davor). Bis alles bereit ist,
+     klingt der berechnete Ersatz. */
+  RIDE_DATEIEN: ['klaenge/drums/ride1.m4a', 'klaenge/drums/ride2.m4a', 'klaenge/drums/ride3.m4a'],
+  rideRoh: null,
+  rideProben: new WeakMap(),
+  rideNr: 0,
+  rideLaden(c) {
+    if (this.rideProben.has(c)) return;
+    this.rideProben.set(c, []);
+    this.rideRoh ||= Promise.all(this.RIDE_DATEIEN.map(d => fetch(d).then(r => {
+      if (!r.ok) throw new Error(d);
+      return r.arrayBuffer();
+    }))).catch(() => null);
+    this.rideRoh.then(roh => roh && Promise.all(roh.map(b => new Promise((ja, nein) => c.decodeAudioData(b.slice(0), ja, nein)))))
+      .then(puffer => {
+        if (!puffer) return;
+        this.rideProben.set(c, puffer.map(p => {
+          const d = p.getChannelData(0);
+          let spitze = 0;
+          for (let i = 0; i < d.length; i++) spitze = Math.max(spitze, Math.abs(d[i]));
+          let i0 = 0;
+          while (i0 < d.length && Math.abs(d[i0]) < spitze * 0.05) i0++;
+          // Lautheit der ersten 0,3 s – alle drei gleich laut
+          const n = Math.min(d.length - i0, Math.floor(p.sampleRate * 0.3));
+          let q = 0;
+          for (let i = 0; i < n; i++) q += d[i0 + i] * d[i0 + i];
+          const rms = Math.sqrt(q / Math.max(1, n)) || 1;
+          return { puffer: p, versatz: Math.max(0, i0 - Math.floor(p.sampleRate * 0.001)) / p.sampleRate, pegel: this.RIDE_PEGEL / rms };
+        }));
+      }).catch(() => {});
+  },
+  RIDE_PEGEL: 0.03,   // Lautheit wie der frühere berechnete Ride: unter der Snare, über der Hi-Hat
+  ride(c, t, ziel, st) {
+    this.rideLaden(c);
+    const proben = this.rideProben.get(c);
+    if (!proben?.length) { this.becken(c, t, ziel, 'ride', st); return; }
+    const pr = proben[this.rideNr++ % proben.length];
+    const q = c.createBufferSource(), g = c.createGain();
+    q.buffer = pr.puffer;
+    g.gain.value = pr.pegel * st;
+    q.connect(g).connect(ziel);
+    q.start(t, pr.versatz);
   },
 
   abwuergen(t) {
@@ -73,10 +123,10 @@ const Drums = {
     return q;
   },
 
-  huelle(c, t, laut, dauer) {
+  huelle(c, t, laut, dauer, einsatz = 0.002) {
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, laut), t + 0.002);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, laut), t + einsatz);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dauer);
     return g;
   },
@@ -86,6 +136,8 @@ const Drums = {
     const P = {
       hh: { band: 10000, hoch: 7000, dauer: 0.06, laut: 2.0, rausch: 0.5 },
       ho: { band: 9000, hoch: 6000, dauer: 0.42, laut: 1.5, rausch: 0.5 },
+      // getreten: die Becken schlagen aufeinander – kurz, dumpfer, mit weichem Einsatz
+      hp: { band: 5200, hoch: 2400, dauer: 0.05, laut: 1.5, rausch: 0.3, einsatz: 0.004 },
       ride: { band: 5500, hoch: 3500, dauer: 0.9, laut: 0.75, rausch: 0.15 },
       crash: { band: 7000, hoch: 3000, dauer: 1.6, laut: 0.95, rausch: 0.9 },
     }[art];
@@ -107,7 +159,7 @@ const Drums = {
     band.type = 'bandpass'; band.frequency.value = P.band; band.Q.value = 0.7;
     const hoch = c.createBiquadFilter();
     hoch.type = 'highpass'; hoch.frequency.value = P.hoch;
-    const g = this.huelle(c, t, P.laut * st, P.dauer);
+    const g = this.huelle(c, t, P.laut * st, P.dauer, P.einsatz);
     summe.connect(band).connect(hoch).connect(g).connect(ziel);
     return g;
   },
@@ -427,6 +479,7 @@ const Schlagzeugseite = {
       if (i >= 0 && i < this.padAnzahl) { e.preventDefault(); this.padSchlag(i); }
     } else if (this.reiter === 'drumset') {
       if (k === '3') { e.preventDefault(); this.setSchlag('hh', true); return; }
+      if (k === 'a') { e.preventDefault(); this.setSchlag('hh', false, true); return; }
       const t = this.SET.find(s => s.taste === k);
       if (t) { e.preventDefault(); this.setSchlag(t.k); }
     }
@@ -435,7 +488,7 @@ const Schlagzeugseite = {
   /* Kurzes Aufleuchten: Klasse entfernen, neu zeichnen lassen, wieder setzen */
   aufblitzen(el, klasse = 'schlag') {
     if (!el) return;
-    el.classList.remove(klasse);
+    el.classList.remove('schlag', 'schlag-offen', 'schlag-tritt');
     void el.getBoundingClientRect();
     el.classList.add(klasse);
   },
@@ -495,40 +548,59 @@ const Schlagzeugseite = {
   },
 
   /* ---------- Drumset ---------- */
-  /* Trommel schräg von vorn: Kessel und Fell (Ellipse) */
-  trommel(cx, cy, rx, h, kessel = 'sz-kessel') {
-    const ry = rx * 0.32;
-    return `<path class="${kessel}" d="M${cx - rx} ${cy} v${h} a${rx} ${ry} 0 0 0 ${2 * rx} 0 v${-h} z"/>
-      <path class="sz-reif" d="M${cx - rx} ${cy + h} a${rx} ${ry} 0 0 0 ${2 * rx} 0" fill="none"/>
-      <ellipse class="sz-fell" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>`;
+  /* Aufbau wie das Drumset in GarageBand: von oben gesehen, große runde Flächen, die man gut
+     trifft. Links Crash und Hi-Hat, oben die Toms, rechts Ride, vorn Snare, Bassdrum, Standtom. */
+  /* Trommel von oben: Kessel (Rand in der Akzentfarbe), Spannreifen mit Böckchen, Fell */
+  trommel(cx, cy, r, kessel = 'sz-kessel') {
+    const boeckchen = Array.from({ length: 8 }, (_, i) => {
+      const w = (i * 45 + 22.5) * Math.PI / 180;
+      const x = cx + Math.cos(w) * (r + 3), y = cy + Math.sin(w) * (r + 3);
+      return `<rect class="sz-boeck" x="${(x - 5).toFixed(1)}" y="${(y - 9).toFixed(1)}" width="10" height="18" rx="4" transform="rotate(${i * 45 + 22.5 + 90} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+    }).join('');
+    return `${boeckchen}<circle class="${kessel}" cx="${cx}" cy="${cy}" r="${r}"/>
+      <circle class="sz-reif" cx="${cx}" cy="${cy}" r="${r - 6}"/>
+      <circle class="sz-fell" cx="${cx}" cy="${cy}" r="${r - 13}"/>`;
   },
-  becken(cx, cy, rx) {
-    return `<ellipse class="sz-becken" cx="${cx}" cy="${cy}" rx="${rx}" ry="${rx * 0.16}"/>
-      <ellipse class="sz-glocke" cx="${cx}" cy="${cy - 2}" rx="${rx * 0.16}" ry="${rx * 0.06}"/>`;
+  /* Becken von oben: Messing mit Rillen, Glocke und Mutter in der Mitte */
+  becken(cx, cy, r) {
+    const rillen = [0.86, 0.72, 0.58, 0.44].map(f => `<circle class="sz-rille" cx="${cx}" cy="${cy}" r="${(r * f).toFixed(1)}"/>`).join('');
+    return `<circle class="sz-becken" cx="${cx}" cy="${cy}" r="${r}"/>${rillen}
+      <circle class="sz-glocke" cx="${cx}" cy="${cy}" r="${(r * 0.24).toFixed(1)}"/>
+      <circle class="sz-mutter" cx="${cx}" cy="${cy}" r="7"/>`;
   },
-  beschriftung(k, x, y) {
+  beschriftung(k, x, y, name, taste) {
     const t = this.SET.find(s => s.k === k);
-    return `<text class="sz-name" x="${x}" y="${y}">${t.name}<tspan class="sz-tk"> · ${t.taste.toUpperCase()}</tspan></text>`;
+    return `<text class="sz-name" x="${x}" y="${y}">${name || t.name}<tspan class="sz-tk"> · ${(taste || t.taste).toUpperCase()}</tspan></text>`;
   },
 
   setSvg() {
     const teil = (k, inhalt) => `<g class="sz-teil" data-k="${k}"${this.setAn[k] ? '' : ' data-aus=""'} role="button" tabindex="0" aria-label="${this.SET.find(s => s.k === k).name}">${inhalt}</g>`;
-    const staender = (x, y1, y2) => `<line class="sz-staender" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/><path class="sz-staender" d="M${x - 26} ${y2} L${x} ${y2 - 18} L${x + 26} ${y2}" fill="none"/>`;
-    return `<svg class="sz-set" viewBox="0 48 820 452" aria-label="Schlagzeug zum Antippen">
-      <ellipse class="sz-boden" cx="410" cy="470" rx="400" ry="26"/>
-      ${staender(165, 110, 468)}${staender(665, 120, 468)}${staender(90, 236, 468)}
-      ${teil('crash', `<g class="sz-schwing">${this.becken(165, 108, 100)}</g>${this.beschriftung('crash', 165, 70)}`)}
-      ${teil('ride', `<g class="sz-schwing">${this.becken(665, 118, 112)}</g>${this.beschriftung('ride', 665, 80)}`)}
-      ${teil('b', `<g class="sz-wackel"><circle class="sz-kessel-b" cx="410" cy="360" r="112"/><circle class="sz-fell-b" cx="410" cy="360" r="96"/>
-        <text class="sz-logo" x="410" y="368">greenboy</text></g>${this.beschriftung('b', 410, 494)}`)}
-      ${teil('t1', `<g class="sz-wackel">${this.trommel(338, 196, 58, 50)}</g>${this.beschriftung('t1', 338, 150)}`)}
-      ${teil('t2', `<g class="sz-wackel">${this.trommel(484, 196, 58, 50)}</g>${this.beschriftung('t2', 484, 150)}`)}
-      ${teil('t3', `<g class="sz-wackel"><line class="sz-staender" x1="598" y1="380" x2="588" y2="466"/><line class="sz-staender" x1="694" y1="380" x2="704" y2="466"/>
-        ${this.trommel(646, 300, 80, 95)}</g>${this.beschriftung('t3', 646, 250)}`)}
-      ${teil('s', `<line class="sz-staender" x1="210" y1="360" x2="210" y2="468"/><path class="sz-staender" d="M184 468 L210 448 L236 468" fill="none"/>
-        <g class="sz-wackel">${this.trommel(210, 318, 72, 38, 'sz-kessel-s')}</g>${this.beschriftung('s', 210, 270)}`)}
-      ${teil('hh', `<g class="sz-hh${this.hhOffen ? ' offen' : ''}"><g class="sz-hh-oben">${this.becken(90, 226, 64)}</g>${this.becken(90, 240, 64)}</g>
-        ${this.beschriftung('hh', 90, 200)}`)}
+    const verlauf = (id, stopps) => `<radialGradient id="${id}" cx="42%" cy="38%" r="70%">${stopps.map(([o, f]) => `<stop offset="${o}" stop-color="${f}"/>`).join('')}</radialGradient>`;
+    return `<svg class="sz-set" viewBox="0 0 1000 700" aria-label="Schlagzeug zum Antippen">
+      <defs>
+        ${verlauf('sz-v-fell', [[0, '#fffdf8'], [0.7, '#eeeae0'], [1, '#d9d4c7']])}
+        ${verlauf('sz-v-becken', [[0, '#fbe7a1'], [0.45, '#e2b445'], [1, '#a9791c']])}
+        ${verlauf('sz-v-glocke', [[0, '#fff1bd'], [1, '#c4952a']])}
+        ${verlauf('sz-v-chrom', [[0, '#ffffff'], [0.6, '#c9ccd6'], [1, '#7d8294']])}
+      </defs>
+      ${teil('b', `<g class="sz-wackel"><circle class="sz-kessel-b" cx="515" cy="545" r="150"/>
+        <circle class="sz-reif" cx="515" cy="545" r="141"/><circle class="sz-fell-b" cx="515" cy="545" r="130"/>
+        <circle class="sz-ring" cx="515" cy="545" r="108"/><circle class="sz-ring" cx="515" cy="545" r="100"/>
+        <text class="sz-logo" x="515" y="556">greenboy</text></g>${this.beschriftung('b', 515, 630)}`)}
+      ${teil('t1', `<g class="sz-wackel">${this.trommel(410, 175, 100)}</g>${this.beschriftung('t1', 410, 182)}`)}
+      ${teil('t2', `<g class="sz-wackel">${this.trommel(620, 175, 100)}</g>${this.beschriftung('t2', 620, 182)}`)}
+      ${teil('crash', `<g class="sz-schwing">${this.becken(170, 160, 148)}</g>${this.beschriftung('crash', 170, 252)}`)}
+      ${teil('ride', `<g class="sz-schwing">${this.becken(862, 172, 138)}</g>${this.beschriftung('ride', 862, 262)}`)}
+      ${teil('hh', `<g class="sz-hh${this.hhOffen ? ' offen' : ''}"><g class="sz-hh-unten">${this.becken(150, 405, 112)}</g>
+        <g class="sz-hh-oben">${this.becken(150, 405, 112)}</g></g>
+        <g class="sz-tritt" data-tritt="">
+          <circle class="sz-tritt-flaeche" cx="150" cy="405" r="50"/>
+          <rect class="sz-clutch" x="130" y="395" width="40" height="20" rx="6"/>
+          <circle class="sz-mutter" cx="150" cy="405" r="6"/>
+        </g>
+        ${this.beschriftung('hh', 150, 492)}<text class="sz-name sz-tritt-name" x="150" y="372">treten<tspan class="sz-tk"> · A</tspan></text>`)}
+      ${teil('s', `<g class="sz-wackel">${this.trommel(300, 580, 115, 'sz-kessel-s')}</g>${this.beschriftung('s', 300, 652)}`)}
+      ${teil('t3', `<g class="sz-wackel">${this.trommel(800, 555, 140)}</g>${this.beschriftung('t3', 800, 640)}`)}
     </svg>`;
   },
 
@@ -544,13 +616,16 @@ const Schlagzeugseite = {
         <label class="schalter"><input type="checkbox" role="switch" id="sz-hh-offen" ${this.hhOffen ? 'checked' : ''}><span class="schalter-bahn"></span>Hi-Hat offen <span class="sz-tk">(oder Taste 3)</span></label>
         <label class="schalter"><input type="checkbox" role="switch" id="sz-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Namen</label>
       </div>
-      <div class="sz-set-rahmen${this.namen ? '' : ' ohne-namen'}">${this.setSvg()}</div>`;
+      <div class="sz-set-rahmen${this.namen ? '' : ' ohne-namen'}">${this.setSvg()}</div>
+      <p class="hint sz-hinweis">Auf die Becken der Hi-Hat tippen spielt sie mit dem Stock, auf die Klemme in der Mitte tippen tritt sie mit dem Fuß.</p>`;
     const svg = this.inhalt.querySelector('.sz-set');
     svg.addEventListener('pointerdown', e => {
       const g = e.target.closest('.sz-teil');
       if (!g || g.hasAttribute('data-aus')) return;
       e.preventDefault();
-      this.setSchlag(g.dataset.k);
+      // Hi-Hat: auf die Klemme in der Mitte (Clutch) tippen = Pedal treten
+      if (g.dataset.k === 'hh' && e.target.closest('[data-tritt]')) this.setSchlag('hh', false, true);
+      else this.setSchlag(g.dataset.k);
     });
     svg.addEventListener('pointerup', () => Ton.audio());
     svg.addEventListener('keydown', e => {
@@ -591,13 +666,14 @@ const Schlagzeugseite = {
     });
   },
 
-  /* offen: nur dieses eine Mal offen (Taste 3), sonst gilt der Schalter */
-  setSchlag(k, offen = false) {
+  /* offen: nur dieses eine Mal offen (Taste 3), sonst gilt der Schalter.
+     tritt: Hi-Hat mit dem Pedal (Clutch antippen oder Taste A) */
+  setSchlag(k, offen = false, tritt = false) {
     if (!this.setAn[k] || !this.inhalt) return;
-    const klang = k === 'hh' && (offen || this.hhOffen) ? 'ho' : k;
+    const klang = k !== 'hh' ? k : tritt ? 'hp' : offen || this.hhOffen ? 'ho' : 'hh';
     Drums.spielen(klang);
     const g = this.inhalt.querySelector(`.sz-teil[data-k="${k}"]`);
-    if (k === 'hh') this.aufblitzen(g, klang === 'ho' ? 'schlag-offen' : 'schlag');
+    if (k === 'hh') this.aufblitzen(g, { ho: 'schlag-offen', hp: 'schlag-tritt' }[klang] || 'schlag');
     else this.aufblitzen(g);
   },
 

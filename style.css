@@ -729,37 +729,45 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .sz-set-optionen { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; margin-bottom: .4rem; }
 .sz-set-rahmen { max-width: 900px; margin: 0 auto; }
 .sz-set { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; overflow: visible; }
-.sz-boden { fill: var(--track); }
 .sz-staender { stroke: #9a93b8; stroke-width: 4; stroke-linecap: round; }
 .sz-teil { cursor: pointer; outline: none; transition: filter .2s, opacity .2s; }
-.sz-teil:focus-visible .sz-fell, .sz-teil:focus-visible .sz-becken, .sz-teil:focus-visible .sz-fell-b { stroke: var(--accent); stroke-width: 4; }
+.sz-teil:focus-visible .sz-fell, .sz-teil:focus-visible .sz-becken, .sz-teil:focus-visible .sz-fell-b { stroke: var(--accent); stroke-width: 5; }
 .sz-teil[data-aus] { filter: grayscale(1); opacity: .28; cursor: default; }
-.sz-kessel { fill: #7c3aed; stroke: #4c1d95; stroke-width: 2; }
-.sz-kessel-s { fill: #d4d4e0; stroke: #8b87a3; stroke-width: 2; }
-.sz-reif { stroke: #c9c4dd; stroke-width: 3; }
-.sz-fell { fill: #f6f3ff; stroke: #c9c4dd; stroke-width: 3; }
-.sz-kessel-b { fill: #7c3aed; stroke: #4c1d95; stroke-width: 3; }
-.sz-fell-b { fill: #f6f3ff; stroke: #c9c4dd; stroke-width: 4; }
-.sz-logo { fill: #7c3aed; font-weight: 800; font-size: 26px; text-anchor: middle; font-style: italic; }
-.sz-becken { fill: #e8b93b; stroke: #a57a12; stroke-width: 2; }
-.sz-glocke { fill: #c99a22; }
-.sz-name { fill: var(--text); font-size: 19px; font-weight: 700; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
-.sz-name .sz-tk { fill: var(--muted); }
+/* Drumset von oben (wie GarageBand): Kessel in der Akzentfarbe, Chrom, helles Fell, Messingbecken */
+.sz-kessel, .sz-kessel-b { fill: #7c3aed; stroke: #3b1580; stroke-width: 2; }
+.sz-kessel-s { fill: url(#sz-v-chrom); stroke: #6b7080; stroke-width: 2; }
+.sz-boeck { fill: url(#sz-v-chrom); stroke: #6b7080; stroke-width: 1.2; }
+.sz-reif { fill: url(#sz-v-chrom); stroke: #6b7080; stroke-width: 1.5; }
+.sz-fell, .sz-fell-b { fill: url(#sz-v-fell); stroke: #b9b3a3; stroke-width: 1.5; }
+.sz-ring { fill: none; stroke: #7c3aed; stroke-width: 3; opacity: .5; }
+.sz-logo { fill: #7c3aed; font-weight: 800; font-size: 34px; text-anchor: middle; font-style: italic; }
+.sz-becken { fill: url(#sz-v-becken); stroke: #8a6212; stroke-width: 2; }
+.sz-rille { fill: none; stroke: #8a6212; stroke-width: 1; opacity: .35; }
+.sz-glocke { fill: url(#sz-v-glocke); stroke: #8a6212; stroke-width: 1.2; }
+.sz-mutter { fill: url(#sz-v-chrom); stroke: #4b4f5c; stroke-width: 1.5; }
+.sz-clutch { fill: #3a3d48; stroke: #15161b; stroke-width: 1.5; }
+.sz-tritt-flaeche { fill: #000; opacity: .12; stroke: #fff; stroke-width: 2; stroke-dasharray: 5 5; stroke-opacity: .8; }
+.sz-name { fill: #2a2438; font-size: 21px; font-weight: 700; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,.85); stroke-width: 5px; stroke-linejoin: round; }
+.sz-name .sz-tk { fill: #6b6480; }
+.sz-tritt-name { font-size: 16px; }
 .ohne-namen .sz-name { display: none; }
-.sz-wackel, .sz-schwing, .sz-hh-oben { transform-box: fill-box; transform-origin: center; }
-.sz-hh-oben { transition: transform .12s; }
-.sz-hh.offen .sz-hh-oben { transform: translateY(-9px); }
+.sz-wackel, .sz-schwing, .sz-hh-oben, .sz-hh-unten, .sz-hh, .sz-tritt { transform-box: fill-box; transform-origin: center; }
+.sz-hh-oben, .sz-hh-unten { transition: transform .12s; }
+/* Offene Hi-Hat: das untere Becken schaut unter dem oberen hervor */
+.sz-hh.offen .sz-hh-unten { transform: translate(9px, 12px); }
+.sz-hh.offen .sz-hh-oben { transform: translate(-3px, -4px); }
 .sz-teil.schlag .sz-wackel { animation: sz-wackel .2s ease-out; }
 .sz-teil.schlag .sz-fell, .sz-teil.schlag .sz-fell-b { animation: sz-fell .25s ease-out; }
-.sz-teil.schlag .sz-schwing { animation: sz-schwing .7s ease-out; }
-.sz-teil[data-k="hh"].schlag .sz-hh { animation: sz-hh .12s ease-out; }
-.sz-teil[data-k="hh"].schlag-offen .sz-hh-oben { animation: sz-schwing .5s ease-out; }
-.sz-teil.schlag .sz-becken, .sz-teil.schlag-offen .sz-becken { animation: sz-glanz .35s ease-out; }
-@keyframes sz-wackel { 0% { transform: scale(.95, .92); } 60% { transform: scale(1.02); } 100% { transform: none; } }
-@keyframes sz-fell { from { fill: #f5d0fe; } to { fill: #f6f3ff; } }
-@keyframes sz-schwing { 0% { transform: rotate(-7deg); } 30% { transform: rotate(5deg); } 55% { transform: rotate(-3deg); } 80% { transform: rotate(1.5deg); } 100% { transform: none; } }
-@keyframes sz-hh { 0% { transform: translateY(4px); } 100% { transform: none; } }
-@keyframes sz-glanz { from { fill: #fff3b0; } to { fill: #e8b93b; } }
+.sz-teil.schlag .sz-schwing { animation: sz-schwing .6s ease-out; }
+.sz-teil[data-k="hh"].schlag .sz-hh { animation: sz-wackel .15s ease-out; }
+.sz-teil[data-k="hh"].schlag-offen .sz-hh-oben { animation: sz-schwing .45s ease-out; }
+.sz-teil[data-k="hh"].schlag-tritt .sz-hh, .sz-teil[data-k="hh"].schlag-tritt .sz-tritt { animation: sz-tritt .16s ease-out; }
+.sz-teil.schlag .sz-becken, .sz-teil.schlag-offen .sz-becken, .sz-teil.schlag-tritt .sz-becken { animation: sz-glanz .35s ease-out; }
+@keyframes sz-wackel { 0% { transform: scale(.95); } 60% { transform: scale(1.015); } 100% { transform: none; } }
+@keyframes sz-fell { from { filter: brightness(.82); } to { filter: none; } }
+@keyframes sz-schwing { 0% { transform: scale(.94) rotate(-4deg); } 35% { transform: scale(1.02) rotate(3deg); } 65% { transform: rotate(-1.5deg); } 100% { transform: none; } }
+@keyframes sz-tritt { 0% { transform: scale(.9); } 100% { transform: none; } }
+@keyframes sz-glanz { from { filter: brightness(1.35); } to { filter: none; } }
 
 /* Drumcomputer */
 .sz-steuerung { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1.3rem; margin-bottom: 1rem; }
@@ -821,7 +829,7 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
   .sz-zaehl { font-size: .58rem; } .sz-zaehl.schlag { font-size: .72rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sz-pad.schlag, .sz-teil.schlag *, .sz-teil.schlag-offen *, .sz-zelle.an.schlag { animation-duration: .01s !important; }
+  .sz-pad.schlag, .sz-teil.schlag *, .sz-teil.schlag-offen *, .sz-teil.schlag-tritt *, .sz-zelle.an.schlag { animation-duration: .01s !important; }
 }
 
 /* ---------- Metronom und Tempo (js/metronom.js): Klavier und Schlagzeug ---------- */
@@ -932,7 +940,7 @@ body.hat-vollbild { overflow: hidden; }
 .klavier-seite.vollbild .klaviatur { flex: 1 1 auto; height: auto; min-height: 180px; margin-bottom: calc(-1 * max(1rem, env(safe-area-inset-bottom))); border-radius: 0; }
 /* Schlagzeug: Inhalt mittig, Drumset und Pads so groß, wie die Höhe erlaubt */
 .sz-seite.vollbild .sz-inhalt { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
-.sz-seite.vollbild .sz-set-rahmen { width: min(100%, calc((100vh - 230px) * 1.8)); max-width: none; }
+.sz-seite.vollbild .sz-set-rahmen { width: min(100%, calc((100vh - 230px) * 1.43)); max-width: none; }
 .sz-seite.vollbild .sz-pads { width: min(100%, calc((100vh - 300px) * 3.2)); max-width: none; }
 .sz-seite.vollbild .sz-gitter { --zeile: clamp(30px, 6.4vh, 64px); }
 .sz-seite.vollbild .sz-hinweis { display: none; }

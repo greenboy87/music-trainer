@@ -4,7 +4,9 @@ music-trainer by greenboy: Musik-Lernspiele für Klasse 5 (Stammtöne,
 Vorzeichen, Hören, Rhythmus), Design wie das School-Tool. Dazu ein Klavier zum
 freien Spielen (`js/klavierseite.js`, `#/klavier`) und ein Schlagzeug
 (`js/schlagzeug.js`, `#/schlagzeug` mit den Reitern Pads, Drumset und
-Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt).
+Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt, nur das Ride als
+Aufnahme aus `klaenge/drums/`; das Drumset ist von oben gezeichnet wie in GarageBand, die
+Klemme der Hi-Hat tritt sie).
 Dazu der Songbaukasten (`js/songbaukasten.js`, `#/songbaukasten`, Knopf „Songs“
 oben): Raster für Töne einer Tonleiter, darunter Hi-Hat, Snare und Bassdrum (Icons wie im Drumcomputer, alles in der Akzentfarbe); angemeldete
 Kinder speichern Songs im Worker (`/api/songs`, Tabelle `songs`) unter einer fünfstelligen
