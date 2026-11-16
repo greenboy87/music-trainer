@@ -55,6 +55,8 @@ Der Worker nimmt Stufennummern 0–29 an (`stufe > 29` und `\d{1,2}` in
 ## Noten: Schnitt der 3 besten Runden
 
 Je Spiel und Stufe zählt der Schnitt der drei besten Runden (Note = 7 − Sterne).
+Ausnahme: bei `rhythmus-pruefung-note` (Endnote der Prüfung) zählt nur die beste
+Prüfung (`wievieleZaehlen()` hier in `Fortschritt` und im School-Tool).
 Gerechnet wird das zweimal und muss gleich bleiben: `meineNote()` in
 `js/app.js` (die Kinder, mit `beste3` vom Worker) und `werte()` in
 `school-tool/js/musiktrainer.js` (die Lehrkraft, aus dem Verlauf).

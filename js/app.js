@@ -44,10 +44,14 @@ const Fortschritt = {
     this.speichern();
   },
 
+  /* Bei der Rhythmus-Prüfung (Endnote) zählt nur die beste, sonst der Schnitt der besten drei –
+     wie im School-Tool (MT_NUR_BESTE) */
+  wievieleZaehlen(spielId) { return spielId === 'rhythmus-pruefung-note' ? 1 : 3; },
+
   /* Schnitt der besten drei Runden in Sternen (weniger gespielt: der gespielten), null = noch nicht */
   schnitt3(spielId, stufe) {
     const w = this.bester(spielId, stufe);
-    const top = w.top || (w.sterne ? [w.sterne] : []);
+    const top = (w.top || (w.sterne ? [w.sterne] : [])).slice(0, this.wievieleZaehlen(spielId));
     return top.length ? top.reduce((a, n) => a + n, 0) / top.length : null;
   },
 
@@ -524,7 +528,7 @@ const App = {
     const name = a => `„${a.spiel.titel} (${a.spiel.bereich}) – ${a.spiel.stufen[a.stufe].name}“`;
     // Was eine Runde mit 6 Sternen aus der schlechtesten Aufgabe machen würde
     const mitSechs = a => {
-      const top = [...(a.top || [7 - a.note]), 6].sort((x, y) => y - x).slice(0, 3);
+      const top = [...(a.top || [7 - a.note]), 6].sort((x, y) => y - x).slice(0, Fortschritt.wievieleZaehlen(a.spiel.id));
       return 7 - top.reduce((s, n) => s + n, 0) / top.length;
     };
     const tipp = offen.length
@@ -538,7 +542,7 @@ const App = {
           <div>
             <h2>${Icons.raw('star')}Meine Note</h2>
             <p class="hint">Diese ${aufgaben.length === 1 ? 'Aufgabe zählt' : `${aufgaben.length} Aufgaben zählen`} für deine Note.
-              Je Aufgabe zählt der Schnitt deiner drei besten Runden – du kannst so oft üben, wie du willst.</p>
+              Je Aufgabe zählt der Schnitt deiner drei besten Runden – du kannst so oft üben, wie du willst.${aufgaben.some(a => a.spiel.id === 'rhythmus-pruefung-note') ? ' Bei der Rhythmus-Prüfung zählt deine beste Prüfung.' : ''}</p>
           </div>
           <div class="note-gross${schnitt ? ` n${Math.round(schnitt)}` : ''}" title="Durchschnitt deiner Aufgaben">${schnitt ? komma(schnitt) : '–'}</div>
         </div>
