@@ -729,18 +729,19 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .sz-set-optionen { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; margin-bottom: .4rem; }
 .sz-set-rahmen { max-width: 900px; margin: 0 auto; }
 .sz-set { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; overflow: visible; }
-.sz-staender { stroke: #9a93b8; stroke-width: 4; stroke-linecap: round; }
+.sz-staender { stroke: #9ea3b1; stroke-width: 6; stroke-linecap: round; }
 .sz-teil { cursor: pointer; outline: none; transition: filter .2s, opacity .2s; }
 .sz-teil:focus-visible .sz-fell, .sz-teil:focus-visible .sz-becken, .sz-teil:focus-visible .sz-fell-b { stroke: var(--accent); stroke-width: 5; }
 .sz-teil[data-aus] { filter: grayscale(1); opacity: .28; cursor: default; }
-/* Drumset von oben (wie GarageBand): Kessel in der Akzentfarbe, Chrom, helles Fell, Messingbecken */
-.sz-kessel, .sz-kessel-b { fill: #7c3aed; stroke: #3b1580; stroke-width: 2; }
-.sz-kessel-s { fill: url(#sz-v-chrom); stroke: #6b7080; stroke-width: 2; }
-.sz-boeck { fill: url(#sz-v-chrom); stroke: #6b7080; stroke-width: 1.2; }
-.sz-reif { fill: url(#sz-v-chrom); stroke: #6b7080; stroke-width: 1.5; }
-.sz-fell, .sz-fell-b { fill: url(#sz-v-fell); stroke: #b9b3a3; stroke-width: 1.5; }
-.sz-ring { fill: none; stroke: #7c3aed; stroke-width: 3; opacity: .5; }
-.sz-logo { fill: #7c3aed; font-weight: 800; font-size: 34px; text-anchor: middle; font-style: italic; }
+/* Drumset schräg von oben (wie GarageBand): lila Kessel mit Chrom, helles Fell, Messingbecken */
+.sz-kessel { fill: url(#sz-v-kessel); stroke: #1a0640; stroke-width: 1.5; }
+.sz-boeck { fill: url(#sz-v-wand); stroke: #4b4f5c; stroke-width: 1; }
+.sz-kralle { fill: url(#sz-v-chrom); stroke: #4b4f5c; stroke-width: 1; }
+.sz-reif { fill: url(#sz-v-chrom); stroke: #4b4f5c; stroke-width: 1.5; }
+.sz-unterreif { fill: none; stroke: #b4b8c4; stroke-width: 5; }
+.sz-fell, .sz-fell-b { fill: url(#sz-v-fell); stroke: #a8a292; stroke-width: 1.5; }
+.sz-ring { fill: none; stroke: #7c3aed; stroke-width: 2.5; opacity: .45; }
+.sz-logo { fill: #7c3aed; font-weight: 800; font-size: 30px; text-anchor: middle; font-style: italic; }
 .sz-becken { fill: url(#sz-v-becken); stroke: #8a6212; stroke-width: 2; }
 .sz-rille { fill: none; stroke: #8a6212; stroke-width: 1; opacity: .35; }
 .sz-glocke { fill: url(#sz-v-glocke); stroke: #8a6212; stroke-width: 1.2; }
