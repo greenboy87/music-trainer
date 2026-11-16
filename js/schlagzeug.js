@@ -750,8 +750,13 @@ const Schlagzeugseite = {
       ${teil('ride', `<g class="sz-schwing">${this.becken(835, 150, 163)}</g>
         <ellipse class="sz-kuppe-flaeche" data-kuppe="" cx="835" cy="150" rx="${(163 * 0.3).toFixed(1)}" ry="${(163 * 0.3 * this.KIPP_B).toFixed(1)}"/>
         ${this.beschriftung('ride', 835, 218)}<text class="sz-name sz-tritt-name" x="835" y="110">Kuppe<tspan class="sz-tk"> · 5</tspan></text>`)}
-      ${teil('hh', `${staender(hh.x, hh.y, 470)}
-        <g class="sz-hh${this.hhOffen ? ' offen' : ''}"><g class="sz-hh-unten">${this.becken(hh.x, hh.y, hh.r)}</g>
+      ${/* Ständer der Hi-Hat hinter der Snare; die Becken selbst liegen wie echt über der Snare */ ''}
+      ${staender(hh.x, hh.y, 470)}
+      ${/* Snare-Ständer: Stange mit drei Beinen */ ''}
+      ${staender(sn.x, sn.y + 150, 672)}
+      <path class="sz-staender" d="M${sn.x - 55} 696 L${sn.x} 668 L${sn.x + 55} 696 M${sn.x} 668 L${sn.x + 8} 698" fill="none"/>
+      ${teil('s', `<g class="sz-wackel">${this.trommel(sn.x, sn.y, sn.r, 55)}</g>${this.beschriftung('s', sn.x, sn.y + 50)}`)}
+      ${teil('hh', `<g class="sz-hh${this.hhOffen ? ' offen' : ''}"><g class="sz-hh-unten">${this.becken(hh.x, hh.y, hh.r)}</g>
         <g class="sz-hh-oben">${this.becken(hh.x, hh.y, hh.r)}</g></g>
         <g class="sz-tritt" data-tritt="">
           <ellipse class="sz-tritt-flaeche" cx="${hh.x}" cy="${hh.k}" rx="52" ry="36"/>
@@ -759,10 +764,6 @@ const Schlagzeugseite = {
           <ellipse class="sz-mutter" cx="${hh.x}" cy="${hh.k - 2}" rx="6" ry="4.5"/>
         </g>
         ${this.beschriftung('hh', hh.x, hh.y + 58)}<text class="sz-name sz-tritt-name" x="${hh.x}" y="${hh.k - 32}">treten<tspan class="sz-tk"> · A</tspan></text>`)}
-      ${/* Snare-Ständer: Stange mit drei Beinen */ ''}
-      ${staender(sn.x, sn.y + 150, 672)}
-      <path class="sz-staender" d="M${sn.x - 55} 696 L${sn.x} 668 L${sn.x + 55} 696 M${sn.x} 668 L${sn.x + 8} 698" fill="none"/>
-      ${teil('s', `<g class="sz-wackel">${this.trommel(sn.x, sn.y, sn.r, 55)}</g>${this.beschriftung('s', sn.x, sn.y + 50)}`)}
       ${teil('t3', `<g class="sz-wackel">${this.trommel(st.x, st.y, st.r, 115)}</g>${this.beschriftung('t3', st.x, st.y + 60)}`)}
     </svg>`;
   },
