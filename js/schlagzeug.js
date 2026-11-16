@@ -15,11 +15,11 @@
 /* ---------- Klänge ---------- */
 const Drums = {
   KLAENGE: {
-    hh: 'Hi-Hat', ho: 'Hi-Hat offen', hp: 'Hi-Hat getreten', s: 'Snare', b: 'Bassdrum', crash: 'Becken (Crash)', ride: 'Ride',
+    hh: 'Hi-Hat', ho: 'Hi-Hat offen', hp: 'Hi-Hat getreten', s: 'Snare', b: 'Bassdrum', crash: 'Becken (Crash)', ride: 'Ride', rb: 'Ride-Kuppe',
     t1: 'Tom 1', t2: 'Tom 2', t3: 'Standtom', clap: 'Klatschen', bh: 'Bongo hoch', bt: 'Bongo tief', kuh: 'Kuhglocke',
   },
   /* Farbfamilie: Becken gelb, Snare orange, Bassdrum blau, Toms grün, Percussion rosa */
-  FAMILIE: { hh: 'becken', ho: 'becken', hp: 'becken', crash: 'becken', ride: 'becken', s: 'snare', b: 'bass',
+  FAMILIE: { hh: 'becken', ho: 'becken', hp: 'becken', crash: 'becken', ride: 'becken', rb: 'becken', s: 'snare', b: 'bass',
     t1: 'tom', t2: 'tom', t3: 'tom', clap: 'perc', bh: 'perc', bt: 'perc', kuh: 'perc' },
   TOM_HZ: { t1: 210, t2: 155, t3: 105 },
   offen: null,          // Hüllkurve der offenen Hi-Hat – die geschlossene würgt sie ab
@@ -55,6 +55,7 @@ const Drums = {
     else if (k === 'ride') this.ride(c, t, ziel, staerke);
     else if (k === 'hp') this.tritt(c, t, ziel, staerke);
     else if (k === 'crash') this.crash(c, t, ziel, staerke);
+    else if (k === 'rb') this.kuppe(c, t, ziel, staerke);
     else {
       const g = this.becken(c, t, ziel, k, staerke);
       if (k === 'ho') this.offen = g;
@@ -215,6 +216,32 @@ const Drums = {
       o.connect(g).connect(tg);
       o.start(t); o.stop(t + dauer);
     }
+  },
+
+  /* Ride-Kuppe: heller, glockiger „Ping“ – unharmonische Teiltöne über etwa 760 Hz, die tieferen
+     klingen länger, dazu ein kurzer Anschlag des Stocks. Berechnet, bis es eine Aufnahme gibt. */
+  KUPPE_LAUT: 0.8,     // etwas lauter als ein normaler Ride-Schlag, wie echt
+  kuppe(c, t, ziel, st) {
+    const s = st * this.KUPPE_LAUT;
+    const summe = c.createGain();
+    summe.gain.value = 1;
+    const hoch = c.createBiquadFilter();
+    hoch.type = 'highpass'; hoch.frequency.value = 500;
+    summe.connect(hoch).connect(ziel);
+    [[1, 0.5, 1.5], [1.48, 0.3, 1.1], [2.03, 0.34, 0.9], [2.63, 0.2, 0.7], [3.2, 0.16, 0.55], [4.18, 0.1, 0.4], [5.4, 0.07, 0.3]].forEach(([v, a, d]) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.frequency.value = 760 * v * (0.995 + Math.random() * 0.01);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(a * 0.12 * s, t + 0.002);
+      g.gain.setTargetAtTime(0.0001, t + 0.004, d / 4);
+      o.connect(g).connect(summe);
+      o.start(t); o.stop(t + d * 1.6);
+    });
+    const r = this.rauschen(c, 0.03);
+    const rh = c.createBiquadFilter();
+    rh.type = 'highpass'; rh.frequency.value = 4000;
+    r.connect(rh).connect(this.huelle(c, t, 0.12 * s, 0.025)).connect(summe);
+    r.start(t);
   },
 
   /* Hi-Hat getreten („Chick“): die beiden Becken klatschen aufeinander. Nur Rauschen, keine
@@ -576,6 +603,7 @@ const Schlagzeugseite = {
     } else if (this.reiter === 'drumset') {
       if (k === '3') { e.preventDefault(); this.setSchlag('hh', true); return; }
       if (k === 'a') { e.preventDefault(); this.setSchlag('hh', false, true); return; }
+      if (k === '5') { e.preventDefault(); this.setSchlag('ride', false, false, true); return; }
       const t = this.SET.find(s => s.taste === k);
       if (t) { e.preventDefault(); this.setSchlag(t.k); }
     }
@@ -648,7 +676,7 @@ const Schlagzeugseite = {
      trifft. Links Crash und Hi-Hat, oben die Toms, rechts Ride, vorn Snare, Bassdrum, Standtom.
      Kessel lila mit Chrom; Fell fast rund, darunter sieht man die Kesselwand. */
   KIPP: 0.86,          // Fell: Höhe zu Breite (Trommeln)
-  KIPP_B: 0.62,        // Becken liegen flacher
+  KIPP_B: 0.78,        // Becken liegen etwas flacher
   /* Trommel: Kesselwand mit Böckchen, unterer Reifen, Spannreifen mit Krallen, Fell */
   trommel(cx, cy, r, h) {
     const ry = r * this.KIPP, f = n => n.toFixed(1);
@@ -666,13 +694,13 @@ const Schlagzeugseite = {
       <ellipse class="sz-reif" cx="${cx}" cy="${cy}" rx="${r}" ry="${f(ry)}"/>${krallen}
       <ellipse class="sz-fell" cx="${cx}" cy="${cy}" rx="${r - 10}" ry="${f(ry - 9)}"/>`;
   },
-  /* Becken: Messing mit Rillen, Glocke und Mutter in der Mitte */
+  /* Becken: Messing mit Rillen, Kuppe und Mutter in der Mitte */
   becken(cx, cy, r) {
-    const ry = r * this.KIPP_B, f = n => n.toFixed(1);
+    const ry = r * this.KIPP_B, f = n => n.toFixed(1), rb = r * 0.24;
     const rillen = [0.86, 0.72, 0.58, 0.44].map(k => `<ellipse class="sz-rille" cx="${cx}" cy="${cy}" rx="${f(r * k)}" ry="${f(ry * k)}"/>`).join('');
     return `<ellipse class="sz-becken" cx="${cx}" cy="${cy}" rx="${r}" ry="${f(ry)}"/>${rillen}
-      <ellipse class="sz-glocke" cx="${cx}" cy="${cy}" rx="${f(r * 0.24)}" ry="${f(ry * 0.24)}"/>
-      <ellipse class="sz-mutter" cx="${cx}" cy="${cy}" rx="7" ry="5"/>`;
+      <ellipse class="sz-glocke" cx="${cx}" cy="${cy}" rx="${f(rb)}" ry="${f(rb * this.KIPP_B)}"/>
+      <ellipse class="sz-mutter" cx="${cx}" cy="${cy}" rx="7" ry="${f(7 * this.KIPP_B)}"/>`;
   },
   /* Bassdrum von vorn: Kessel, Spannreifen mit Böckchen, Resonanzfell mit Ring */
   bassdrumBild(cx, cy, r) {
@@ -699,6 +727,7 @@ const Schlagzeugseite = {
     const quer = (id, s) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0">${stopps(s)}</linearGradient>`;
     const staender = (x, y1, y2) => `<line class="sz-staender" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`;
     const hh = { x: 145, y: 315, r: 118 };
+    hh.k = hh.y;                              // in der Mitte sitzt die Klemme
     const sn = { x: 270, y: 465, r: 120 };    // Snare
     const st = { x: 790, y: 455, r: 125 };    // Standtom
     return `<svg class="sz-set" viewBox="0 0 1000 700" aria-label="Schlagzeug zum Antippen">
@@ -710,29 +739,31 @@ const Schlagzeugseite = {
         ${quer('sz-v-kessel', [[0, '#2a0e5c'], [0.14, '#7c3aed'], [0.3, '#4c1d95'], [0.48, '#a78bfa'], [0.62, '#5b21b6'], [0.82, '#7c3aed'], [1, '#22094d']])}
         ${quer('sz-v-wand', [[0, '#6f7486'], [0.3, '#f4f5f8'], [0.55, '#9da2b0'], [0.8, '#e6e8ee'], [1, '#6f7486']])}
       </defs>
-      ${staender(170, 130, 300)}${staender(835, 150, 330)}
+      ${staender(248, 128, 300)}${staender(835, 150, 330)}
       ${/* Standtom: drei Füße, hinter der Bassdrum */ ''}
       ${staender(st.x - st.r + 14, st.y + 40, 694)}${staender(st.x + st.r - 14, st.y + 40, 694)}${staender(st.x + 30, st.y + 150, 698)}
       ${teil('b', `<g class="sz-wackel">${this.bassdrumBild(510, 515, 165)}</g>${this.beschriftung('b', 510, 600)}`)}
-      ${teil('t1', `<g class="sz-wackel">${this.trommel(400, 215, 100, 45)}</g>${this.beschriftung('t1', 400, 257)}`)}
-      ${teil('t2', `<g class="sz-wackel">${this.trommel(605, 215, 100, 45)}</g>${this.beschriftung('t2', 605, 257)}`)}
+      ${teil('t1', `<g class="sz-wackel">${this.trommel(422, 245, 92, 42)}</g>${this.beschriftung('t1', 422, 284)}`)}
+      ${teil('t2', `<g class="sz-wackel">${this.trommel(612, 245, 92, 42)}</g>${this.beschriftung('t2', 612, 284)}`)}
       ${/* Größen wie echt: Crash 16″, Ride 21″ */ ''}
-      ${teil('crash', `<g class="sz-schwing">${this.becken(170, 130, 124)}</g>${this.beschriftung('crash', 170, 182)}`)}
-      ${teil('ride', `<g class="sz-schwing">${this.becken(835, 150, 163)}</g>${this.beschriftung('ride', 835, 218)}`)}
+      ${teil('crash', `<g class="sz-schwing">${this.becken(248, 128, 124)}</g>${this.beschriftung('crash', 248, 180)}`)}
+      ${teil('ride', `<g class="sz-schwing">${this.becken(835, 150, 163)}</g>
+        <ellipse class="sz-kuppe-flaeche" data-kuppe="" cx="835" cy="150" rx="${(163 * 0.3).toFixed(1)}" ry="${(163 * 0.3 * this.KIPP_B).toFixed(1)}"/>
+        ${this.beschriftung('ride', 835, 218)}<text class="sz-name sz-tritt-name" x="835" y="110">Kuppe<tspan class="sz-tk"> · 5</tspan></text>`)}
       ${teil('hh', `${staender(hh.x, hh.y, 470)}
         <g class="sz-hh${this.hhOffen ? ' offen' : ''}"><g class="sz-hh-unten">${this.becken(hh.x, hh.y, hh.r)}</g>
         <g class="sz-hh-oben">${this.becken(hh.x, hh.y, hh.r)}</g></g>
         <g class="sz-tritt" data-tritt="">
-          <ellipse class="sz-tritt-flaeche" cx="${hh.x}" cy="${hh.y}" rx="52" ry="36"/>
-          <rect class="sz-clutch" x="${hh.x - 20}" y="${hh.y - 9}" width="40" height="18" rx="6"/>
-          <ellipse class="sz-mutter" cx="${hh.x}" cy="${hh.y}" rx="6" ry="4.5"/>
+          <ellipse class="sz-tritt-flaeche" cx="${hh.x}" cy="${hh.k}" rx="52" ry="36"/>
+          <rect class="sz-clutch" x="${hh.x - 20}" y="${hh.k - 11}" width="40" height="18" rx="6"/>
+          <ellipse class="sz-mutter" cx="${hh.x}" cy="${hh.k - 2}" rx="6" ry="4.5"/>
         </g>
-        ${this.beschriftung('hh', hh.x, hh.y + 58)}<text class="sz-name sz-tritt-name" x="${hh.x}" y="${hh.y - 44}">treten<tspan class="sz-tk"> · A</tspan></text>`)}
+        ${this.beschriftung('hh', hh.x, hh.y + 58)}<text class="sz-name sz-tritt-name" x="${hh.x}" y="${hh.k - 32}">treten<tspan class="sz-tk"> · A</tspan></text>`)}
       ${/* Snare-Ständer: Stange mit drei Beinen */ ''}
       ${staender(sn.x, sn.y + 150, 672)}
       <path class="sz-staender" d="M${sn.x - 55} 696 L${sn.x} 668 L${sn.x + 55} 696 M${sn.x} 668 L${sn.x + 8} 698" fill="none"/>
       ${teil('s', `<g class="sz-wackel">${this.trommel(sn.x, sn.y, sn.r, 55)}</g>${this.beschriftung('s', sn.x, sn.y + 50)}`)}
-      ${teil('t3', `<g class="sz-wackel">${this.trommel(st.x, st.y, st.r, 62)}</g>${this.beschriftung('t3', st.x, st.y + 60)}`)}
+      ${teil('t3', `<g class="sz-wackel">${this.trommel(st.x, st.y, st.r, 115)}</g>${this.beschriftung('t3', st.x, st.y + 60)}`)}
     </svg>`;
   },
 
@@ -749,7 +780,7 @@ const Schlagzeugseite = {
         <label class="schalter"><input type="checkbox" role="switch" id="sz-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Namen</label>
       </div>
       <div class="sz-set-rahmen${this.namen ? '' : ' ohne-namen'}">${this.setSvg()}</div>
-      <p class="hint sz-hinweis">Auf die Becken der Hi-Hat tippen spielt sie mit dem Stock, auf die Klemme in der Mitte tippen tritt sie mit dem Fuß.</p>`;
+      <p class="hint sz-hinweis">Auf die Becken der Hi-Hat tippen spielt sie mit dem Stock, auf die Klemme in der Mitte tippen tritt sie mit dem Fuß. Die Kuppe in der Mitte des Rides klingt hell wie eine Glocke.</p>`;
     const svg = this.inhalt.querySelector('.sz-set');
     svg.addEventListener('pointerdown', e => {
       const g = e.target.closest('.sz-teil');
@@ -757,6 +788,8 @@ const Schlagzeugseite = {
       e.preventDefault();
       // Hi-Hat: auf die Klemme in der Mitte (Clutch) tippen = Pedal treten
       if (g.dataset.k === 'hh' && e.target.closest('[data-tritt]')) this.setSchlag('hh', false, true);
+      // Ride: auf die Kuppe tippen = glockiger Kuppenschlag
+      else if (g.dataset.k === 'ride' && e.target.closest('[data-kuppe]')) this.setSchlag('ride', false, false, true);
       else this.setSchlag(g.dataset.k);
     });
     svg.addEventListener('pointerup', () => Ton.audio());
@@ -800,9 +833,9 @@ const Schlagzeugseite = {
 
   /* offen: nur dieses eine Mal offen (Taste 3), sonst gilt der Schalter.
      tritt: Hi-Hat mit dem Pedal (Clutch antippen oder Taste A) */
-  setSchlag(k, offen = false, tritt = false) {
+  setSchlag(k, offen = false, tritt = false, kuppe = false) {
     if (!this.setAn[k] || !this.inhalt) return;
-    const klang = k !== 'hh' ? k : tritt ? 'hp' : offen || this.hhOffen ? 'ho' : 'hh';
+    const klang = k === 'ride' && kuppe ? 'rb' : k !== 'hh' ? k : tritt ? 'hp' : offen || this.hhOffen ? 'ho' : 'hh';
     Drums.spielen(klang);
     const g = this.inhalt.querySelector(`.sz-teil[data-k="${k}"]`);
     if (k === 'hh') this.aufblitzen(g, { ho: 'schlag-offen', hp: 'schlag-tritt' }[klang] || 'schlag');

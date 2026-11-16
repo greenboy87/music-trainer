@@ -744,9 +744,9 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .sz-logo { fill: #7c3aed; font-weight: 800; font-size: 30px; text-anchor: middle; font-style: italic; }
 .sz-becken { fill: url(#sz-v-becken); stroke: #8a6212; stroke-width: 2; }
 .sz-rille { fill: none; stroke: #8a6212; stroke-width: 1; opacity: .35; }
-.sz-glocke { fill: url(#sz-v-glocke); stroke: #8a6212; stroke-width: 1.2; }
-.sz-mutter { fill: url(#sz-v-chrom); stroke: #4b4f5c; stroke-width: 1.5; }
+.sz-glocke { fill: url(#sz-v-glocke); stroke: #8a6212; stroke-width: 1.2; }.sz-mutter { fill: url(#sz-v-chrom); stroke: #4b4f5c; stroke-width: 1.5; }
 .sz-clutch { fill: #3a3d48; stroke: #15161b; stroke-width: 1.5; }
+.sz-kuppe-flaeche { fill: transparent; stroke: #fff; stroke-width: 2; stroke-dasharray: 5 5; stroke-opacity: .6; }
 .sz-tritt-flaeche { fill: #000; opacity: .12; stroke: #fff; stroke-width: 2; stroke-dasharray: 5 5; stroke-opacity: .8; }
 .sz-name { fill: #2a2438; font-size: 21px; font-weight: 700; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,.85); stroke-width: 5px; stroke-linejoin: round; }
 .sz-name .sz-tk { fill: #6b6480; }
