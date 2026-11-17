@@ -478,6 +478,12 @@ async function klassenUebersicht(env, id, seit) {
   const { results: kinder } = await env.DB.prepare(
     'SELECT id, anzeige AS benutzername, zuletzt FROM schueler WHERE klasse_id = ? ORDER BY anzeige'
   ).bind(id).all();
+  // Wer gerade nach zu vielen falschen Passwörtern gesperrt ist (bis wann) – die Lehrkraft kann entsperren
+  const { results: sperren } = await env.DB.prepare(
+    `SELECT s.id, p.bis FROM schueler s JOIN sperren p ON p.schluessel = 'kind:' || s.benutzername
+     WHERE s.klasse_id = ? AND p.bis > ? AND p.versuche >= ?`
+  ).bind(id, jetzt(), MAX_JE_KIND).all();
+  const gesperrtBis = Object.fromEntries(sperren.map(p => [p.id, p.bis]));
   const { results: zeilen } = await env.DB.prepare(
     `SELECT f.schueler_id, f.spiel, f.stufe, f.sterne, f.punkte, f.runden, f.geaendert, f.richtig, f.von
      FROM fortschritt f JOIN schueler s ON s.id = f.schueler_id WHERE s.klasse_id = ?`
@@ -496,7 +502,19 @@ async function klassenUebersicht(env, id, seit) {
     ((nachKind[z.schueler_id] ||= {})[z.spiel] ||= {})[z.stufe] =
       { sterne: z.sterne, punkte: z.punkte, runden: z.runden, geaendert: z.geaendert, richtig: z.richtig, von: z.von };
   });
-  return { klasse, schueler: kinder.map(k => ({ ...k, fortschritt: nachKind[k.id] || {} })), verlauf, besuche };
+  return { klasse, schueler: kinder.map(k => ({ ...k, fortschritt: nachKind[k.id] || {}, ...(gesperrtBis[k.id] ? { gesperrtBis: gesperrtBis[k.id] } : {}) })), verlauf, besuche };
+}
+
+/* Sperre nach Fehlversuchen für ein Kind aufheben – dazu die der Adresse, von der die
+   Lehrkraft gerade kommt (in der Schule dieselbe wie die der iPads) */
+async function sperreAufheben(env, id, ip) {
+  const s = await env.DB.prepare('SELECT benutzername FROM schueler WHERE id = ?').bind(id).first();
+  if (!s) throw new Fehler(404, 'Zugang nicht gefunden');
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM sperren WHERE schluessel = ?').bind('kind:' + s.benutzername),
+    env.DB.prepare('DELETE FROM sperren WHERE schluessel = ?').bind('ip:' + await herkunft(env, ip)),
+  ]);
+  return { entsperrt: true };
 }
 
 async function kindLoeschen(env, id) {
@@ -556,6 +574,7 @@ async function verteilen(request, env) {
       return { schueler: await kinderEintragen(env, k.id, body.schueler) };
     }
     if ((teile = pfad.match(/^\/api\/lehrer\/schueler\/(\d+)$/)) && m === 'DELETE') return kindLoeschen(env, +teile[1]);
+    if ((teile = pfad.match(/^\/api\/lehrer\/schueler\/(\d+)\/sperre$/)) && m === 'DELETE') return sperreAufheben(env, +teile[1], ip);
   }
   throw new Fehler(404, 'Unbekannte Adresse');
 }
