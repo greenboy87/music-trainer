@@ -1075,19 +1075,6 @@ body.hat-vollbild { overflow: hidden; }
 
 /* ---------- Songbaukasten ---------- */
 .sb-steuer { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: .8rem; }
-/* Eine Kopfzeile: Titel, Abspielen, Metronom, Vollbild – damit das Raster möglichst viel Höhe bekommt */
-.sb-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem .9rem; margin-bottom: .7rem; }
-.sb-kopf h2 { margin: 0; display: flex; align-items: center; font-size: 1.15rem; }
-.sb-kopf h2 .icon { color: var(--accent); }
-.sb-kopf .sz-kopf-rechts { margin-left: auto; }
-@media (max-width: 1150px) { .sb-kopf h2 span { display: none; } }
-.sb-klangwahl { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.4rem; margin: .8rem 0; }
-.sb-seite:not(.zweite) .sb-klangwahl { display: none; }
-/* Auf dieser Seite keine Fußzeile und wenig Rand, damit alles ohne Scrollen passt */
-body.im-songbaukasten .fusszeile { display: none; }
-body.im-songbaukasten .seite { padding-top: .6rem; padding-bottom: .6rem; }
-body.im-songbaukasten .zurueck { margin-bottom: .4rem; }
-.sb-seite .sb-werkzeuge { margin-top: .6rem; }
 .sb-play { min-height: 2.8rem; min-width: 8.5rem; font-size: 1.05rem; }
 .sb-stopp-zeichen { margin-right: .4rem; }
 .sb-metro { flex: 1 1 320px; }
@@ -1099,8 +1086,7 @@ body.im-songbaukasten .zurueck { margin-bottom: .4rem; }
 .sb-gitter {
   --namen: 4.6rem; --hoehe: clamp(15px, 2.5vh, 24px); --leer: rgba(255, 255, 255, .06); --leer-schlag: rgba(255, 255, 255, .11);
   position: relative; display: grid; gap: 2px; user-select: none; -webkit-user-select: none; touch-action: none;
-  /* Spaltenbreite und --hoehe setzt groesse() in js/songbaukasten.js: quadratische Kästchen */
-  width: max-content; margin: 0 auto;
+  min-width: calc(var(--namen) + var(--spalten) * 22px + (var(--takte) - 1) * 11px);
 }
 :root[data-theme="light"] .sb-gitter { --leer: rgba(42, 33, 72, .07); --leer-schlag: rgba(42, 33, 72, .13); }
 .sb-name { position: sticky; left: 0; z-index: 2; color: var(--muted); font-size: .66rem; font-weight: 600;
@@ -1124,8 +1110,8 @@ body.im-songbaukasten .zurueck { margin-bottom: .4rem; }
 .sb-z:hover:not(.an) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sb-z.an { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent); }
 .sb-z.an.klingt { transform: scale(1.12); filter: brightness(1.2); }
-/* Drumspuren: mit Abstand zum Tonraster */
-.sb-name.drum, .sb-z.drum { height: var(--hoehe); }
+/* Drumspuren: etwas höher, mit Abstand zum Tonraster */
+.sb-name.drum, .sb-z.drum { height: calc(var(--hoehe) * 1.5); }
 .sb-name.drum.erste, .sb-z.drum.erste { margin-top: .5rem; }
 .sb-name.drum { color: var(--text); font-size: .68rem; justify-content: flex-start; padding-left: .2rem; }
 .sb-name.drum svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--accent); }
@@ -1157,24 +1143,11 @@ body.im-songbaukasten .zurueck { margin-bottom: .4rem; }
 .sb-nummer b { font-size: 2.4rem; letter-spacing: .12em; color: var(--accent); line-height: 1; }
 .sb-nummer .hint { flex-basis: 100%; }
 .sb-seite.vollbild .sb-rahmen { flex: 1 1 auto; }
-.sb-seite:not(.zweite) .sb-speicher, .sb-seite.zweite .sb-rahmen { display: none; }
-.sb-seite.zweite .sb-einstellungen { margin-top: 0; }
+.sb-seite.vollbild .sb-gitter { --hoehe: clamp(16px, calc((100vh - 290px) / (var(--zeilen) + 4.7)), 40px); }
+.sb-seite.vollbild .sb-speicher, .sb-seite.vollbild .sb-einstellungen { display: none; }
 @media (max-width: 640px) {
   .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }
   .sb-info { margin-left: 0; flex-basis: 100%; }
   .sb-gitter { --namen: 2.4rem; }
   .sb-name.drum span { display: none; }
 }
-/* Sperre im Vollbild: Schloss-Knopf, gedrückt halten füllt ihn von links */
-.vollbild-sperre { position: relative; overflow: hidden; min-height: 2.6rem; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.vollbild-sperre[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
-.vollbild-halten { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: color-mix(in srgb, var(--accent) 30%, transparent); pointer-events: none; }
-.vollbild-sperre.haelt .vollbild-halten { transform: scaleX(1); transition: transform var(--halten, 1.5s) linear; }
-.card.vollbild.gesperrt .zurueck { display: none; }
-@media (max-width: 520px) { .vollbild-sperre span { display: none; } .vollbild-sperre .icon { margin-right: 0; } }
-/* Songbaukasten: Metronom einzeilig in der Kopfzeile */
-.sb-kopf .sb-metro { flex: 1 1 0; min-width: 0; }
-.sb-kopf .metro-leiste { flex-wrap: nowrap; gap: .5rem .7rem; padding: .35rem .6rem; }
-.sb-kopf .metro-leiste .sz-tempo input { width: 110px; min-width: 60px; }
-@media (max-width: 900px) { .sb-kopf .metro-punkte { display: none; } }
-@media (max-width: 700px) { .sb-kopf .sb-metro { flex-basis: 100%; order: 5; } .sb-kopf .metro-leiste { flex-wrap: wrap; } }

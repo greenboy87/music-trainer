@@ -15,14 +15,7 @@ Nummer und öffnen sie damit wieder (`#/songbaukasten/48213`). Format `v: 1` sie
 Klavier und Schlagzeug haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
 Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen
 Knopf „Vollbild“ (`js/vollbild.js`); dazu oben in der Leiste ein Vollbild-Knopf für den
-ganzen music-trainer. Auch auf dem iPad echtes Vollbild, obwohl Safari beim schnellen Tippen
-„Im Vollbildmodus bleiben?“ fragt (Tom will es so, Schul-iPads). Alternativ ohne Leisten als App vom Home-Bildschirm
-(`manifest.json`, `apple-mobile-web-app-capable`, Symbol `bilder/app-icon-*.png`). Im Vollbild gibt es eine Sperre (Schloss-Knopf): gesperrt sind
-„Vollbild beenden“, Esc und die Zurück-Geste aus (`Vollbild.gesperrtAuf`, geprüft in
-`App.route()`), nur langes Drücken auf das Schloss entsperrt. Doppeltipp-Zoom ist per
-`touch-action: manipulation` aus; im Songbaukasten reicht das dem iPad nicht, dort sperrt
-`zoomSperre()` Doppeltippen und Zwei-Finger-Zoom, und ein zweiter Finger im Raster nimmt
-den angefangenen Strich zurück.
+ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
 `#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne
 auch in Liste und Zeile umschaltbar) → `#/pruefung/k5-liste`:
