@@ -16,7 +16,8 @@ Klavier und Schlagzeug haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); a
 Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen
 Knopf „Vollbild“ (`js/vollbild.js`); dazu oben in der Leiste ein Vollbild-Knopf für den
 ganzen music-trainer. Auf iPad/iPhone kein echtes Vollbild (`Vollbild.apple()`): Safari
-fragt beim schnellen Tippen sonst ständig „Im Vollbildmodus bleiben?“; dort füllt nur die Karte das Fenster. Im Vollbild gibt es eine Sperre (Schloss-Knopf): gesperrt sind
+fragt beim schnellen Tippen sonst ständig „Im Vollbildmodus bleiben?“; dort füllt nur die Karte das Fenster. Ohne Leisten läuft es als App vom Home-Bildschirm
+(`manifest.json`, `apple-mobile-web-app-capable`, Symbol `bilder/app-icon-*.png`). Im Vollbild gibt es eine Sperre (Schloss-Knopf): gesperrt sind
 „Vollbild beenden“, Esc und die Zurück-Geste aus (`Vollbild.gesperrtAuf`, geprüft in
 `App.route()`), nur langes Drücken auf das Schloss entsperrt. Doppeltipp-Zoom ist per
 `touch-action: manipulation` aus; im Songbaukasten reicht das dem iPad nicht, dort sperrt
