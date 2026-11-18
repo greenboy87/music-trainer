@@ -1151,3 +1151,10 @@ body.hat-vollbild { overflow: hidden; }
   .sb-gitter { --namen: 2.4rem; }
   .sb-name.drum span { display: none; }
 }
+/* Sperre im Vollbild: Schloss-Knopf, gedrückt halten füllt ihn von links */
+.vollbild-sperre { position: relative; overflow: hidden; min-height: 2.6rem; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.vollbild-sperre[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.vollbild-halten { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: color-mix(in srgb, var(--accent) 30%, transparent); pointer-events: none; }
+.vollbild-sperre.haelt .vollbild-halten { transform: scaleX(1); transition: transform var(--halten, 1.5s) linear; }
+.card.vollbild.gesperrt .zurueck { display: none; }
+@media (max-width: 520px) { .vollbild-sperre span { display: none; } .vollbild-sperre .icon { margin-right: 0; } }

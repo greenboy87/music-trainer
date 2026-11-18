@@ -182,6 +182,7 @@ const Songbaukasten = {
       </section>`;
     this.gitter = el.querySelector('#sb-gitter');
     Vollbild.binden(el.querySelector('.sb-seite'));
+    this.zoomSperre();
 
     this.uhr = new Taktuhr(() => this.song.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i),
       { teile: () => this.song.teile, laenge: () => this.schritte() });
@@ -320,19 +321,56 @@ const Songbaukasten = {
     return true;
   },
 
+  /* Kein Zoom auf dieser Seite: Doppeltippen und zwei Finger würden die Seite
+     vergrößern, und zurück ginge es nicht, weil jeder Finger im Raster ein
+     Kästchen setzt. (touch-action allein reicht dem iPad hier nicht.) Der
+     zweite Tipp auf einen Knopf wird dabei selbst ausgelöst. */
+  zoomSperre() {
+    let zuletzt = 0;
+    const zwei = e => { if (e.touches.length > 1) e.preventDefault(); };
+    const tipp = e => {
+      if (e.touches.length || e.changedTouches.length !== 1) return;
+      const jetzt = e.timeStamp;
+      if (jetzt - zuletzt < 400 && !e.target.closest?.('input, select, textarea')) {
+        e.preventDefault();
+        e.target.closest?.('button, a, label')?.click();
+        zuletzt = 0;
+        return;
+      }
+      zuletzt = jetzt;
+    };
+    const geste = e => e.preventDefault();
+    document.addEventListener('touchstart', zwei, { passive: false });
+    document.addEventListener('touchend', tipp, { passive: false });
+    ['gesturestart', 'gesturechange'].forEach(n => document.addEventListener(n, geste));
+    App.beimAufraeumen(() => {
+      document.removeEventListener('touchstart', zwei);
+      document.removeEventListener('touchend', tipp);
+      ['gesturestart', 'gesturechange'].forEach(n => document.removeEventListener(n, geste));
+    });
+  },
+
   /* Antippen schaltet um; beim Ziehen wird wie beim ersten Kästchen weitergemalt
      (gesetzt oder gelöscht) – in der Tonzeile oder Drumspur, in der man begonnen hat */
   malenEinrichten() {
     const g = this.gitter;
     let modus = null, art = null, geaendert = false;
+    const finger = new Set();   // Finger, die gerade auf dem Raster liegen
     const zelle = e => {
       const k = document.elementFromPoint(e.clientX, e.clientY)?.closest('.sb-z');
       return k && g.contains(k) ? k : null;
     };
     g.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'touch') finger.add(e.pointerId);
       const k = e.target.closest('.sb-z');
       if (!k) return;
       e.preventDefault();
+      /* Zweiter Finger (Zwei-Finger-Geste): nichts eintragen, den angefangenen
+         Strich zurücknehmen */
+      if (finger.size > 1) {
+        if (modus !== null) { modus = null; this.zurueck(); }
+        return;
+      }
       Ton.audio();
       try { g.setPointerCapture(e.pointerId); } catch { /* egal */ }
       art = k.dataset.d !== undefined ? 'drum' : 'ton';
@@ -347,13 +385,18 @@ const Songbaukasten = {
       if (!k || (k.dataset.d !== undefined ? 'drum' : 'ton') !== art) return;
       if (this.zelleSetzen(k, modus)) geaendert = true;
     });
-    const ende = () => {
+    const ende = e => {
+      if (e.type !== 'lostpointercapture') finger.delete(e.pointerId);
       if (modus === null) return;
       modus = null;
       if (geaendert) this.sichern(); else this.verlauf.pop();
       this.el.querySelector('#sb-zurueck').disabled = !this.verlauf.length;
     };
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => g.addEventListener(n, ende));
+    // Finger, die außerhalb des Rasters losgelassen werden
+    const weg = e => finger.delete(e.pointerId);
+    ['pointerup', 'pointercancel'].forEach(n => window.addEventListener(n, weg));
+    App.beimAufraeumen(() => ['pointerup', 'pointercancel'].forEach(n => window.removeEventListener(n, weg)));
     g.addEventListener('contextmenu', e => e.preventDefault());
   },
 

@@ -275,6 +275,11 @@ const App = {
   },
 
   route() {
+    // Gesperrtes Vollbild: Zurück-Geste und Links führen nicht von der Seite weg
+    if (Vollbild.gesperrtAuf && location.hash !== Vollbild.gesperrtAuf) {
+      history.replaceState(null, '', Vollbild.gesperrtAuf);
+      return;
+    }
     this.aufraeumen();
     const [pfad, abfrage] = location.hash.split('?');
     const [, art, id] = pfad.split('/');
