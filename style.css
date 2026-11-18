@@ -1086,7 +1086,8 @@ body.hat-vollbild { overflow: hidden; }
 .sb-gitter {
   --namen: 4.6rem; --hoehe: clamp(15px, 2.5vh, 24px); --leer: rgba(255, 255, 255, .06); --leer-schlag: rgba(255, 255, 255, .11);
   position: relative; display: grid; gap: 2px; user-select: none; -webkit-user-select: none; touch-action: none;
-  min-width: calc(var(--namen) + var(--spalten) * 22px + (var(--takte) - 1) * 11px);
+  /* Spaltenbreite und --hoehe setzt groesse() in js/songbaukasten.js: quadratische Kästchen */
+  width: max-content; margin: 0 auto;
 }
 :root[data-theme="light"] .sb-gitter { --leer: rgba(42, 33, 72, .07); --leer-schlag: rgba(42, 33, 72, .13); }
 .sb-name { position: sticky; left: 0; z-index: 2; color: var(--muted); font-size: .66rem; font-weight: 600;
@@ -1110,8 +1111,8 @@ body.hat-vollbild { overflow: hidden; }
 .sb-z:hover:not(.an) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sb-z.an { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent); }
 .sb-z.an.klingt { transform: scale(1.12); filter: brightness(1.2); }
-/* Drumspuren: etwas höher, mit Abstand zum Tonraster */
-.sb-name.drum, .sb-z.drum { height: calc(var(--hoehe) * 1.5); }
+/* Drumspuren: mit Abstand zum Tonraster */
+.sb-name.drum, .sb-z.drum { height: var(--hoehe); }
 .sb-name.drum.erste, .sb-z.drum.erste { margin-top: .5rem; }
 .sb-name.drum { color: var(--text); font-size: .68rem; justify-content: flex-start; padding-left: .2rem; }
 .sb-name.drum svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--accent); }
@@ -1143,7 +1144,6 @@ body.hat-vollbild { overflow: hidden; }
 .sb-nummer b { font-size: 2.4rem; letter-spacing: .12em; color: var(--accent); line-height: 1; }
 .sb-nummer .hint { flex-basis: 100%; }
 .sb-seite.vollbild .sb-rahmen { flex: 1 1 auto; }
-.sb-seite.vollbild .sb-gitter { --hoehe: clamp(16px, calc((100vh - 290px) / (var(--zeilen) + 4.7)), 40px); }
 .sb-seite.vollbild .sb-speicher, .sb-seite.vollbild .sb-einstellungen { display: none; }
 @media (max-width: 640px) {
   .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }

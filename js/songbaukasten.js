@@ -225,6 +225,9 @@ const Songbaukasten = {
       if (!p.hidden) this.panelZeichnen();
     });
     this.malenEinrichten();
+    const neu = () => this.groesse();
+    window.addEventListener('resize', neu);
+    App.beimAufraeumen(() => window.removeEventListener('resize', neu));
 
     const taste = e => {
       if (e.target.closest?.('input, select, textarea')) return;
@@ -290,14 +293,37 @@ const Songbaukasten = {
       }
     });
     html += '<div class="sb-lauf" hidden></div>';
-    const takt = `repeat(${proTakt}, minmax(20px, 1fr))`;
-    this.gitter.style.gridTemplateColumns = `var(--namen) ${Array.from({ length: takte }, () => takt).join(' 9px ')}`;
     this.gitter.style.setProperty('--spalten', S);
     this.gitter.style.setProperty('--takte', takte);
     this.gitter.style.setProperty('--zeilen', Z);
     this.gitter.innerHTML = html;
     this.lauf = this.gitter.querySelector('.sb-lauf');
+    this.groesse();
     this.infoZeigen();
+  },
+
+  /* Kästchen bleiben quadratisch: so breit, wie der Platz erlaubt (bei wenigen
+     Takten also größer), höchstens ZELLE_MAX – im Vollbild höchstens so groß,
+     dass das ganze Raster in die Höhe passt. Unter 20 px wird gescrollt. */
+  ZELLE_MAX: 44,
+  groesse() {
+    const g = this.gitter;
+    if (!g?.isConnected) return;
+    const takte = this.song.takte, S = this.schritte();
+    const rahmen = g.parentElement, st = getComputedStyle(rahmen);
+    const breite = rahmen.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const namen = 4.6 * rem, spalten = 1 + S + (takte - 1);
+    let zelle = (breite - namen - (takte - 1) * 9 - (spalten - 1) * 2) / S;
+    let max = this.ZELLE_MAX;
+    if (g.closest('.vollbild')) {
+      const zeilen = this.zeilen() + this.SPUREN.length;
+      max = Math.min(64, (window.innerHeight - 250) / zeilen - 2);
+    }
+    zelle = Math.floor(Math.max(20, Math.min(zelle, max)));
+    const takt = `repeat(${S / takte}, ${zelle}px)`;
+    g.style.gridTemplateColumns = `var(--namen) ${Array.from({ length: takte }, () => takt).join(' 9px ')}`;
+    g.style.setProperty('--hoehe', zelle + 'px');
   },
 
   infoZeigen() {
