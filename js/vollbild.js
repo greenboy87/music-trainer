@@ -12,7 +12,16 @@
       Größe neu berechnen. */
 const Vollbild = {
   echt() { return document.fullscreenElement || document.webkitFullscreenElement; },
+  /* iPad/iPhone: Safari hält schnelles Tippen im echten Vollbild für Tippen auf
+     einer Tastatur und blendet dann „Im Vollbildmodus bleiben?“ ein – beim
+     Trommeln ständig. Dort also kein echtes Vollbild: die Karte füllt nur das
+     Fenster (und die Sperre gilt trotzdem). */
+  apple() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  },
   moeglich() {
+    if (this.apple()) return false;
     const el = document.documentElement;
     return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(el.requestFullscreen || el.webkitRequestFullscreen);
   },
@@ -86,7 +95,7 @@ const Vollbild = {
       if (gesperrt) return;
       const an = !karte.classList.contains('vollbild');
       setzen(an);
-      if (an && !this.echt()) { selbst = true; this.rein(); }
+      if (an && !this.echt() && this.moeglich()) { selbst = true; this.rein(); }
       else if (!an && selbst) { selbst = false; this.raus(); }
     });
     // Schloss: Tippen sperrt, gedrückt halten entsperrt
