@@ -1075,6 +1075,19 @@ body.hat-vollbild { overflow: hidden; }
 
 /* ---------- Songbaukasten ---------- */
 .sb-steuer { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: .8rem; }
+/* Eine Kopfzeile: Titel, Abspielen, Metronom, Vollbild – damit das Raster möglichst viel Höhe bekommt */
+.sb-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem .9rem; margin-bottom: .7rem; }
+.sb-kopf h2 { margin: 0; display: flex; align-items: center; font-size: 1.15rem; }
+.sb-kopf h2 .icon { color: var(--accent); }
+.sb-kopf .sz-kopf-rechts { margin-left: auto; }
+@media (max-width: 1150px) { .sb-kopf h2 span { display: none; } }
+.sb-klangwahl { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.4rem; margin: .8rem 0; }
+.sb-seite:not(.zweite) .sb-klangwahl { display: none; }
+/* Auf dieser Seite keine Fußzeile und wenig Rand, damit alles ohne Scrollen passt */
+body.im-songbaukasten .fusszeile { display: none; }
+body.im-songbaukasten .seite { padding-top: .6rem; padding-bottom: .6rem; }
+body.im-songbaukasten .zurueck { margin-bottom: .4rem; }
+.sb-seite .sb-werkzeuge { margin-top: .6rem; }
 .sb-play { min-height: 2.8rem; min-width: 8.5rem; font-size: 1.05rem; }
 .sb-stopp-zeichen { margin-right: .4rem; }
 .sb-metro { flex: 1 1 320px; }
@@ -1144,7 +1157,8 @@ body.hat-vollbild { overflow: hidden; }
 .sb-nummer b { font-size: 2.4rem; letter-spacing: .12em; color: var(--accent); line-height: 1; }
 .sb-nummer .hint { flex-basis: 100%; }
 .sb-seite.vollbild .sb-rahmen { flex: 1 1 auto; }
-.sb-seite.vollbild .sb-speicher, .sb-seite.vollbild .sb-einstellungen { display: none; }
+.sb-seite:not(.zweite) .sb-speicher, .sb-seite.zweite .sb-rahmen { display: none; }
+.sb-seite.zweite .sb-einstellungen { margin-top: 0; }
 @media (max-width: 640px) {
   .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }
   .sb-info { margin-left: 0; flex-basis: 100%; }
@@ -1158,3 +1172,9 @@ body.hat-vollbild { overflow: hidden; }
 .vollbild-sperre.haelt .vollbild-halten { transform: scaleX(1); transition: transform var(--halten, 1.5s) linear; }
 .card.vollbild.gesperrt .zurueck { display: none; }
 @media (max-width: 520px) { .vollbild-sperre span { display: none; } .vollbild-sperre .icon { margin-right: 0; } }
+/* Songbaukasten: Metronom einzeilig in der Kopfzeile */
+.sb-kopf .sb-metro { flex: 1 1 0; min-width: 0; }
+.sb-kopf .metro-leiste { flex-wrap: nowrap; gap: .5rem .7rem; padding: .35rem .6rem; }
+.sb-kopf .metro-leiste .sz-tempo input { width: 110px; min-width: 60px; }
+@media (max-width: 900px) { .sb-kopf .metro-punkte { display: none; } }
+@media (max-width: 700px) { .sb-kopf .sb-metro { flex-basis: 100%; order: 5; } .sb-kopf .metro-leiste { flex-wrap: wrap; } }

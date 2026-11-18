@@ -153,29 +153,27 @@ const Songbaukasten = {
     el.innerHTML = `
       <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card sb-seite">
-        <div class="klavier-kopf">
-          <h2>${Icons.raw('raster')}Songbaukasten</h2>
-          <div class="sz-kopf-rechts">
-            ${Vollbild.knopf()}
-            <label class="klavier-klang">Klang
-              <select id="sb-klang">${Object.entries(Ton.KLAENGE).map(([id, n]) =>
-                `<option value="${id}"${id === this.song.klang ? ' selected' : ''}>${n}</option>`).join('')}</select>
-            </label>
-            <label class="schalter"><input type="checkbox" role="switch" id="sb-namen"><span class="schalter-bahn"></span>Notennamen</label>
-          </div>
-        </div>
-        <div class="sb-steuer">
+        <div class="sb-kopf">
+          <h2>${Icons.raw('raster')}<span>Songbaukasten</span></h2>
           <button type="button" class="primary sb-play" id="sb-play" title="Abspielen oder anhalten (Leertaste)">${Icons.raw('play')}<span>Abspielen</span></button>
           <div class="sb-metro"></div>
+          <div class="sz-kopf-rechts">${Vollbild.knopf()}</div>
         </div>
         <div class="sb-rahmen">
           <div class="sb-gitter" id="sb-gitter"></div>
         </div>
         <div class="sb-werkzeuge">
-          <button type="button" class="small" id="sb-einstellungen" aria-expanded="false">${Icons.raw('regler')}Einstellungen</button>
+          <button type="button" class="small" id="sb-einstellungen" aria-expanded="false">${Icons.raw('regler')}<span>Einstellungen · Speichern</span></button>
           <button type="button" class="small" id="sb-zurueck" disabled title="Rückgängig (⌘Z / Strg+Z)">${Icons.raw('reset')}Rückgängig</button>
           <button type="button" class="small" id="sb-leeren" title="Alle Kästchen leeren">${Icons.raw('x')}Leeren</button>
           <span class="sb-info hint" id="sb-info"></span>
+        </div>
+        <div class="sb-klangwahl">
+          <label class="klavier-klang">Klang
+            <select id="sb-klang">${Object.entries(Ton.KLAENGE).map(([id, n]) =>
+              `<option value="${id}"${id === this.song.klang ? ' selected' : ''}>${n}</option>`).join('')}</select>
+          </label>
+          <label class="schalter"><input type="checkbox" role="switch" id="sb-namen"><span class="schalter-bahn"></span>Notennamen</label>
         </div>
         <div class="sb-einstellungen" id="sb-panel" hidden></div>
         <div class="sb-speicher" id="sb-speicher"></div>
@@ -218,13 +216,20 @@ const Songbaukasten = {
       this.sichern();
       this.gitterZeichnen();
     });
+    /* Zweite Seite: Einstellungen und Speichern statt des Rasters – so passt das
+       Raster auf der ersten Seite immer ganz auf den Bildschirm */
     el.querySelector('#sb-einstellungen').addEventListener('click', e => {
       const p = el.querySelector('#sb-panel');
       p.hidden = !p.hidden;
-      e.currentTarget.setAttribute('aria-expanded', String(!p.hidden));
-      if (!p.hidden) this.panelZeichnen();
+      const k = e.currentTarget;
+      k.setAttribute('aria-expanded', String(!p.hidden));
+      el.querySelector('.sb-seite').classList.toggle('zweite', !p.hidden);
+      k.innerHTML = p.hidden ? `${Icons.raw('regler')}<span>Einstellungen · Speichern</span>` : `${Icons.raw('back')}<span>Zurück zum Raster</span>`;
+      if (!p.hidden) this.panelZeichnen(); else this.groesse();
     });
     this.malenEinrichten();
+    document.body.classList.add('im-songbaukasten');
+    App.beimAufraeumen(() => document.body.classList.remove('im-songbaukasten'));
     const neu = () => this.groesse();
     window.addEventListener('resize', neu);
     App.beimAufraeumen(() => window.removeEventListener('resize', neu));
@@ -245,6 +250,7 @@ const Songbaukasten = {
     });
 
     this.alles();
+    requestAnimationFrame(() => this.groesse());   // nach dem ersten Layout nachmessen
     if (/^\d{5}$/.test(nummer || '')) this.oeffnen(nummer);
   },
 
@@ -302,28 +308,39 @@ const Songbaukasten = {
     this.infoZeigen();
   },
 
-  /* Kästchen bleiben quadratisch: so breit, wie der Platz erlaubt (bei wenigen
-     Takten also größer), höchstens ZELLE_MAX – im Vollbild höchstens so groß,
-     dass das ganze Raster in die Höhe passt. Unter 20 px wird gescrollt. */
+  /* Kästchen bleiben quadratisch und das ganze Raster passt immer auf den
+     Bildschirm, ohne Scrollen: so groß, wie Breite und Höhe erlauben, höchstens
+     ZELLE_MAX. Erst grob aus der Breite, dann so weit verkleinert, bis Seite (oder
+     Vollbild-Karte) nicht mehr übersteht. */
   ZELLE_MAX: 44,
+  ZELLE_MIN: 8,
   groesse() {
     const g = this.gitter;
-    if (!g?.isConnected) return;
+    if (!g?.isConnected || g.closest('.zweite')) return;
     const takte = this.song.takte, S = this.schritte();
     const rahmen = g.parentElement, st = getComputedStyle(rahmen);
     const breite = rahmen.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     const namen = 4.6 * rem, spalten = 1 + S + (takte - 1);
-    let zelle = (breite - namen - (takte - 1) * 9 - (spalten - 1) * 2) / S;
-    let max = this.ZELLE_MAX;
-    if (g.closest('.vollbild')) {
-      const zeilen = this.zeilen() + this.SPUREN.length;
-      max = Math.min(64, (window.innerHeight - 250) / zeilen - 2);
+    const zeilen = this.zeilen() + this.SPUREN.length;
+    const setzen = z => {
+      const takt = `repeat(${S / takte}, ${z}px)`;
+      g.style.gridTemplateColumns = `var(--namen) ${Array.from({ length: takte }, () => takt).join(' 9px ')}`;
+      g.style.setProperty('--hoehe', z + 'px');
+    };
+    const karte = g.closest('.vollbild');
+    const ueber = () => Math.max(rahmen.scrollHeight - rahmen.clientHeight, karte
+      ? karte.scrollHeight - karte.clientHeight
+      : document.documentElement.scrollHeight - window.innerHeight);
+    let zelle = Math.floor(Math.min(this.ZELLE_MAX, (breite - namen - (takte - 1) * 9 - (spalten - 1) * 2) / S));
+    zelle = Math.max(this.ZELLE_MIN, zelle);
+    setzen(zelle);
+    for (let i = 0; i < 4 && zelle > this.ZELLE_MIN; i++) {
+      const zuViel = ueber();
+      if (zuViel <= 0) break;
+      zelle = Math.max(this.ZELLE_MIN, zelle - Math.ceil(zuViel / zeilen));
+      setzen(zelle);
     }
-    zelle = Math.floor(Math.max(20, Math.min(zelle, max)));
-    const takt = `repeat(${S / takte}, ${zelle}px)`;
-    g.style.gridTemplateColumns = `var(--namen) ${Array.from({ length: takte }, () => takt).join(' 9px ')}`;
-    g.style.setProperty('--hoehe', zelle + 'px');
   },
 
   infoZeigen() {
