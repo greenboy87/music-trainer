@@ -12,16 +12,10 @@
       Größe neu berechnen. */
 const Vollbild = {
   echt() { return document.fullscreenElement || document.webkitFullscreenElement; },
-  /* iPad/iPhone: Safari hält schnelles Tippen im echten Vollbild für Tippen auf
-     einer Tastatur und blendet dann „Im Vollbildmodus bleiben?“ ein – beim
-     Trommeln ständig. Dort also kein echtes Vollbild: die Karte füllt nur das
-     Fenster (und die Sperre gilt trotzdem). */
-  apple() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent)
-      || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
-  },
+  /* Hinweis iPad/iPhone: Safari hält schnelles Tippen im echten Vollbild für Tippen
+     auf einer Tastatur und fragt dann „Im Vollbildmodus bleiben?“. Abstellen lässt
+     sich das nicht; Tom nimmt es in Kauf (Schul-iPads ohne Home-Bildschirm-App). */
   moeglich() {
-    if (this.apple()) return false;
     const el = document.documentElement;
     return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(el.requestFullscreen || el.webkitRequestFullscreen);
   },
