@@ -138,7 +138,7 @@ const Drums = {
   becken(c, t, ziel, art, st) {
     const P = {
       hh: { band: 10000, hoch: 7000, dauer: 0.06, laut: 2.0, rausch: 0.5 },
-      ho: { band: 9000, hoch: 6000, dauer: 0.42, laut: 1.5, rausch: 0.5 },
+      ho: { band: 8000, hoch: 5000, dauer: 0.6, laut: 1.1, rausch: 0.6 },
       ride: { band: 5500, hoch: 3500, dauer: 0.9, laut: 0.75, rausch: 0.15 },
       crash: { band: 7000, hoch: 3000, dauer: 1.6, laut: 0.95, rausch: 0.9 },
     }[art];
@@ -160,9 +160,32 @@ const Drums = {
     band.type = 'bandpass'; band.frequency.value = P.band; band.Q.value = 0.7;
     const hoch = c.createBiquadFilter();
     hoch.type = 'highpass'; hoch.frequency.value = P.hoch;
-    const g = this.huelle(c, t, P.laut * st, P.dauer, P.einsatz);
+    let g;
+    if (art === 'ho') {
+      /* Offene Hi-Hat: kurz voll stehen lassen, dann ausklingen – sonst klingt sie wie ein
+         leises Zischen, das erst nach dem Schlag kommt. Dazu ein heller Stockanschlag. */
+      g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(P.laut * st, t + 0.001);
+      g.gain.linearRampToValueAtTime(P.laut * st * 0.75, t + 0.12);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + P.dauer);
+      this.stockAnschlag(c, t, ziel, st);
+    } else g = this.huelle(c, t, P.laut * st, P.dauer, P.einsatz);
     summe.connect(band).connect(hoch).connect(g).connect(ziel);
     return g;
+  },
+
+  /* Kurzer, breiter Knack des Stocks auf dem Becken (für die offene Hi-Hat) */
+  stockAnschlag(c, t, ziel, st) {
+    const r = this.rauschen(c, 0.04);
+    const f = c.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = 2500;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.5 * st, t + 0.0007);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+    r.connect(f).connect(g).connect(ziel);
+    r.start(t);
   },
 
   /* Crash: statt der 808-Rechtecke ein breites Rauschen mit vielen unharmonischen Teiltönen.
