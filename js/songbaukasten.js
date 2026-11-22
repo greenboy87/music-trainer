@@ -1,11 +1,13 @@
 /* Songbaukasten (#/songbaukasten): eigene kleine Songs in Kästchen bauen.
 
-   Oben das Raster für Töne (unten tief, oben hoch, Grundtöne etwas betont),
-   darunter drei Spuren Schlagzeug: Hi-Hat, Snare, Bassdrum – mit denselben
-   Icons wie im Drumcomputer, alles in den Farben der Seite. Antippen
-   setzt oder löscht ein Kästchen, Ziehen malt weiter. Die Einstellungen
-   bestimmen Länge (Takte), Schläge je Takt, Teilung der Schläge, Tonleiter,
-   Grundton mit Lage und Umfang (Oktaven).
+   Aufgebaut wie ein Song-Maker: die Seite füllt das ganze Fenster und scrollt
+   nicht (auch kein Zoomen). Oben das Raster für Töne (unten tief, oben hoch,
+   jeder Ton in seiner Farbe), darunter drei Zeilen Schlagzeug. Antippen setzt
+   oder löscht ein Kästchen, Finger draufhalten und ziehen malt weiter. Passen
+   nicht alle Takte nebeneinander, blättert der Schieber darunter weiter.
+   Unten: Abspielen, Klang und Schlagzeug (Antippen schaltet weiter), Tempo,
+   Einstellungen (Länge, Schläge, Teilung, Tonleiter, Grundton, Umfang,
+   Notennamen, Metronom), Rückgängig, Speichern. Zurück führt zur Übersicht.
 
    Abgespielt wird über eine Taktuhr (js/metronom.js), Töne über Ton.anschlag,
    Schläge über Drums.spielen. Der Song im Bau liegt im Browser; angemeldete
@@ -13,8 +15,9 @@
    öffnen ihn damit wieder (#/songbaukasten/48213 öffnet direkt).
 
    Gespeichert wird nur: { v: 1, takte, schlaege, teile, tonleiter, grundton,
-   lage, umfang, bpm, klang, noten: [[schritt, zeile], …], drums: [[schritt, spur], …] }
-   – zeile 0 = tiefster Ton, spur 0 = Hi-Hat, 1 = Snare, 2 = Bassdrum. */
+   lage, umfang, bpm, klang, kit, noten: [[schritt, zeile], …], drums: [[schritt, spur], …] }
+   – zeile 0 = tiefster Ton, spur 0–2 = die drei Klänge des Schlagzeugs (KITS,
+   beim normalen Schlagzeug Hi-Hat, Snare, Bassdrum). kit fehlt in älteren Songs. */
 const Songbaukasten = {
   TONLEITERN: {
     dur: { name: 'Dur', stufen: [0, 2, 4, 5, 7, 9, 11] },
@@ -26,17 +29,21 @@ const Songbaukasten = {
   GRUNDTOENE: ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'as', 'a', 'b', 'h'],
   NAMEN: ['c', 'cis', 'd', 'es', 'e', 'f', 'fis', 'g', 'as', 'a', 'b', 'h'],
   LAGEN: { 3: 'tief', 4: 'mittel', 5: 'hoch' },
-  SPUREN: [
-    { k: 'hh', name: 'Hi-Hat' },
-    { k: 's', name: 'Snare' },
-    { k: 'b', name: 'Bass' },
-  ],
+  /* Schlagzeuge zum Durchschalten: je drei Klänge für die drei Zeilen (oben → unten) */
+  KITS: {
+    rock: { name: 'Schlagzeug', spuren: ['hh', 's', 'b'], kurz: ['HH', 'SN', 'BD'] },
+    jazz: { name: 'Jazz', spuren: ['ride', 's', 'b'], kurz: ['RD', 'SN', 'BD'] },
+    toms: { name: 'Toms', spuren: ['t1', 't2', 't3'], kurz: ['T1', 'T2', 'T3'] },
+    perc: { name: 'Percussion', spuren: ['kuh', 'bh', 'bt'], kurz: ['KG', 'BO', 'BT'] },
+    klatsch: { name: 'Klatschen', spuren: ['hh', 'clap', 'b'], kurz: ['HH', 'KL', 'BD'] },
+  },
+  spurKlang(d) { return (this.KITS[this.song.kit] || this.KITS.rock).spuren[d]; },
   GRENZEN: { takte: [1, 16], schlaege: [2, 6], teile: [1, 4], umfang: [1, 3] },
   KEY: 'musiktrainer-songbaukasten',
 
   neu() {
     return { v: 1, takte: 4, schlaege: 4, teile: 2, tonleiter: 'dur', grundton: 0, lage: 4, umfang: 2,
-      bpm: 100, klang: 'klavier', noten: [], drums: [] };
+      bpm: 100, klang: 'marimba', kit: 'rock', noten: [], drums: [] };
   },
 
   /* Name einer Zeile: bei Tonleitern mit sieben Stufen richtig geschrieben (jede Stufe
@@ -88,6 +95,7 @@ const Songbaukasten = {
       umfang: zahl(s.umfang, this.GRENZEN.umfang, n.umfang),
       bpm: zahl(s.bpm, [50, 200], n.bpm),
       klang: s.klang in Ton.KLAENGE ? s.klang : n.klang,
+      kit: s.kit in this.KITS ? s.kit : n.kit,
       noten: [], drums: [],
     };
     this.song = song;
@@ -132,229 +140,493 @@ const Songbaukasten = {
     const alt = this.verlauf.pop();
     if (!alt) return;
     this.setzen(JSON.parse(alt));
-    this.el.querySelector('#sb-zurueck').disabled = !this.verlauf.length;
-    this.leiste.setzen(this.song.bpm);
-    this.el.querySelector('#sb-klang').value = this.song.klang;
     this.alles();
   },
 
-  /* ---------- Seite ---------- */
+  /* ---------- Seite: füllt das ganze Fenster, nichts scrollt ---------- */
   zeigen(el, nummer) {
     this.el = el;
     this.verlauf = [];
     this.laeuft = false;
     this.metroAn = false;
+    this.x = 0;             // wie weit das Raster nach links geschoben ist (px)
+    this.aktuell = null;    // Schritt, der gerade klingt
     let gemerkt = null;
     try { gemerkt = JSON.parse(localStorage.getItem(this.KEY)); } catch { /* nichts */ }
     this.setzen(gemerkt?.song || this.neu());
     this.nummer = gemerkt?.nummer || null;
     this.eigener = !!gemerkt?.eigener;
+    this.namenAn = false;
+    try { this.namenAn = localStorage.getItem(this.KEY + '-namen') === 'an'; } catch { /* egal */ }
 
+    const werkzeug = (id, icon, text, titel) => `
+      <button type="button" class="sb-werkzeug" id="${id}" title="${titel}">
+        <span class="sb-kreis">${Icons.raw(icon)}</span><span class="sb-beschr">${text}</span></button>`;
+    document.body.classList.add('sb-offen');
     el.innerHTML = `
-      <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
-      <section class="card sb-seite">
-        <div class="klavier-kopf">
-          <h2>${Icons.raw('raster')}Songbaukasten</h2>
-          <div class="sz-kopf-rechts">
-            ${Vollbild.knopf()}
-            <label class="klavier-klang">Klang
-              <select id="sb-klang">${Object.entries(Ton.KLAENGE).map(([id, n]) =>
-                `<option value="${id}"${id === this.song.klang ? ' selected' : ''}>${n}</option>`).join('')}</select>
-            </label>
-            <label class="schalter"><input type="checkbox" role="switch" id="sb-namen"><span class="schalter-bahn"></span>Notennamen</label>
+      <div class="sb-app">
+        <header class="sb-kopf">
+          <div class="sb-kopf-seite">
+            <a class="sb-rund" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>
+            <button type="button" class="sb-rund" id="sb-vollbild" title="Vollbild" aria-label="Vollbild">${Icons.raw('expand')}</button>
+          </div>
+          <h2 class="sb-titel">Songbaukasten<span id="sb-titel-nr"></span></h2>
+          <div class="sb-kopf-seite rechts">
+            <button type="button" class="sb-text" id="sb-neu" title="Alles leeren und neu anfangen">${Icons.raw('neu')}<span>Neu</span></button>
+          </div>
+        </header>
+        <div class="sb-buehne" id="sb-buehne"><canvas id="sb-feld" aria-label="Raster für Töne und Schlagzeug"></canvas>
+          <div class="sb-toast" id="sb-toast" hidden></div></div>
+        <div class="sb-schieber" id="sb-schieber" title="Ziehen, um durch die Takte zu blättern"><div class="sb-daumen" id="sb-daumen"></div></div>
+        <footer class="sb-fuss">
+          <button type="button" class="sb-play" id="sb-play" title="Abspielen oder anhalten (Leertaste)" aria-label="Abspielen">${Icons.raw('play')}</button>
+          ${werkzeug('sb-klang', 'piano', '', 'Antippen: nächster Klang')}
+          ${werkzeug('sb-kit', 'drum', '', 'Antippen: nächstes Schlagzeug')}
+          <label class="sb-tempo"><span>Tempo</span>
+            <input type="range" id="sb-tempo" min="50" max="200" step="1" aria-label="Tempo in BPM">
+            <b id="sb-bpm"></b></label>
+          <div class="sb-fuss-rechts">
+            ${werkzeug('sb-einst', 'regler', 'Einstellungen', 'Takte, Tonleiter, Notennamen …')}
+            ${werkzeug('sb-zurueck', 'undo', 'Rückgängig', 'Rückgängig (⌘Z / Strg+Z)')}
+            ${werkzeug('sb-sichern', 'check', 'Speichern', 'Speichern und öffnen über eine Nummer')}
+          </div>
+        </footer>
+        <div class="sb-blatt" id="sb-blatt" hidden>
+          <div class="sb-blatt-karte">
+            <div class="sb-blatt-kopf"><h3 id="sb-blatt-titel"></h3>
+              <button type="button" class="sb-rund" id="sb-blatt-zu" aria-label="Schließen">${Icons.raw('x')}</button></div>
+            <div class="sb-blatt-inhalt" id="sb-blatt-inhalt"></div>
           </div>
         </div>
-        <div class="sb-steuer">
-          <button type="button" class="primary sb-play" id="sb-play" title="Abspielen oder anhalten (Leertaste)">${Icons.raw('play')}<span>Abspielen</span></button>
-          <div class="sb-metro"></div>
-        </div>
-        <div class="sb-rahmen">
-          <div class="sb-gitter" id="sb-gitter"></div>
-        </div>
-        <div class="sb-werkzeuge">
-          <button type="button" class="small" id="sb-einstellungen" aria-expanded="false">${Icons.raw('regler')}Einstellungen</button>
-          <button type="button" class="small" id="sb-zurueck" disabled title="Rückgängig (⌘Z / Strg+Z)">${Icons.raw('reset')}Rückgängig</button>
-          <button type="button" class="small" id="sb-leeren" title="Alle Kästchen leeren">${Icons.raw('x')}Leeren</button>
-          <span class="sb-info hint" id="sb-info"></span>
-        </div>
-        <div class="sb-einstellungen" id="sb-panel" hidden></div>
-        <div class="sb-speicher" id="sb-speicher"></div>
-      </section>`;
-    this.gitter = el.querySelector('#sb-gitter');
-    Vollbild.binden(el.querySelector('.sb-seite'));
-
+      </div>`;
+    this.app = el.querySelector('.sb-app');
+    this.buehne = el.querySelector('#sb-buehne');
+    this.canvas = el.querySelector('#sb-feld');
     this.uhr = new Taktuhr(() => this.song.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i),
       { teile: () => this.song.teile, laenge: () => this.schritte() });
-    this.leiste = new Tempoleiste(el.querySelector('.sb-metro'), {
-      bpm: this.song.bpm,
-      beiTempo: b => { this.song.bpm = b; this.sichern(); },
-      beiMetronom: () => { this.metroAn = !this.metroAn; this.leiste.an(this.metroAn); },
-    });
 
-    let namen = true;
-    try { namen = localStorage.getItem(this.KEY + '-namen') !== 'aus'; } catch { /* egal */ }
-    const nk = el.querySelector('#sb-namen');
-    nk.checked = namen;
-    this.gitter.classList.toggle('ohne-namen', !namen);
-    nk.addEventListener('change', () => {
-      this.gitter.classList.toggle('ohne-namen', !nk.checked);
-      try { localStorage.setItem(this.KEY + '-namen', nk.checked ? 'an' : 'aus'); } catch { /* egal */ }
-    });
-    el.querySelector('#sb-klang').addEventListener('change', e => {
-      this.vorher();
-      this.song.klang = e.target.value;
-      this.sichern();
-      const aus = Ton.anschlag(this.midi(0), this.song.klang);
-      setTimeout(aus, 400);
-    });
-    el.querySelector('#sb-play').addEventListener('click', () => this.umschalten());
-    el.querySelector('#sb-zurueck').addEventListener('click', () => this.zurueck());
-    el.querySelector('#sb-leeren').addEventListener('click', () => {
-      if (!this.noten.size && !this.drums.size) return;
+    const $ = s => el.querySelector(s);
+    $('#sb-play').addEventListener('click', () => this.umschalten());
+    $('#sb-zurueck').addEventListener('click', () => this.zurueck());
+    $('#sb-klang').addEventListener('click', () => this.weiter('klang'));
+    $('#sb-kit').addEventListener('click', () => this.weiter('kit'));
+    $('#sb-einst').addEventListener('click', () => this.blatt('einstellungen'));
+    $('#sb-sichern').addEventListener('click', () => this.blatt('speichern'));
+    $('#sb-blatt-zu').addEventListener('click', () => this.blattZu());
+    $('#sb-blatt').addEventListener('pointerdown', e => { if (e.target.id === 'sb-blatt') this.blattZu(); });
+    $('#sb-neu').addEventListener('click', () => {
+      if ((this.noten.size || this.drums.size) && !confirm('Alles leeren und einen neuen Song beginnen?')) return;
       this.vorher();
       this.noten.clear();
       this.drums.clear();
+      this.nummer = null;
+      this.eigener = false;
+      this.x = 0;
       this.sichern();
-      this.gitterZeichnen();
+      this.alles();
     });
-    el.querySelector('#sb-einstellungen').addEventListener('click', e => {
-      const p = el.querySelector('#sb-panel');
-      p.hidden = !p.hidden;
-      e.currentTarget.setAttribute('aria-expanded', String(!p.hidden));
-      if (!p.hidden) this.panelZeichnen();
+    const tempo = $('#sb-tempo');
+    tempo.addEventListener('input', () => {
+      this.song.bpm = Number(tempo.value);
+      $('#sb-bpm').textContent = this.song.bpm;
     });
+    tempo.addEventListener('change', () => this.sichern());
+    this.vollbildEinrichten();
     this.malenEinrichten();
+    this.schieberEinrichten();
 
     const taste = e => {
-      if (e.target.closest?.('input, select, textarea')) return;
-      if (e.key === ' ' && !e.repeat) { e.preventDefault(); this.umschalten(); }
+      if (e.target.closest?.('input:not([type=range]), select, textarea')) return;
+      if (e.key === 'Escape' && !$('#sb-blatt').hidden) this.blattZu();
+      else if (e.key === ' ' && !e.repeat) { e.preventDefault(); this.umschalten(); }
       else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); this.zurueck(); }
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        this.schieben(this.x + (e.key === 'ArrowRight' ? 1 : -1) * this.m.proTakt * this.m.spalte);
+      }
     };
     const weg = () => { if (document.hidden) this.stoppen(); };
+    // Safari auf dem iPad: kein Zoomen mit zwei Fingern
+    const kneifen = e => e.preventDefault();
+    const ro = new ResizeObserver(() => this.malen());
+    ro.observe(this.buehne);
     document.addEventListener('keydown', taste);
     document.addEventListener('visibilitychange', weg);
+    document.addEventListener('gesturestart', kneifen);
+    const thema = new MutationObserver(() => this.malen());
+    thema.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     App.beimAufraeumen(() => {
       document.removeEventListener('keydown', taste);
       document.removeEventListener('visibilitychange', weg);
+      document.removeEventListener('gesturestart', kneifen);
+      ro.disconnect();
+      thema.disconnect();
       this.uhr.stoppen();
       this.laeuft = false;
+      clearTimeout(this.toastUhr);
+      document.body.classList.remove('sb-offen');
     });
 
     this.alles();
     if (/^\d{5}$/.test(nummer || '')) this.oeffnen(nummer);
   },
 
-  alles() {
-    this.gitterZeichnen();
-    if (!this.el.querySelector('#sb-panel').hidden) this.panelZeichnen();
-    this.speicherZeichnen();
-  },
-
-  /* Das Raster: oben die Takt-Nummern, dann die Töne (höchster zuerst), dann die drei
-     Schlagzeug-Spuren. Zwischen den Takten liegt eine eigene schmale Spalte mit einem
-     durchgehenden Strich – so bleiben alle Kästchen gleich breit. Jeder Schlag beginnt
-     mit einem helleren Kästchen, jeder zweite Takt ist leicht getönt. */
-  gitterZeichnen() {
-    const S = this.schritte(), Z = this.zeilen(), { teile, schlaege, takte } = this.song;
-    const proTakt = teile * schlaege;
-    const zeilenGesamt = 1 + Z + this.SPUREN.length;
-    const sp = s => 2 + s + Math.floor(s / proTakt);           // Spalte im Raster (1 = Namen)
-    const klassen = s => {
-      const c = [];
-      if (s % teile === 0) c.push('schlag');
-      if (Math.floor(s / proTakt) % 2) c.push('getoent');
-      return c.join(' ');
+  /* Knopf oben links (wie beim Original): echtes Vollbild des Browsers, wo es das gibt */
+  vollbildEinrichten() {
+    const k = this.el.querySelector('#sb-vollbild');
+    if (!Vollbild.moeglich()) { k.hidden = true; return; }
+    let selbst = false;
+    const zeigen = () => {
+      const an = !!Vollbild.echt();
+      k.innerHTML = Icons.raw(an ? 'shrink' : 'expand');
+      k.title = an ? 'Vollbild beenden' : 'Vollbild';
+      if (!an) selbst = false;
     };
-    const ort = (spalte, zeile) => `grid-area: ${zeile} / ${spalte}`;
-    let html = `<div class="sb-name sb-kopf" style="${ort(1, 1)}"></div>`;
-    for (let t = 0; t < takte; t++) {
-      html += `<div class="sb-taktnr${t % 2 ? ' getoent' : ''}" style="grid-area: 1 / ${sp(t * proTakt)} / 2 / span ${proTakt}">${t + 1}</div>`;
-      if (t) html += `<div class="sb-trenner" style="grid-area: 1 / ${sp(t * proTakt) - 1} / ${zeilenGesamt + 1} / span 1"></div>`;
-    }
-    for (let z = Z - 1; z >= 0; z--) {
-      const zeile = 2 + (Z - 1 - z);
-      const grund = z % this.leiter().length === 0;
-      html += `<div class="sb-name${grund ? ' grund' : ''}" style="${ort(1, zeile)}">${this.zeilenName(z)}</div>`;
-      for (let s = 0; s < S; s++) {
-        const an = this.noten.has(`${s}:${z}`);
-        html += `<div class="sb-z ton ${klassen(s)}${grund ? ' grundzeile' : ''}${an ? ' an' : ''}" data-s="${s}" data-z="${z}" style="${ort(sp(s), zeile)}"></div>`;
-      }
-    }
-    this.SPUREN.forEach((spur, i) => {
-      const zeile = 2 + Z + i;
-      html += `<div class="sb-name drum${i === 0 ? ' erste' : ''}" title="${spur.name}" style="${ort(1, zeile)}"><svg viewBox="0 0 24 24" aria-hidden="true">${Schlagzeugseite.SPUR_ICON[spur.k]}</svg><span>${spur.name}</span></div>`;
-      for (let s = 0; s < S; s++) {
-        const an = this.drums.has(`${s}:${i}`);
-        html += `<div class="sb-z drum ${klassen(s)}${i === 0 ? ' erste' : ''}${an ? ' an' : ''}" data-s="${s}" data-d="${i}" style="${ort(sp(s), zeile)}"></div>`;
-      }
+    k.addEventListener('click', () => {
+      if (Vollbild.echt()) Vollbild.raus(); else { selbst = true; Vollbild.rein(); }
     });
-    html += '<div class="sb-lauf" hidden></div>';
-    const takt = `repeat(${proTakt}, minmax(20px, 1fr))`;
-    this.gitter.style.gridTemplateColumns = `var(--namen) ${Array.from({ length: takte }, () => takt).join(' 9px ')}`;
-    this.gitter.style.setProperty('--spalten', S);
-    this.gitter.style.setProperty('--takte', takte);
-    this.gitter.style.setProperty('--zeilen', Z);
-    this.gitter.innerHTML = html;
-    this.lauf = this.gitter.querySelector('.sb-lauf');
-    this.infoZeigen();
+    document.addEventListener('fullscreenchange', zeigen);
+    document.addEventListener('webkitfullscreenchange', zeigen);
+    App.beimAufraeumen(() => {
+      document.removeEventListener('fullscreenchange', zeigen);
+      document.removeEventListener('webkitfullscreenchange', zeigen);
+      if (selbst) Vollbild.raus();
+    });
+    zeigen();
   },
 
-  infoZeigen() {
-    const l = this.TONLEITERN[this.song.tonleiter].name;
-    this.el.querySelector('#sb-info').textContent =
-      `${this.song.takte} Takte · ${this.song.schlaege}/4 · ${this.GRUNDTOENE[this.song.grundton]}-${l}`;
+  /* Klang oder Schlagzeug durchschalten – Antippen nimmt den nächsten */
+  weiter(was) {
+    const liste = Object.keys(was === 'klang' ? Ton.KLAENGE : this.KITS);
+    this.vorher();
+    this.song[was] = liste[(liste.indexOf(this.song[was]) + 1) % liste.length];
+    this.sichern();
+    this.knoepfeZeigen();
+    Ton.audio();
+    if (was === 'klang') {
+      [0, 2, 4].forEach((z, n) => setTimeout(() => {
+        const aus = Ton.anschlag(this.midi(z), this.song.klang);
+        setTimeout(aus, 300);
+      }, n * 110));
+    } else {
+      const c = Ton.audio();
+      [2, 0, 1, 0].forEach((d, n) => Drums.spielen(this.spurKlang(d), c.currentTime + 0.02 + n * 0.16, 0.9));
+    }
   },
 
-  zelleSetzen(k, an) {
-    const d = k.dataset.d !== undefined;
-    const schl = `${k.dataset.s}:${d ? k.dataset.d : k.dataset.z}`;
-    const set = d ? this.drums : this.noten;
+  knoepfeZeigen() {
+    const $ = s => this.el.querySelector(s);
+    $('#sb-klang .sb-beschr').textContent = Ton.KLAENGE[this.song.klang];
+    $('#sb-kit .sb-beschr').textContent = this.KITS[this.song.kit].name;
+    $('#sb-tempo').value = this.song.bpm;
+    $('#sb-bpm').textContent = this.song.bpm;
+    $('#sb-zurueck').disabled = !this.verlauf.length;
+    $('#sb-titel-nr').textContent = this.nummer ? ` · Nr. ${this.nummer}` : '';
+  },
+
+  alles() {
+    this.knoepfeZeigen();
+    this.malen();
+    const offen = this.el.querySelector('#sb-blatt').hidden ? null : this.blattArt;
+    if (offen === 'einstellungen') this.panelZeichnen();
+    if (offen === 'speichern') this.speicherZeichnen();
+  },
+
+  /* Einstellungen und Speichern liegen auf einem Blatt über dem Raster */
+  blatt(art) {
+    this.blattArt = art;
+    const b = this.el.querySelector('#sb-blatt');
+    this.el.querySelector('#sb-blatt-titel').textContent = art === 'einstellungen' ? 'Einstellungen' : 'Speichern und öffnen';
+    const inhalt = this.el.querySelector('#sb-blatt-inhalt');
+    if (art === 'einstellungen') {
+      inhalt.innerHTML = `
+        <div class="sb-einstellungen" id="sb-panel"></div>
+        <div class="sb-schalter">
+          <label class="schalter"><input type="checkbox" role="switch" id="sb-namen"${this.namenAn ? ' checked' : ''}><span class="schalter-bahn"></span>Notennamen am Rand</label>
+          <label class="schalter"><input type="checkbox" role="switch" id="sb-metro"${this.metroAn ? ' checked' : ''}><span class="schalter-bahn"></span>Metronom beim Abspielen</label>
+        </div>`;
+      this.panelZeichnen();
+      inhalt.querySelector('#sb-namen').addEventListener('change', e => {
+        this.namenAn = e.target.checked;
+        try { localStorage.setItem(this.KEY + '-namen', this.namenAn ? 'an' : 'aus'); } catch { /* egal */ }
+        this.malen();
+      });
+      inhalt.querySelector('#sb-metro').addEventListener('change', e => { this.metroAn = e.target.checked; });
+    } else {
+      inhalt.innerHTML = '<div class="sb-speicher" id="sb-speicher"></div>';
+      this.speicherZeichnen();
+    }
+    b.hidden = false;
+  },
+  blattZu() { this.el.querySelector('#sb-blatt').hidden = true; this.blattArt = null; },
+
+  /* Kurze Meldung über dem Raster */
+  toast(text, fehler = false) {
+    const t = this.el.querySelector('#sb-toast');
+    if (!t) return;
+    t.textContent = text;
+    t.classList.toggle('fehler', fehler);
+    t.hidden = false;
+    clearTimeout(this.toastUhr);
+    this.toastUhr = setTimeout(() => { t.hidden = true; }, 3500);
+  },
+
+  /* ---------- Raster auf einer Zeichenfläche ----------
+     Es passen so viele Takte nebeneinander, dass die Kästchen gut zu treffen sind
+     (beim iPad quer meist vier); der Rest liegt rechts daneben und wird mit dem
+     Schieber unten erreicht. Die Höhe teilen sich alle Tonzeilen gleichmäßig,
+     darunter die drei Schlagzeug-Zeilen. */
+  mass() {
+    const W = this.buehne.clientWidth, H = this.buehne.clientHeight;
+    const { teile, schlaege, takte } = this.song;
+    const proTakt = teile * schlaege, S = this.schritte(), Z = this.zeilen();
+    const namen = this.namenAn ? (W < 600 ? 30 : 40) : 0;
+    const breite = W - namen;
+    let n = Math.max(1, Math.min(takte, Math.floor(breite / (proTakt * 30))));
+    while (n < takte && breite / (n * proTakt) > 64) n++;
+    const spalte = breite / (n * proTakt);
+    const trommel = Math.max(26, Math.min(54, H * 0.075));
+    const luecke = 8;
+    const tonH = Math.max(40, H - 3 * trommel - luecke);
+    const maxX = Math.max(0, S * spalte - breite);
+    this.x = Math.max(0, Math.min(maxX, this.x));
+    this.m = { W, H, namen, breite, spalte, proTakt, S, Z, zeile: tonH / Z, tonH, trommel, luecke, maxX, sicht: n };
+    return this.m;
+  },
+
+  farbe(z, hell) {
+    const l = this.leiter().length, stufe = z % l;
+    const ton = (this.song.grundton + this.leiter()[stufe]) % 12;
+    // Jeder Ton (c, d, e …) hat immer dieselbe Farbe, egal in welcher Tonart
+    const hue = (ton * 30 + 350) % 360;
+    return `hsl(${hue} ${hell ? 72 : 78}% ${hell ? 52 : 62}%)`;
+  },
+
+  malen() {
+    if (!this.canvas?.isConnected) return;
+    const m = this.mass();
+    const c = this.canvas, dpr = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(m.W * dpr) || c.height !== Math.round(m.H * dpr)) {
+      c.width = Math.round(m.W * dpr);
+      c.height = Math.round(m.H * dpr);
+    }
+    const g = c.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const css = getComputedStyle(this.app);
+    const v = n => css.getPropertyValue(n).trim();
+    const hell = document.documentElement.dataset.theme === 'light';
+    const F = { feld: v('--sb-feld'), feld2: v('--sb-feld2'), linie: v('--sb-linie'), schlag: v('--sb-schlag'),
+      takt: v('--sb-takt'), oktave: v('--sb-oktave'), punkt: v('--sb-punkt'), akzent: v('--accent'), text: v('--muted'), lauf: v('--sb-lauf') };
+    const { namen, spalte, proTakt, S, Z, zeile, tonH, trommel, luecke } = m;
+    const teile = this.song.teile;
+    const y0 = tonH + luecke;
+    g.clearRect(0, 0, m.W, m.H);
+
+    const von = Math.max(0, Math.floor(this.x / spalte)), bis = Math.min(S, Math.ceil((this.x + m.breite) / spalte));
+    const sx = s => namen + s * spalte - this.x;
+    g.save();
+    g.beginPath();
+    g.rect(namen, 0, m.breite, m.H);
+    g.clip();
+    // Hintergrund: jeder zweite Takt leicht getönt
+    for (let s = von; s < bis; s++) {
+      g.fillStyle = Math.floor(s / proTakt) % 2 ? F.feld2 : F.feld;
+      g.fillRect(sx(s), 0, spalte + 0.5, tonH);
+      g.fillRect(sx(s), y0, spalte + 0.5, 3 * trommel);
+    }
+    // Laufender Schritt
+    if (this.laeuft && this.aktuell !== null) {
+      g.fillStyle = F.lauf;
+      g.fillRect(sx(this.aktuell), 0, spalte, m.H);
+    }
+    // Waagrechte Linien, über jedem Grundton (Oktave) kräftiger
+    for (let r = 1; r < Z; r++) {
+      const z = Z - r;               // Zeile darunter ist z - 1 … die Linie liegt über Zeile z-1
+      const y = Math.round(r * zeile) + 0.5;
+      g.strokeStyle = (z - 1) % this.leiter().length === this.leiter().length - 1 ? F.oktave : F.linie;
+      g.lineWidth = (z - 1) % this.leiter().length === this.leiter().length - 1 ? 2 : 1;
+      g.beginPath(); g.moveTo(namen, y); g.lineTo(m.W, y); g.stroke();
+    }
+    // Senkrechte Linien: Teil dünn, Schlag mittel, Takt kräftig
+    for (let s = von; s <= bis; s++) {
+      const x = Math.round(sx(s)) + 0.5;
+      const takt = s % proTakt === 0, schlag = s % teile === 0;
+      g.strokeStyle = takt ? F.takt : schlag ? F.schlag : F.linie;
+      g.lineWidth = takt ? 2 : 1;
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, tonH); g.moveTo(x, y0); g.lineTo(x, y0 + 3 * trommel); g.stroke();
+    }
+    // Töne
+    for (const k of this.noten) {
+      const [s, z] = k.split(':').map(Number);
+      if (s < von || s >= bis) continue;
+      const klingt = this.laeuft && s === this.aktuell;
+      const y = (Z - 1 - z) * zeile;
+      g.fillStyle = this.farbe(z, hell);
+      const e = klingt ? -1.5 : 0.5;
+      g.fillRect(sx(s) + e, y + e, spalte - 2 * e, zeile - 2 * e);
+      if (klingt) { g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(sx(s) + e, y + e, spalte - 2 * e, zeile - 2 * e); }
+    }
+    // Schlagzeug: leer ein Punkt (auf dem Schlag größer), gesetzt eine Form
+    for (let d = 0; d < 3; d++) {
+      const cy = y0 + (d + 0.5) * trommel;
+      for (let s = von; s < bis; s++) {
+        const cx = sx(s) + spalte / 2;
+        const an = this.drums.has(`${s}:${d}`);
+        if (!an) {
+          g.fillStyle = F.punkt;
+          g.beginPath(); g.arc(cx, cy, s % teile === 0 ? 3.2 : 2, 0, 7); g.fill();
+          continue;
+        }
+        const r = Math.min(spalte, trommel) * (this.laeuft && s === this.aktuell ? 0.42 : 0.34);
+        g.fillStyle = F.akzent;
+        g.beginPath();
+        if (d === 0) { g.moveTo(cx, cy - r); g.lineTo(cx + r * 1.05, cy + r * 0.8); g.lineTo(cx - r * 1.05, cy + r * 0.8); g.closePath(); }
+        else if (d === 1) { g.moveTo(cx, cy - r * 1.1); g.lineTo(cx + r * 1.1, cy); g.lineTo(cx, cy + r * 1.1); g.lineTo(cx - r * 1.1, cy); g.closePath(); }
+        else g.arc(cx, cy, r, 0, 7);
+        g.fill();
+      }
+    }
+    g.restore();
+    // Trennlinie zwischen Tönen und Schlagzeug
+    g.fillStyle = F.takt;
+    g.fillRect(namen, tonH + luecke / 2 - 1, m.breite, 2);
+    // Notennamen am Rand
+    if (namen) {
+      g.fillStyle = F.feld;
+      g.fillRect(0, 0, namen, m.H);
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const gr = Math.min(13, Math.max(9, zeile * 0.48));
+      for (let z = 0; z < Z; z++) {
+        const grund = z % this.leiter().length === 0;
+        g.font = `${grund ? 800 : 600} ${gr}px system-ui, sans-serif`;
+        g.fillStyle = grund ? F.akzent : F.text;
+        g.fillText(this.zeilenName(z), namen / 2, (Z - 1 - z + 0.5) * zeile);
+      }
+      g.font = `700 ${Math.min(11, gr)}px system-ui, sans-serif`;
+      g.fillStyle = F.text;
+      this.KITS[this.song.kit].kurz.forEach((k, d) => g.fillText(k, namen / 2, y0 + (d + 0.5) * trommel));
+    }
+    this.schieberZeigen();
+  },
+
+  neuMalen() {
+    if (this.malt) return;
+    this.malt = requestAnimationFrame(() => { this.malt = null; this.malen(); });
+  },
+
+  /* Welches Kästchen liegt unter dem Finger? */
+  zelleBei(e) {
+    const m = this.m, r = this.canvas.getBoundingClientRect();
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    if (px < m.namen || px >= m.W || py < 0 || py >= m.H) return null;
+    const s = Math.floor((px - m.namen + this.x) / m.spalte);
+    if (s < 0 || s >= m.S) return null;
+    if (py < m.tonH) return { art: 'ton', s, z: m.Z - 1 - Math.min(m.Z - 1, Math.floor(py / m.zeile)) };
+    if (py < m.tonH + m.luecke) return null;
+    return { art: 'drum', s, z: Math.min(2, Math.floor((py - m.tonH - m.luecke) / m.trommel)) };
+  },
+
+  zelleSetzen(k, an, still = false) {
+    const set = k.art === 'drum' ? this.drums : this.noten;
+    const schl = `${k.s}:${k.z}`;
     if (set.has(schl) === an) return false;
     if (an) set.add(schl); else set.delete(schl);
-    k.classList.toggle('an', an);
-    if (an && !this.laeuft) {
+    if (an && !this.laeuft && !still) {
       // Zum Hören kurz anspielen
-      if (d) Drums.spielen(this.SPUREN[k.dataset.d].k, undefined, 0.8);
-      else { const aus = Ton.anschlag(this.midi(Number(k.dataset.z)), this.song.klang); setTimeout(aus, 250); }
+      if (k.art === 'drum') Drums.spielen(this.spurKlang(k.z), undefined, 0.8);
+      else { const aus = Ton.anschlag(this.midi(k.z), this.song.klang); setTimeout(aus, 250); }
     }
+    this.neuMalen();
     return true;
   },
 
-  /* Antippen schaltet um; beim Ziehen wird wie beim ersten Kästchen weitergemalt
-     (gesetzt oder gelöscht) – in der Tonzeile oder Drumspur, in der man begonnen hat */
+  /* Antippen schaltet um; Finger draufhalten und ziehen malt weiter (setzt oder
+     löscht wie beim ersten Kästchen) – bei Tönen oder beim Schlagzeug, wo man begann.
+     Nur ein Finger zählt; Zoomen und Scrollen gibt es auf dem Raster nicht. */
   malenEinrichten() {
-    const g = this.gitter;
-    let modus = null, art = null, geaendert = false;
-    const zelle = e => {
-      const k = document.elementFromPoint(e.clientX, e.clientY)?.closest('.sb-z');
-      return k && g.contains(k) ? k : null;
-    };
-    g.addEventListener('pointerdown', e => {
-      const k = e.target.closest('.sb-z');
+    const c = this.canvas;
+    let modus = null, art = null, geaendert = false, zeiger = null, letzte = null;
+    c.addEventListener('pointerdown', e => {
+      if (zeiger !== null) return;
+      const k = this.zelleBei(e);
       if (!k) return;
       e.preventDefault();
       Ton.audio();
-      try { g.setPointerCapture(e.pointerId); } catch { /* egal */ }
-      art = k.dataset.d !== undefined ? 'drum' : 'ton';
-      const set = art === 'drum' ? this.drums : this.noten;
-      modus = !set.has(`${k.dataset.s}:${art === 'drum' ? k.dataset.d : k.dataset.z}`);
+      zeiger = e.pointerId;
+      try { c.setPointerCapture(e.pointerId); } catch { /* egal */ }
+      art = k.art;
+      letzte = k;
+      modus = !(art === 'drum' ? this.drums : this.noten).has(`${k.s}:${k.z}`);
       this.vorher();
       geaendert = this.zelleSetzen(k, modus);
     });
-    g.addEventListener('pointermove', e => {
-      if (modus === null) return;
-      const k = zelle(e);
-      if (!k || (k.dataset.d !== undefined ? 'drum' : 'ton') !== art) return;
-      if (this.zelleSetzen(k, modus)) geaendert = true;
+    // Schnelles Ziehen springt über Kästchen – die dazwischen werden mitgemalt
+    c.addEventListener('pointermove', e => {
+      if (e.pointerId !== zeiger) return;
+      const k = this.zelleBei(e);
+      if (!k || k.art !== art) return;
+      const n = Math.max(Math.abs(k.s - letzte.s), Math.abs(k.z - letzte.z));
+      for (let i = 1; i <= n; i++) {
+        const z = { art, s: Math.round(letzte.s + (k.s - letzte.s) * i / n), z: Math.round(letzte.z + (k.z - letzte.z) * i / n) };
+        if (this.zelleSetzen(z, modus, i < n)) geaendert = true;
+      }
+      letzte = k;
     });
-    const ende = () => {
-      if (modus === null) return;
-      modus = null;
+    const ende = e => {
+      if (e.pointerId !== zeiger) return;
+      zeiger = null;
       if (geaendert) this.sichern(); else this.verlauf.pop();
       this.el.querySelector('#sb-zurueck').disabled = !this.verlauf.length;
     };
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => g.addEventListener(n, ende));
-    g.addEventListener('contextmenu', e => e.preventDefault());
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => c.addEventListener(n, ende));
+    c.addEventListener('contextmenu', e => e.preventDefault());
+    // Am Rechner: mit dem Trackpad oder Mausrad seitlich blättern
+    c.addEventListener('wheel', e => {
+      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!this.m.maxX) return;
+      e.preventDefault();
+      this.schieben(this.x + d);
+    }, { passive: false });
+  },
+
+  /* ---------- Schieber unter dem Raster ---------- */
+  schieben(x) {
+    this.x = Math.max(0, Math.min(this.m.maxX, x));
+    this.neuMalen();
+  },
+
+  schieberZeigen() {
+    const sch = this.el.querySelector('#sb-schieber'), d = this.el.querySelector('#sb-daumen');
+    const m = this.m, B = sch.clientWidth;
+    const gesamt = m.S * m.spalte;
+    const w = m.maxX ? Math.max(48, B * m.breite / gesamt) : B;
+    d.style.width = `${w}px`;
+    d.style.transform = `translateX(${m.maxX ? (B - w) * this.x / m.maxX : 0}px)`;
+    sch.classList.toggle('voll', !m.maxX);
+  },
+
+  schieberEinrichten() {
+    const sch = this.el.querySelector('#sb-schieber'), d = this.el.querySelector('#sb-daumen');
+    let start = null;
+    sch.addEventListener('pointerdown', e => {
+      if (!this.m.maxX) return;
+      e.preventDefault();
+      try { sch.setPointerCapture(e.pointerId); } catch { /* egal */ }
+      const r = d.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right) {
+        // Neben den Daumen getippt: dorthin springen (Mitte des Daumens unter den Finger)
+        const B = sch.clientWidth, w = r.width, links = sch.getBoundingClientRect().left;
+        this.schieben((e.clientX - links - w / 2) / (B - w) * this.m.maxX);
+      }
+      start = { x: e.clientX, wert: this.x };
+    });
+    sch.addEventListener('pointermove', e => {
+      if (!start) return;
+      const B = sch.clientWidth, w = d.offsetWidth;
+      this.schieben(start.wert + (e.clientX - start.x) / Math.max(1, B - w) * this.m.maxX);
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => sch.addEventListener(n, () => { start = null; }));
   },
 
   /* ---------- Abspielen ---------- */
@@ -367,20 +639,21 @@ const Songbaukasten = {
     this.laeuft = true;
     this.uhr.starten();
     const k = this.el.querySelector('#sb-play');
-    k.innerHTML = `<span class="sb-stopp-zeichen">■</span><span>Stopp</span>`;
-    k.setAttribute('aria-pressed', 'true');
+    k.innerHTML = Icons.raw('stop');
+    k.setAttribute('aria-label', 'Anhalten');
+    k.classList.add('laeuft');
   },
 
   stoppen() {
     this.laeuft = false;
     this.uhr.stoppen();
+    this.aktuell = null;
     const k = this.el.querySelector('#sb-play');
     if (!k) return;
-    k.innerHTML = `${Icons.raw('play')}<span>Abspielen</span>`;
-    k.setAttribute('aria-pressed', 'false');
-    if (this.lauf) this.lauf.hidden = true;
-    this.gitter.querySelectorAll('.klingt').forEach(z => z.classList.remove('klingt'));
-    this.leiste.schlag(-1);
+    k.innerHTML = Icons.raw('play');
+    k.setAttribute('aria-label', 'Abspielen');
+    k.classList.remove('laeuft');
+    this.malen();
   },
 
   schritt(i, zeit) {
@@ -390,25 +663,25 @@ const Songbaukasten = {
       const aus = Ton.anschlag(this.midi(z), this.song.klang, zeit);
       aus(zeit + dauer * 0.92);
     }
-    this.SPUREN.forEach((sp, d) => { if (this.drums.has(`${i}:${d}`)) Drums.spielen(sp.k, zeit, 0.9); });
+    for (let d = 0; d < 3; d++) {
+      if (!this.drums.has(`${i}:${d}`)) continue;
+      const k = this.spurKlang(d);
+      // Becken auf dem Schlag etwas lauter als dazwischen
+      Drums.spielen(k, zeit, Drums.FAMILIE[k] === 'becken' && i % this.song.teile ? 0.7 : 0.9);
+    }
     if (this.metroAn && i % this.song.teile === 0) Metronom.klick(zeit, i % (this.song.teile * this.song.schlaege) === 0);
   },
 
-  /* Ein senkrechter Balken läuft mit; was gerade klingt, leuchtet auf */
+  /* Der klingende Schritt leuchtet; läuft er aus dem Bild, blättert das Raster weiter */
   laufmarke(i) {
-    if (!this.lauf) return;
-    const c = this.gitter.querySelector(`.sb-z[data-s="${i}"]`);
-    if (!c) return;
-    this.lauf.hidden = false;
-    this.lauf.style.left = `${c.offsetLeft}px`;
-    this.lauf.style.width = `${c.offsetWidth}px`;
-    this.gitter.querySelectorAll('.klingt').forEach(z => z.classList.remove('klingt'));
-    this.gitter.querySelectorAll(`.sb-z.an[data-s="${i}"]`).forEach(z => z.classList.add('klingt'));
-    if (i % this.song.teile === 0) this.leiste.schlag((i / this.song.teile) % 4);
-    // Bei langen Songs mitscrollen
-    const r = this.el.querySelector('.sb-rahmen');
-    const x = c.offsetLeft;
-    if (x < r.scrollLeft + 60 || x > r.scrollLeft + r.clientWidth - 60) r.scrollLeft = Math.max(0, x - 80);
+    this.aktuell = i;
+    const m = this.m;
+    const x = i * m.spalte;
+    if (x < this.x - 1 || x + m.spalte > this.x + m.breite + 1) {
+      const seite = m.sicht * m.proTakt * m.spalte;
+      this.x = Math.min(m.maxX, Math.floor(x / seite) * seite);
+    }
+    this.neuMalen();
   },
 
   /* ---------- Einstellungen ---------- */
@@ -422,7 +695,9 @@ const Songbaukasten = {
         </div></div>`;
     const auswahl = (id, werte, wert) => `<select data-wahl="${id}">${Object.entries(werte).map(([k, n]) =>
       `<option value="${k}"${String(k) === String(wert) ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
-    this.el.querySelector('#sb-panel').innerHTML = `
+    const p = this.el.querySelector('#sb-panel');
+    if (!p) return;
+    p.innerHTML = `
       <div class="sb-spalte">
         ${zahl('takte', 'Länge', `${s.takte} ${s.takte === 1 ? 'Takt' : 'Takte'}`)}
         ${zahl('schlaege', 'Schläge pro Takt', s.schlaege)}
@@ -435,7 +710,6 @@ const Songbaukasten = {
           Object.fromEntries(this.GRUNDTOENE.map((n, i) => [i, n])), s.grundton)}</div></div>
         ${zahl('umfang', 'Umfang', `${s.umfang} ${s.umfang === 1 ? 'Oktave' : 'Oktaven'}`)}
       </div>`;
-    const p = this.el.querySelector('#sb-panel');
     p.querySelectorAll('[data-feld]').forEach(b => b.addEventListener('click', () => {
       const f = b.dataset.feld, [a, z] = this.GRENZEN[f];
       const neu = Math.max(a, Math.min(z, s[f] + Number(b.dataset.d)));
@@ -487,7 +761,8 @@ const Songbaukasten = {
 
   speicherZeichnen(meldung = '') {
     const ort = this.el.querySelector('#sb-speicher');
-    if (!Konto.verfuegbar()) { ort.innerHTML = ''; return; }
+    if (!ort) return;
+    if (!Konto.verfuegbar()) { ort.innerHTML = '<p class="hint">Speichern geht hier nicht – dieser Browser merkt sich deinen Song aber.</p>'; return; }
     if (!Konto.angemeldet()) {
       ort.innerHTML = `<p class="hint">${Icons.raw('user')}Zum Speichern und Öffnen über eine Nummer bitte
         <a href="#/anmelden">anmelden</a>. Bis dahin merkt sich dieser Browser deinen Song.</p>`;
@@ -503,7 +778,6 @@ const Songbaukasten = {
           <div class="sb-knoepfe">
             <button type="button" class="primary" id="sb-speichern">${Icons.raw('check')}${eigen ? `Nr. ${this.nummer} speichern` : 'Speichern'}</button>
             ${this.nummer ? '<button type="button" id="sb-neu-speichern">Als neuer Song</button>' : ''}
-            <button type="button" id="sb-neuer">Neuer leerer Song</button>
           </div>
         </div>
         <div class="sb-speicher-teil">
@@ -518,17 +792,6 @@ const Songbaukasten = {
       <div class="sb-meldung" aria-live="polite">${meldung}</div>`;
     ort.querySelector('#sb-speichern').addEventListener('click', () => this.speichern(!eigen));
     ort.querySelector('#sb-neu-speichern')?.addEventListener('click', () => this.speichern(true));
-    ort.querySelector('#sb-neuer').addEventListener('click', () => {
-      if ((this.noten.size || this.drums.size) && !confirm('Neuen leeren Song beginnen? Ist der jetzige gespeichert?')) return;
-      this.vorher();
-      const s = this.neu();
-      ['takte', 'schlaege', 'teile', 'tonleiter', 'grundton', 'lage', 'umfang', 'bpm', 'klang'].forEach(k => { s[k] = this.song[k]; });
-      this.setzen(s);
-      this.nummer = null;
-      this.eigener = false;
-      this.sichern();
-      this.alles();
-    });
     ort.querySelector('#sb-oeffnen-form').addEventListener('submit', e => {
       e.preventDefault();
       const n = ort.querySelector('#sb-nr').value.replace(/\D/g, '');
@@ -538,9 +801,11 @@ const Songbaukasten = {
     ort.querySelectorAll('[data-nr]').forEach(b => b.addEventListener('click', () => this.oeffnen(b.dataset.nr)));
   },
 
+  /* Meldung im offenen Speichern-Blatt, sonst kurz über dem Raster */
   meldung(text, fehler = false) {
     const m = this.el.querySelector('.sb-meldung');
     if (m) { m.innerHTML = text; m.classList.toggle('fehler', fehler); }
+    else this.toast(text.replace(/<[^>]+>/g, ''), fehler);
   },
 
   async speichern(alsNeu) {
@@ -555,6 +820,7 @@ const Songbaukasten = {
       this.eigener = true;
       this.meineMerken(this.nummer);
       this.sichern();
+      this.knoepfeZeigen();
       this.speicherZeichnen(`<div class="sb-nummer"><span>Gespeichert! Deine Nummer:</span><b>${this.nummer}</b>
         <span class="hint">Schreib sie dir auf – damit öffnest du den Song wieder, auch auf einem anderen Gerät.</span></div>`);
     } catch (e) {
@@ -574,12 +840,11 @@ const Songbaukasten = {
       this.nummer = String(d.nummer);
       this.eigener = !!d.eigener;
       if (this.eigener) this.meineMerken(this.nummer);
+      this.x = 0;
       this.sichern();
-      this.leiste.setzen(this.song.bpm);
-      this.el.querySelector('#sb-klang').value = this.song.klang;
-      this.gitterZeichnen();
-      if (!this.el.querySelector('#sb-panel').hidden) this.panelZeichnen();
-      this.speicherZeichnen(this.eigener ? `Dein Song ${n} ist offen.`
+      this.blattZu();
+      this.alles();
+      this.toast(this.eigener ? `Dein Song ${n} ist offen.`
         : `Song ${n} ist offen. Wenn du etwas änderst, speichere ihn als deinen eigenen Song.`);
       if (location.hash !== '#/songbaukasten') history.replaceState(null, '', '#/songbaukasten');
     } catch (e) {

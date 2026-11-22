@@ -941,11 +941,19 @@ body.hat-vollbild { overflow: hidden; }
 .klavier-seite.vollbild .klaviatur { flex: 1 1 auto; height: auto; min-height: 180px; margin-bottom: calc(-1 * max(1rem, env(safe-area-inset-bottom))); border-radius: 0; }
 /* Schlagzeug: Inhalt mittig, Drumset und Pads so groß, wie die Höhe erlaubt */
 .sz-seite.vollbild .sz-inhalt { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
-.sz-seite.vollbild .sz-set-rahmen { width: min(100%, calc((100vh - 230px) * 1.43)); max-width: none; }
-.sz-seite.vollbild .sz-pads { width: min(100%, calc((100vh - 300px) * 3.2)); max-width: none; }
+.sz-seite.vollbild .sz-set-rahmen { width: min(100%, calc((100dvh - 260px) * 1.43)); max-width: none; }
+.sz-seite.vollbild .sz-pads { width: min(100%, calc((100dvh - 300px) * 3.2)); max-width: none; }
 .sz-seite.vollbild .sz-gitter { --zeile: clamp(30px, 6.4vh, 64px); }
 .sz-seite.vollbild .sz-hinweis { display: none; }
 @media (max-width: 520px) { .vollbild-knopf span { display: none; } .vollbild-knopf .icon { margin-right: 0; } }
+/* Klavier und Schlagzeug als festes Bild: Zurück-Pfeil im Kopf, nichts scrollt */
+body.hat-vollbild { overscroll-behavior: none; }
+body.hat-vollbild .fusszeile { display: none; }
+.card.vollbild { touch-action: manipulation; }
+.karte-zurueck { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin: 0 .3rem 0 -.5rem;
+  border-radius: 50%; color: var(--text); text-decoration: none; vertical-align: middle; }
+.karte-zurueck:hover { background: var(--hover); }
+.karte-zurueck .icon { width: 24px; height: 24px; margin: 0 !important; }
 /* Laufmarke und klingende Note beim Vorspielen */
 .pz-kopfzeiger { filter: drop-shadow(0 0 4px var(--accent)); }
 .pz-n { transition: color .08s; }
@@ -1048,7 +1056,7 @@ body.hat-vollbild { overflow: hidden; }
 /* Pads: 3 oder 6 */
 .sz-pads-kopf { display: flex; justify-content: center; margin-bottom: .9rem; }
 .sz-pads.sechs { row-gap: clamp(.8rem, 2.4vw, 1.6rem); max-width: 720px; }
-.sz-seite.vollbild .sz-pads.sechs { width: min(100%, calc((100vh - 330px) * 1.45)); }
+.sz-seite.vollbild .sz-pads.sechs { width: min(100%, calc((100dvh - 330px) * 1.45)); }
 .sz-pads.sechs { max-width: 640px; }
 .sz-pads.sechs .sz-pad { aspect-ratio: 5 / 4; }
 .sz-pads.sechs .sz-pad-feld { gap: .4rem; }
@@ -1073,55 +1081,98 @@ body.hat-vollbild { overflow: hidden; }
 .pz-gespeichert { display: flex; align-items: center; justify-content: center; gap: .35rem; margin: -.4rem 0 1rem; }
 .pz-gespeichert .icon { color: var(--green); margin: 0; }
 
-/* ---------- Songbaukasten ---------- */
-.sb-steuer { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-bottom: .8rem; }
-.sb-play { min-height: 2.8rem; min-width: 8.5rem; font-size: 1.05rem; }
-.sb-stopp-zeichen { margin-right: .4rem; }
-.sb-metro { flex: 1 1 320px; }
-.sb-metro .metro-leiste { margin: 0; }
-/* Raster wie der Drumcomputer: dunkler Rahmen, gleiche abgerundete Kästchen in der
-   Akzentfarbe; Takte mit Abstand, der erste Teil jedes Schlags etwas heller */
-.sb-rahmen { overflow-x: auto; padding: .6rem; border-radius: var(--radius-sm); background: color-mix(in srgb, #0b0918 55%, transparent); }
-:root[data-theme="light"] .sb-rahmen { background: color-mix(in srgb, #2a2148 8%, transparent); }
-.sb-gitter {
-  --namen: 4.6rem; --hoehe: clamp(15px, 2.5vh, 24px); --leer: rgba(255, 255, 255, .06); --leer-schlag: rgba(255, 255, 255, .11);
-  position: relative; display: grid; gap: 2px; user-select: none; -webkit-user-select: none; touch-action: none;
-  min-width: calc(var(--namen) + var(--spalten) * 22px + (var(--takte) - 1) * 11px);
+/* ---------- Songbaukasten: ganze Seite wie ein Song-Maker, nichts scrollt ---------- */
+body.sb-offen { overflow: hidden; overscroll-behavior: none; }
+body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
+.sb-app {
+  --sb-feld: #1b1636; --sb-feld2: #241d46; --sb-linie: rgba(255, 255, 255, .1); --sb-schlag: rgba(255, 255, 255, .2);
+  --sb-takt: color-mix(in srgb, var(--accent) 65%, transparent); --sb-oktave: color-mix(in srgb, var(--accent) 45%, transparent);
+  --sb-punkt: rgba(255, 255, 255, .28); --sb-lauf: color-mix(in srgb, var(--accent) 20%, transparent);
+  position: fixed; inset: 0; z-index: 900; display: flex; flex-direction: column;
+  background: var(--bg); color: var(--text);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none;
 }
-:root[data-theme="light"] .sb-gitter { --leer: rgba(42, 33, 72, .07); --leer-schlag: rgba(42, 33, 72, .13); }
-.sb-name { position: sticky; left: 0; z-index: 2; color: var(--muted); font-size: .66rem; font-weight: 600;
-  display: flex; align-items: center; justify-content: flex-end; gap: .3rem; padding-right: .45rem; height: var(--hoehe);
-  background: color-mix(in srgb, var(--bg) 80%, transparent); }
-:root[data-theme="light"] .sb-name { background: color-mix(in srgb, #f4f1fb 92%, transparent); }
-.sb-name.grund { color: var(--text); font-weight: 800; }
-.sb-gitter.ohne-namen .sb-name:not(.drum) { color: transparent; }
-.sb-z { height: var(--hoehe); border-radius: 4px; background: var(--leer); cursor: pointer; transition: background .08s, transform .08s; }
-.sb-z.schlag { background: var(--leer-schlag); }
-/* Takte: eigene schmale Spalte mit einem Strich in der Akzentfarbe, jeder zweite Takt
-   leicht getönt, oben die Taktnummer */
-.sb-trenner { justify-self: center; width: 2px; border-radius: 1px; background: color-mix(in srgb, var(--accent) 70%, transparent); pointer-events: none; }
-.sb-z.getoent:not(.an) { background: color-mix(in srgb, var(--accent) 7%, var(--leer)); }
-.sb-z.getoent.schlag:not(.an) { background: color-mix(in srgb, var(--accent) 9%, var(--leer-schlag)); }
-.sb-taktnr { height: 1.3rem; display: flex; align-items: center; padding-left: .3rem; font-size: .72rem; font-weight: 800;
-  color: var(--accent); border-radius: 4px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.sb-taktnr.getoent { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-.sb-name.sb-kopf { height: 1.3rem; }
-.sb-z.grundzeile:not(.an) { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 35%, transparent); }
-.sb-z:hover:not(.an) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
-.sb-z.an { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 45%, transparent); }
-.sb-z.an.klingt { transform: scale(1.12); filter: brightness(1.2); }
-/* Drumspuren: etwas höher, mit Abstand zum Tonraster */
-.sb-name.drum, .sb-z.drum { height: calc(var(--hoehe) * 1.5); }
-.sb-name.drum.erste, .sb-z.drum.erste { margin-top: .5rem; }
-.sb-name.drum { color: var(--text); font-size: .68rem; justify-content: flex-start; padding-left: .2rem; }
-.sb-name.drum svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: var(--accent); }
-.sb-name.drum span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sb-lauf { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: color-mix(in srgb, var(--accent) 16%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); pointer-events: none; z-index: 1; }
-.sb-werkzeuge { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .8rem; }
-.sb-info { margin-left: auto; }
+:root[data-theme="light"] .sb-app {
+  --sb-feld: #ffffff; --sb-feld2: #f3f1f8; --sb-linie: rgba(42, 33, 72, .09); --sb-schlag: rgba(42, 33, 72, .2);
+  --sb-punkt: rgba(42, 33, 72, .3); background: #fbfaff;
+}
+.sb-kopf { flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .5rem; height: 56px; padding: 0 12px; }
+.sb-kopf-seite { display: flex; align-items: center; gap: .4rem; }
+.sb-kopf-seite.rechts { justify-content: flex-end; }
+.sb-titel { margin: 0; font-size: 1.05rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 800; white-space: nowrap; }
+.sb-titel span { color: var(--accent); letter-spacing: .05em; text-transform: none; }
+.sb-rund { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0;
+  border-radius: 50%; border: 0; background: transparent; color: var(--text); text-decoration: none; }
+.sb-rund .icon { width: 24px; height: 24px; margin: 0; }
+.sb-rund:hover { background: var(--hover); }
+.sb-text { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; border: 0; background: transparent; color: var(--text); font-weight: 600; }
+.sb-text .icon { color: var(--accent); margin: 0; }
+.sb-buehne { position: relative; flex: 1 1 auto; min-height: 0; }
+.sb-buehne canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer; }
+.sb-toast { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px);
+  padding: .55rem 1rem; border-radius: 999px; background: var(--card-solid); border: 1px solid var(--accent);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .3); font-weight: 600; text-align: center; pointer-events: none; }
+:root[data-theme="light"] .sb-toast { background: #fff; }
+.sb-toast.fehler { border-color: var(--danger); color: var(--danger); }
+/* Schieber: so breit wie die Seite, der Daumen zeigt den sichtbaren Teil */
+.sb-schieber { flex: none; position: relative; height: 22px; margin: 10px 14px 4px; border-radius: 999px; background: var(--track); touch-action: none; cursor: pointer; }
+.sb-daumen { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--accent); }
+.sb-schieber.voll { cursor: default; }
+.sb-schieber.voll .sb-daumen { opacity: .35; }
+/* Leiste unten */
+.sb-fuss { flex: none; display: flex; align-items: center; gap: clamp(.4rem, 1.6vw, 1.4rem); padding: 6px 14px 8px; touch-action: manipulation; }
+.sb-play { flex: none; width: 76px; height: 76px; padding: 0; border-radius: 50%; border: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 45%, transparent); }
+.sb-app .sb-play:hover { background: var(--accent); filter: brightness(1.07); }
+.sb-app .sb-werkzeug:hover, .sb-app .sb-text:hover { background: transparent; }
+.sb-werkzeug:not(:disabled):hover .sb-kreis { background: var(--hover); }
+.sb-play .icon { width: 34px; height: 34px; margin: 0 0 0 4px; fill: currentColor; }
+.sb-play.laeuft .icon { margin: 0; }
+.sb-werkzeug { flex: none; display: inline-flex; flex-direction: column; align-items: center; gap: .25rem; padding: 0; min-width: 64px;
+  border: 0; background: transparent; color: var(--muted); font-size: .8rem; font-weight: 600; }
+.sb-werkzeug:disabled { opacity: .4; }
+.sb-kreis { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--panel); color: var(--accent); }
+.sb-kreis .icon { width: 26px; height: 26px; margin: 0; }
+.sb-werkzeug:not(:disabled):active .sb-kreis { transform: scale(.93); }
+.sb-beschr { white-space: nowrap; max-width: 6.5rem; overflow: hidden; text-overflow: ellipsis; }
+.sb-tempo { flex: 1 1 160px; display: flex; align-items: center; gap: .7rem; min-width: 0; padding: 0 .4rem; color: var(--muted); font-weight: 600; }
+.sb-tempo input { flex: 1 1 auto; min-width: 60px; accent-color: var(--accent); touch-action: none; }
+.sb-tempo b { color: var(--accent); min-width: 2.2rem; text-align: right; }
+.sb-fuss-rechts { display: flex; gap: clamp(.2rem, 1vw, .9rem); margin-left: auto; }
+@media (max-width: 760px) {
+  .sb-beschr, .sb-tempo > span { display: none; }
+  .sb-werkzeug { min-width: 0; }
+  .sb-kreis { width: 44px; height: 44px; }
+  .sb-play { width: 58px; height: 58px; }
+  .sb-text span { display: none; }
+  .sb-titel { font-size: .85rem; letter-spacing: .08em; }
+}
+@media (max-width: 520px) {
+  .sb-fuss { flex-wrap: wrap; row-gap: 4px; }
+  .sb-tempo { order: 5; flex-basis: 100%; padding: 0 .2rem; }
+}
+@media (max-height: 520px) {
+  .sb-kopf { height: 44px; }
+  .sb-play { width: 52px; height: 52px; }
+  .sb-kreis { width: 40px; height: 40px; }
+  .sb-beschr { display: none; }
+  .sb-schieber { height: 16px; margin-top: 6px; }
+}
+/* Blatt für Einstellungen und Speichern über dem Raster */
+.sb-blatt { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(10, 8, 24, .55); touch-action: manipulation; }
+.sb-blatt[hidden] { display: none; }
+.sb-blatt-karte { width: min(720px, 100%); max-height: 100%; overflow: auto; overscroll-behavior: contain; touch-action: pan-y;
+  padding: 1rem 1.3rem 1.3rem; border-radius: 18px; background: var(--card-solid); border: 1px solid var(--card-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .4); user-select: text; -webkit-user-select: text; }
+:root[data-theme="light"] .sb-blatt-karte { background: #fff; }
+.sb-blatt-kopf { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
+.sb-blatt-kopf h3 { margin: 0; font-size: 1.15rem; }
+.sb-schalter { display: flex; flex-wrap: wrap; gap: .8rem 2rem; margin-top: 1rem; }
 /* Einstellungen wie Zeilen mit − und + */
-.sb-einstellungen { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; margin-top: .8rem; padding: .4rem 1rem; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); }
+.sb-einstellungen { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; padding: .4rem 1rem; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); }
 .sb-zeile { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .55rem 0; border-bottom: 1px solid var(--border); }
 .sb-spalte .sb-zeile:last-child { border-bottom: none; }
 .sb-zeile > span { color: var(--muted); }
@@ -1129,7 +1180,6 @@ body.hat-vollbild { overflow: hidden; }
 .sb-wert b { color: var(--accent); min-width: 4.5rem; text-align: right; margin-right: .3rem; }
 .sb-wert select { min-height: 2.4rem; }
 /* Speichern und Öffnen */
-.sb-speicher { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--border); }
 .sb-speicher > .hint .icon { vertical-align: -.15em; margin-right: .35rem; }
 .sb-speicher-reihe { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; }
 .sb-speicher h3 { margin: 0 0 .5rem; font-size: 1rem; }
@@ -1142,12 +1192,6 @@ body.hat-vollbild { overflow: hidden; }
 .sb-nummer { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .8rem; padding: .8rem 1rem; border-radius: 12px; background: var(--active-soft); border: 1px solid var(--accent); }
 .sb-nummer b { font-size: 2.4rem; letter-spacing: .12em; color: var(--accent); line-height: 1; }
 .sb-nummer .hint { flex-basis: 100%; }
-.sb-seite.vollbild .sb-rahmen { flex: 1 1 auto; }
-.sb-seite.vollbild .sb-gitter { --hoehe: clamp(16px, calc((100vh - 290px) / (var(--zeilen) + 4.7)), 40px); }
-.sb-seite.vollbild .sb-speicher, .sb-seite.vollbild .sb-einstellungen { display: none; }
 @media (max-width: 640px) {
   .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }
-  .sb-info { margin-left: 0; flex-basis: 100%; }
-  .sb-gitter { --namen: 2.4rem; }
-  .sb-name.drum span { display: none; }
 }

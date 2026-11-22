@@ -96,10 +96,9 @@ const Klavierseite = {
       localStorage.removeItem('musiktrainer-klavier-lage');    // Lage bis 02.11.2026, galt für zwei Oktaven
     } catch { /* privates Fenster */ }
     el.innerHTML = `
-      <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card klavier-seite">
         <div class="klavier-kopf">
-          <h2>${Icons.raw('piano')}Klavier</h2>
+          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('piano')}Klavier</h2>
           <div class="klavier-einstellungen">
             ${Vollbild.knopf()}
             <label class="klavier-klang">Klang

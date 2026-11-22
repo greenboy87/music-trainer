@@ -8,13 +8,19 @@ Drumcomputer; Klänge im Browser erzeugt wie in der Rhythmus-Werkstatt, nur das 
 Aufnahme aus `klaenge/drums/`; das Drumset ist von oben gezeichnet wie in GarageBand, die
 Klemme der Hi-Hat tritt sie).
 Dazu der Songbaukasten (`js/songbaukasten.js`, `#/songbaukasten`, Knopf „Songs“
-oben): Raster für Töne einer Tonleiter, darunter Hi-Hat, Snare und Bassdrum (Icons wie im Drumcomputer, alles in der Akzentfarbe); angemeldete
+oben), aufgebaut wie ein Song-Maker: füllt das ganze Fenster (Leiste oben und Fußzeile
+ausgeblendet, nichts scrollt, kein Zoom), Raster auf einem Canvas (jeder Ton in seiner
+Farbe), darunter drei Schlagzeug-Zeilen (Klänge je nach `KITS`), Schieber zum Blättern
+durch die Takte, unten Play, Klang und Schlagzeug (Antippen schaltet weiter), Tempo,
+Einstellungen und Speichern als Blatt darüber, Rückgängig; angemeldete
 Kinder speichern Songs im Worker (`/api/songs`, Tabelle `songs`) unter einer fünfstelligen
 Nummer und öffnen sie damit wieder (`#/songbaukasten/48213`). Format `v: 1` siehe Dateikopf; Tonleitern in `TONLEITERN` (u. a. HM5); Klänge für Klavier und Songbaukasten in `Ton.KLAENGE`/`Ton.stimmen`, alle etwa gleich laut;
 ändert es sich, `pruefeSong()` im Worker anpassen.
 Klavier und Schlagzeug haben ein Metronom mit Tempo-Leiste (`js/metronom.js`); auf der
-Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten haben einen
-Knopf „Vollbild“ (`js/vollbild.js`); dazu oben in der Leiste ein Vollbild-Knopf für den
+Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten sind ein
+festes Bild über dem ganzen Fenster (`Vollbild.binden` in `js/vollbild.js`, Zurück-Pfeil im
+Kopf, nichts scrollt – Inhalte müssen auf iPad quer und hochkant ganz passen); ihr Knopf
+„Vollbild“ schaltet nur das echte Browser-Vollbild. Dazu oben in der Leiste ein Vollbild-Knopf für den
 ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
 `#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne

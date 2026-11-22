@@ -4,12 +4,11 @@
       Vollbild ein und aus (ohne Adress- und Tableiste). Wo der Browser das nicht
       kann (iPhone), ist der Knopf ausgeblendet.
 
-   2. Für Klavier und Schlagzeug: ein Knopf legt die Karte über die ganze Seite und
-      schaltet – wo es geht – zusätzlich echtes Vollbild ein. Wo es kein echtes
-      Vollbild gibt, füllt die Karte trotzdem das Fenster. Esc oder derselbe Knopf
-      beendet es. War die Seite schon vorher im Vollbild (Knopf oben), bleibt sie es.
-      Nach dem Umschalten löst ein „resize“ aus, damit Klaviatur und Drumset ihre
-      Größe neu berechnen. */
+   2. Klavier und Schlagzeug: die Karte liegt immer über der ganzen Seite (festes
+      Bild, kein Scrollen, Zurück-Pfeil oben links). Ihr Knopf schaltet zusätzlich
+      echtes Vollbild ein und aus. War die Seite schon vorher im Vollbild (Knopf
+      oben), bleibt sie es. Nach dem Umschalten löst ein „resize“ aus, damit
+      Klaviatur und Drumset ihre Größe neu berechnen. */
 const Vollbild = {
   echt() { return document.fullscreenElement || document.webkitFullscreenElement; },
   moeglich() {
@@ -47,36 +46,32 @@ const Vollbild = {
     return `<button type="button" class="small vollbild-knopf" aria-pressed="false" title="Vollbild an oder aus">${Icons.raw('expand')}<span>Vollbild</span></button>`;
   },
 
+  /* Klavier und Schlagzeug sind immer ein festes Bild: die Karte füllt das Fenster,
+     die Seite scrollt nicht. Der Knopf schaltet nur noch das echte Vollbild des
+     Browsers (ohne Adress- und Tableiste) ein und aus. */
   binden(karte) {
     const k = karte.querySelector('.vollbild-knopf');
     const neu = () => requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
     let selbst = false;   // echtes Vollbild von hier aus eingeschaltet (nicht schon vorher an)
-    const setzen = an => {
-      karte.classList.toggle('vollbild', an);
-      document.body.classList.toggle('hat-vollbild', an);
+    karte.classList.add('vollbild');
+    document.body.classList.add('hat-vollbild');
+    const zeigen = () => {
+      const an = !!this.echt();
+      if (!an) selbst = false;
       k.setAttribute('aria-pressed', String(an));
       k.innerHTML = `${Icons.raw(an ? 'shrink' : 'expand')}<span>${an ? 'Vollbild beenden' : 'Vollbild'}</span>`;
       neu();
     };
+    if (!this.moeglich()) k.hidden = true;
     k.addEventListener('click', () => {
-      const an = !karte.classList.contains('vollbild');
-      setzen(an);
-      if (an && !this.echt()) { selbst = true; this.rein(); }
-      else if (!an && selbst) { selbst = false; this.raus(); }
+      if (this.echt()) this.raus(); else { selbst = true; this.rein(); }
     });
-    // Echtes Vollbild mit Esc verlassen: Karte wieder normal
-    const wechsel = () => {
-      if (!this.echt() && karte.classList.contains('vollbild')) { selbst = false; setzen(false); }
-      neu();
-    };
-    const esc = e => { if (e.key === 'Escape' && karte.classList.contains('vollbild') && !this.echt()) setzen(false); };
-    document.addEventListener('fullscreenchange', wechsel);
-    document.addEventListener('webkitfullscreenchange', wechsel);
-    document.addEventListener('keydown', esc);
+    document.addEventListener('fullscreenchange', zeigen);
+    document.addEventListener('webkitfullscreenchange', zeigen);
+    zeigen();
     App.beimAufraeumen(() => {
-      document.removeEventListener('fullscreenchange', wechsel);
-      document.removeEventListener('webkitfullscreenchange', wechsel);
-      document.removeEventListener('keydown', esc);
+      document.removeEventListener('fullscreenchange', zeigen);
+      document.removeEventListener('webkitfullscreenchange', zeigen);
       document.body.classList.remove('hat-vollbild');
       if (selbst) this.raus();
     });

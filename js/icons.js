@@ -35,6 +35,9 @@ const Icons = {
     expand:    '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
     shrink:    '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>',
     hand:      '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5"/><path d="M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M17 9.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L3.6 15.6a1.6 1.6 0 0 1 2.5-2L8 15.5"/>',
+    undo:      '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+    stop:      '<rect x="5.5" y="5.5" width="13" height="13" rx="1.5" fill="currentColor"/>',
+    neu:       '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
   },
 
   raw(name, extraClass = '') {

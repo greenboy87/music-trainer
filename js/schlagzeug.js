@@ -521,10 +521,9 @@ const Schlagzeugseite = {
     else if (this.lies('reiter') in this.REITER) this.reiter = this.lies('reiter');
     this.laeuft = false;
     el.innerHTML = `
-      <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card sz-seite">
         <div class="klavier-kopf">
-          <h2>${Icons.raw('drum')}Schlagzeug</h2>
+          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('drum')}Schlagzeug</h2>
           <div class="sz-kopf-rechts">
             ${Vollbild.knopf()}
             <button type="button" class="small sz-laeuft" id="sz-mini-stopp" hidden title="Drumcomputer anhalten (Leertaste)">■ Beat stoppen</button>
