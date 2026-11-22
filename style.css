@@ -1238,3 +1238,38 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
   background: var(--active-soft); color: var(--accent); font-size: 1rem; font-weight: 800; letter-spacing: 0; text-transform: none; }
 .wechsel-knopf.aktiv span { color: var(--text); white-space: nowrap; }
 @media (max-width: 520px) { .wechsel-knopf.aktiv span { display: none; } .wechsel-knopf.aktiv { width: 40px; padding: 0; } }
+
+/* ---------- Oktavlagen (js/notenspiele.js) ---------- */
+.notenbild.klaviersystem { max-width: 230px; }
+.setzer-system.klaviersystem { max-width: 460px; }
+.klavier.mit-etagen { max-width: 980px; }
+.klavier.mit-etagen .taste.weiss { border-top: 7px solid var(--etage); }
+.klavier.mit-etagen .taste-c { font-size: .65rem; }
+.etage { display: flex; flex-direction: column; align-items: center; gap: .15rem; font-size: 1rem; line-height: 1.15; }
+.etage::before { content: ''; width: 2.4rem; height: .45rem; border-radius: 99px; background: var(--etage); margin-bottom: .2rem; }
+.etage small { opacity: .75; font-size: .85rem; }
+.okt-zeile { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: .7rem 1.2rem; margin-top: .8rem; }
+.okt-anzeige { min-width: 5rem; padding: .1rem 1rem; font-size: 2rem; font-weight: 800;
+  border-radius: var(--radius-sm); border: 3px solid var(--etage, var(--border)); }
+.okt-anzeige.gut { border-color: var(--green); color: var(--green); }
+.okt-anzeige.schlecht { border-color: var(--danger); color: var(--danger); font-size: 1.5rem; }
+.okt-anzeige s { opacity: .7; }
+.okt-buchstaben .option.an { border-color: var(--accent); background: var(--active-soft); }
+.okt-etagen { display: flex; justify-content: center; gap: .5rem; flex-wrap: wrap; }
+.okt-etagen button { min-width: 4.2rem; font-size: 1.25rem; font-weight: 700; border-bottom: 5px solid var(--etage); }
+.okt-etagen button.an { background: color-mix(in srgb, var(--etage) 35%, transparent); border-color: var(--etage); }
+.platz-bild { display: flex; justify-content: center; gap: 1rem; width: 100%; }
+.platz-bild .notenbild { max-width: 210px; }
+.platz-wahl { display: flex; flex-direction: column; gap: .15rem; font-weight: 700; }
+.platz-wahl small { font-weight: 400; opacity: .7; margin-right: .35rem; font-size: .8rem; }
+/* Runden auf niedrigen Bildschirmen (iPad quer): etwas enger, damit nichts scrollt */
+@media (max-height: 820px) {
+  .runde .aufgabe-karte { padding: 1rem 1rem; }
+  .runde .frage { margin-bottom: .5rem; }
+  .runde .bild { margin-bottom: .6rem; }
+  .runde .rueckmeldung { margin-top: .5rem; }
+  .runde .weiter-btn { margin-top: .3rem; }
+  .aufgabe-karte .klavier { height: 160px; }
+  .runde .notenbild.klaviersystem { max-height: 32vh; }
+  .runde .setzer-system.klaviersystem { max-height: calc(100vh - 430px); }
+}

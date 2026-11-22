@@ -50,6 +50,15 @@ Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM
 `BESTANDEN`, `VERSUCHE`, Endnote am Ende (gespeichert, s. o.). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
+## Notenspiele (`js/notenspiele.js`)
+
+Bereiche Stammtöne, Vorzeichen, Bassschlüssel, Bassschlüssel Vorzeichen (je fünf Spiele,
+`notenSpiele(art)` mit Schlüssel aus `NOTEN_ARTEN`) und Oktavlagen (Klasse 6, `oktavSpiele()`:
+Welche Etage?, Name mit Oktave, Note → Taste, Noten schreiben, Oktav-Detektiv, Gleicher Platz).
+Namen mit Oktave wie im Unterricht: C … H, c … h, c¹, c², c³ (`Stufe.vollerName`, hochgestellt,
+nicht c'). Oktav-Farben in `Oktavlage.ETAGEN`. Profi der Oktavlagen im Klaviersystem
+(`Notenbild.klaviersystem`, `Notensetzer` mit `schluessel: 'klavier'`).
+
 ## Versionsnummer nach jeder CSS/JS-Änderung hochzählen
 
 Alle eingebundenen Dateien tragen `?v=N`. Nach einer Änderung die Zahl in

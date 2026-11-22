@@ -107,9 +107,10 @@ const sterneHtml = (anzahl, von = Bewertung.MAX) =>
 const Klavier = {
   SCHWARZ: [1, 3, 6, 8, 10],
 
-  erzeuge(von, bis, beiTaste) {
+  /* etagen: oben auf jeder weißen Taste die Farbe ihrer Oktave (Bereich Oktavlagen) */
+  erzeuge(von, bis, beiTaste, { etagen = false } = {}) {
     const el = document.createElement('div');
-    el.className = 'klavier';
+    el.className = 'klavier' + (etagen ? ' mit-etagen' : '');
     const weisse = [];
     for (let m = von; m <= bis; m++) if (!this.SCHWARZ.includes(m % 12)) weisse.push(m);
     const breite = 100 / weisse.length;
@@ -134,7 +135,7 @@ const Klavier = {
       el.appendChild(b);
     };
 
-    weisse.forEach(m => taste(m, 'weiss', `width:${breite}%`));
+    weisse.forEach(m => taste(m, 'weiss', `width:${breite}%` + (etagen ? `;--etage:${Oktavlage.ETAGEN[Oktavlage.etageVonMidi(m)]?.farbe || 'transparent'}` : '')));
     weisse.forEach((m, i) => {
       if (m + 1 <= bis && this.SCHWARZ.includes((m + 1) % 12))
         taste(m + 1, 'schwarz', `left:${(i + 1) * breite - breite * 0.32}%;width:${breite * 0.64}%`);
@@ -703,7 +704,7 @@ const App = {
     if (knopf) knopf.classList.add(ok ? 'richtig' : 'falsch');
     if (!ok && optionen[a.richtig]) optionen[a.richtig].classList.add('richtig');
     // Notenspiele: den richtigen Namen groß unter die Note schreiben
-    if (!ok && a.ton && a.bild) document.getElementById('r-bild').insertAdjacentHTML('beforeend', `<div class="bild-loesung">${Tonname.vonTon(a.ton)}</div>`);
+    if (!ok && a.bild && (a.bildLoesung || a.ton)) document.getElementById('r-bild').insertAdjacentHTML('beforeend', `<div class="bild-loesung">${a.bildLoesung || Tonname.vonTon(a.ton)}</div>`);
 
     if (ok) {
       r.richtig++;

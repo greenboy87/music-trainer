@@ -15,11 +15,13 @@ const Stufe = {
     return 60 + 12 * oktave + this.HALBTOENE[((stufe % 7) + 7) % 7];
   },
 
-  /* Name mit Oktavstrichen: c', a, c'', H */
+  /* Name mit Oktave wie im Unterricht: große Oktave C … H, kleine c … h,
+     dann c¹ … h¹, c² … h², c³ (hochgestellte Ziffern, nicht c' / c'') */
+  HOCH: ['¹', '²', '³', '⁴', '⁵'],
   vollerName(stufe) {
     const oktave = Math.floor(stufe / 7);
     const n = this.name(stufe);
-    if (oktave >= 0) return n.toLowerCase() + "'".repeat(oktave + 1);
+    if (oktave >= 0) return n.toLowerCase() + this.HOCH[oktave];
     if (oktave === -1) return n.toLowerCase();
     return n;
   },
@@ -31,29 +33,34 @@ const Notenbild = {
   /* Stufe der untersten Linie: e' im Violinschlüssel, G im Bassschlüssel */
   UNTERSTE: { violin: 2, bass: -10 },
 
-  yVon(stufe, schluessel) {
-    return this.UNTEN - (stufe - this.UNTERSTE[schluessel]) * (this.ABSTAND / 2);
+  /* Klaviersystem: y der untersten Linie je System (Violin oben, Bass unten) */
+  KLAVIER: { violin: 80, bass: 170 },
+  /* Erlaubte Stufen je System: höchstens zwei Hilfslinien (und der Zwischenraum dahinter) */
+  bereich(schluessel) { const u = this.UNTERSTE[schluessel]; return [u - 5, u + 13]; },
+
+  yVon(stufe, schluessel, unten = this.UNTEN) {
+    return unten - (stufe - this.UNTERSTE[schluessel]) * (this.ABSTAND / 2);
   },
 
-  linien(x1, x2) {
+  linien(x1, x2, unten = this.UNTEN) {
     let s = '';
     for (let i = 0; i < 5; i++) {
-      const y = this.UNTEN - i * this.ABSTAND;
+      const y = unten - i * this.ABSTAND;
       s += `<line x1="${x1}" x2="${x2}" y1="${y}" y2="${y}" class="nl"/>`;
     }
     return s;
   },
 
-  schluessel(art) {
+  schluessel(art, unten = this.UNTEN) {
     return art === 'bass'
-      ? `<text x="10" y="${this.UNTEN + 5}" class="ns ns-bass">\u{1D122}</text>`
-      : `<text x="10" y="${this.UNTEN}" class="ns ns-violin">\u{1D11E}</text>`;
+      ? `<text x="10" y="${unten + 5}" class="ns ns-bass">\u{1D122}</text>`
+      : `<text x="10" y="${unten}" class="ns ns-violin">\u{1D11E}</text>`;
   },
 
-  hilfslinien(x, y) {
+  hilfslinien(x, y, unten = this.UNTEN) {
     let s = '';
-    const oben = this.UNTEN - 4 * this.ABSTAND;
-    for (let ly = this.UNTEN + this.ABSTAND; ly <= y + 0.1; ly += this.ABSTAND)
+    const oben = unten - 4 * this.ABSTAND;
+    for (let ly = unten + this.ABSTAND; ly <= y + 0.1; ly += this.ABSTAND)
       s += `<line x1="${x - 11}" x2="${x + 11}" y1="${ly}" y2="${ly}" class="nl"/>`;
     for (let ly = oben - this.ABSTAND; ly >= y - 0.1; ly -= this.ABSTAND)
       s += `<line x1="${x - 11}" x2="${x + 11}" y1="${ly}" y2="${ly}" class="nl"/>`;
@@ -78,19 +85,49 @@ const Notenbild = {
      rechts nach oben, ab der 3. Linie links nach unten. */
   noten(toene, schluessel = 'violin') {
     const breite = 90 + toene.length * 40;
-    const mitte = this.UNTEN - 2 * this.ABSTAND;
     let s = this.linien(4, breite - 6) + this.schluessel(schluessel);
-    toene.forEach((ton, i) => {
-      const st = typeof ton === 'number' ? ton : ton.stufe;
-      const x = 80 + i * 40;
-      const y = this.yVon(st, schluessel);
-      s += this.hilfslinien(x, y) + this.vorzeichen(x, y, ton.vz) + this.kopf(x, y);
-      s += y > mitte
-        ? `<line x1="${x + 5.8}" x2="${x + 5.8}" y1="${y - 1}" y2="${y - 34}" class="nh"/>`
-        : `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 34}" class="nh"/>`;
-    });
+    toene.forEach((ton, i) => { s += this.note(80 + i * 40, ton, schluessel); });
     // Mehr Noten = breiteres Bild, sonst würde jede Note winzig
     return `<svg class="notenbild" viewBox="0 0 ${breite} 120" style="max-width:${200 + toene.length * 50}px" role="img" aria-label="Noten">${s}</svg>`;
+  },
+
+  /* Eine Viertelnote mit Hilfslinien und Vorzeichen bei x */
+  note(x, ton, schluessel, unten = this.UNTEN) {
+    const st = typeof ton === 'number' ? ton : ton.stufe;
+    const y = this.yVon(st, schluessel, unten);
+    const mitte = unten - 2 * this.ABSTAND;
+    return this.hilfslinien(x, y, unten) + this.vorzeichen(x, y, ton.vz) + this.kopf(x, y) + (y > mitte
+      ? `<line x1="${x + 5.8}" x2="${x + 5.8}" y1="${y - 1}" y2="${y - 34}" class="nh"/>`
+      : `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 34}" class="nh"/>`);
+  },
+
+  /* Klaviersystem: Violin- und Bassschlüssel mit Klammer. Jeder Ton trägt
+     sein System ({ stufe, schluessel }); ohne Angabe ab c¹ oben, darunter unten. */
+  klavierLinien(breite) {
+    const k = this.KLAVIER, oben = k.violin - 4 * this.ABSTAND;
+    return this.linien(14, breite - 6, k.violin) + this.linien(14, breite - 6, k.bass) +
+      `<line x1="14" x2="14" y1="${oben}" y2="${k.bass}" class="nh"/>` +
+      this.klammer(8, oben, k.bass) +
+      this.schluessel('violin', k.violin).replace('x="10"', 'x="20"') + this.schluessel('bass', k.bass).replace('x="10"', 'x="20"');
+  },
+
+  /* Geschweifte Klammer vor dem Klaviersystem, Spitze links bei x */
+  klammer(x, oben, unten) {
+    const m = (oben + unten) / 2, h = unten - oben;
+    return `<path d="M${x + 4} ${oben} C${x - 3} ${oben + h * 0.12} ${x + 5} ${m - h * 0.12} ${x - 2} ${m} ` +
+      `C${x + 5} ${m + h * 0.12} ${x - 3} ${unten - h * 0.12} ${x + 4} ${unten}" class="nh" fill="none" style="stroke-width:2.4"/>`;
+  },
+
+  systemVon(ton) { return ton.schluessel || (ton.stufe >= 0 ? 'violin' : 'bass'); },
+
+  klaviersystem(toene) {
+    const breite = 100 + toene.length * 40;
+    let s = this.klavierLinien(breite);
+    toene.forEach((ton, i) => {
+      const sys = this.systemVon(ton);
+      s += this.note(90 + i * 40, ton, sys, this.KLAVIER[sys]);
+    });
+    return `<svg class="notenbild klaviersystem" viewBox="0 8 ${breite} 196" style="max-width:${170 + toene.length * 40}px" role="img" aria-label="Noten im Klaviersystem">${s}</svg>`;
   },
 
   /* Rhythmus auf einer Linie. Eingabe: ein Takt (Liste von Bausteinen wie
