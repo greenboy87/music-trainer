@@ -171,7 +171,7 @@ const Songbaukasten = {
             <button type="button" class="sb-rund" id="sb-vollbild" title="Vollbild" aria-label="Vollbild">${Icons.raw('expand')}</button>
             ${Vollbild.wechsel('songbaukasten')}
           </div>
-          <h2 class="sb-titel">Songbaukasten<span id="sb-titel-nr"></span></h2>
+          <h2 class="sb-titel"><span id="sb-titel-nr"></span></h2>
           <div class="sb-kopf-seite rechts">
             <button type="button" class="sb-text" id="sb-neu" title="Alles leeren und neu anfangen">${Icons.raw('neu')}<span>Neu</span></button>
           </div>
@@ -325,7 +325,7 @@ const Songbaukasten = {
     $('#sb-tempo').value = this.song.bpm;
     $('#sb-bpm').textContent = this.song.bpm;
     $('#sb-zurueck').disabled = !this.verlauf.length;
-    $('#sb-titel-nr').textContent = this.nummer ? ` · Nr. ${this.nummer}` : '';
+    $('#sb-titel-nr').textContent = this.nummer ? `Song Nr. ${this.nummer}` : '';
   },
 
   alles() {

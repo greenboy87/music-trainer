@@ -516,7 +516,7 @@ const Schlagzeugseite = {
     el.innerHTML = `
       <section class="card sz-seite">
         <div class="klavier-kopf">
-          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('drum')}Schlagzeug${Vollbild.wechsel('schlagzeug')}</h2>
+          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Vollbild.wechsel('schlagzeug')}</h2>
           <div class="sz-kopf-rechts">
             ${Vollbild.knopf()}
             <button type="button" class="small sz-laeuft" id="sz-mini-stopp" hidden title="Drumcomputer anhalten (Leertaste)">■ Beat stoppen</button>

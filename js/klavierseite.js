@@ -98,7 +98,7 @@ const Klavierseite = {
     el.innerHTML = `
       <section class="card klavier-seite">
         <div class="klavier-kopf">
-          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('piano')}Klavier${Vollbild.wechsel('klavier')}</h2>
+          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Vollbild.wechsel('klavier')}</h2>
           <div class="klavier-einstellungen">
             <button type="button" class="small sz-laeuft" id="k-mitspiel"></button>
             ${Vollbild.knopf()}
@@ -180,11 +180,11 @@ const Klavierseite = {
     document.addEventListener('keydown', pfeile);
     window.addEventListener('resize', groesse);
     window.addEventListener('blur', weg);
-    /* Zum Dazuspielen: der Beat aus dem Drumcomputer (der gespeicherte, auch wenn das
-       Schlagzeug noch nicht offen war) – oder der Song, wenn man vom Songbaukasten mit
-       laufendem Song kam. Ein Knopf startet und stoppt. */
+    /* Zum Dazuspielen, je nachdem woher man kommt: vom Songbaukasten der Song, sonst der
+       Beat aus dem Drumcomputer (der gespeicherte, auch wenn das Schlagzeug noch nicht offen
+       war). Ein Knopf startet und stoppt. */
     const mitspiel = el.querySelector('#k-mitspiel');
-    const quelle = Songbaukasten.laeuft ? Songbaukasten : Schlagzeugseite;
+    const quelle = (App.vorherigeArt === 'songbaukasten' && Songbaukasten.uhr) || Songbaukasten.laeuft ? Songbaukasten : Schlagzeugseite;
     const name = quelle === Songbaukasten ? 'Song' : 'Beat';
     const zeigen = () => {
       mitspiel.innerHTML = quelle.laeuft ? `■ ${name} stoppen` : `${Icons.raw('play')}${name} starten`;

@@ -43,15 +43,18 @@ const Vollbild = {
   },
 
   /* Direkt zwischen Klavier, Schlagzeug und Songbaukasten wechseln (die Seiten verdecken
-     die obere Leiste). Ein laufender Beat oder Song spielt beim Wechsel zum Klavier weiter. */
+     die obere Leiste). Immer in derselben Reihenfolge wie auf der Startseite; das Instrument,
+     auf dem man ist, ist markiert und trägt seinen Namen. Ein laufender Beat oder Song spielt
+     beim Wechsel zum Klavier weiter. */
   WECHSEL: [
     { art: 'klavier', icon: 'piano', name: 'Klavier' },
     { art: 'schlagzeug', icon: 'drum', name: 'Schlagzeug' },
     { art: 'songbaukasten', icon: 'raster', name: 'Songbaukasten' },
   ],
   wechsel(aktuell) {
-    return `<span class="wechsel" role="group" aria-label="Instrument wechseln">${this.WECHSEL.filter(w => w.art !== aktuell)
-      .map(w => `<a class="wechsel-knopf" href="#/${w.art}" title="Zum ${w.name}" aria-label="Zum ${w.name}">${Icons.raw(w.icon)}</a>`).join('')}</span>`;
+    return `<span class="wechsel" role="group" aria-label="Instrument wechseln">${this.WECHSEL.map(w => (w.art === aktuell
+      ? `<span class="wechsel-knopf aktiv" aria-current="page">${Icons.raw(w.icon)}<span>${w.name}</span></span>`
+      : `<a class="wechsel-knopf" href="#/${w.art}" title="Zum ${w.name}" aria-label="Zum ${w.name}">${Icons.raw(w.icon)}</a>`)).join('')}</span>`;
   },
 
   knopf() {

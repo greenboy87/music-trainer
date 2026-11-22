@@ -1220,9 +1220,13 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
   .sb-einstellungen, .sb-speicher-reihe { grid-template-columns: 1fr; }
 }
 /* Direkt wechseln zwischen Klavier, Schlagzeug und Songbaukasten */
-.wechsel { display: inline-flex; gap: .25rem; margin-left: .8rem; vertical-align: middle; }
+.wechsel { display: inline-flex; gap: .3rem; vertical-align: middle; }
 .wechsel-knopf { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;
   border: 1px solid var(--border); background: var(--panel); color: var(--accent); text-decoration: none; }
 .wechsel-knopf:hover { background: var(--hover); }
 .wechsel-knopf .icon { width: 22px; height: 22px; margin: 0 !important; }
 .sb-kopf .wechsel { margin-left: .3rem; }
+.wechsel-knopf.aktiv { width: auto; padding: 0 .9rem 0 .65rem; gap: .4rem; border-radius: 999px; border-color: var(--accent);
+  background: var(--active-soft); color: var(--accent); font-size: 1rem; font-weight: 800; letter-spacing: 0; text-transform: none; }
+.wechsel-knopf.aktiv span { color: var(--text); white-space: nowrap; }
+@media (max-width: 520px) { .wechsel-knopf.aktiv span { display: none; } .wechsel-knopf.aktiv { width: 40px; padding: 0; } }

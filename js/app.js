@@ -284,6 +284,8 @@ const App = {
   route() {
     const [pfad, abfrage] = location.hash.split('?');
     const [, art, id] = pfad.split('/');
+    this.vorherigeArt = this.art;   // woher man kommt (für den Knopf am Klavier)
+    this.art = art;
     this.aufraeumen(art);
     const spiel = SPIELE.find(s => s.id === id);
     /* Anmelde-Link aus dem QR-Code: #/anmelden?u=LenaMüller&p=… – meldet ein
