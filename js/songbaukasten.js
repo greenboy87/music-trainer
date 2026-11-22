@@ -156,8 +156,8 @@ const Songbaukasten = {
     this.setzen(gemerkt?.song || this.neu());
     this.nummer = gemerkt?.nummer || null;
     this.eigener = !!gemerkt?.eigener;
-    this.namenAn = false;
-    try { this.namenAn = localStorage.getItem(this.KEY + '-namen') === 'an'; } catch { /* egal */ }
+    this.namenAn = true;
+    try { this.namenAn = localStorage.getItem(this.KEY + '-namen') !== 'aus'; } catch { /* egal */ }
 
     const werkzeug = (id, icon, text, titel) => `
       <button type="button" class="sb-werkzeug" id="${id}" title="${titel}">
@@ -380,7 +380,7 @@ const Songbaukasten = {
     const W = this.buehne.clientWidth, H = this.buehne.clientHeight;
     const { teile, schlaege, takte } = this.song;
     const proTakt = teile * schlaege, S = this.schritte(), Z = this.zeilen();
-    const namen = this.namenAn ? (W < 600 ? 30 : 40) : 0;
+    const namen = this.namenAn ? (W < 600 ? 34 : 48) : 0;
     const breite = W - namen;
     let n = Math.max(1, Math.min(takte, Math.floor(breite / (proTakt * 30))));
     while (n < takte && breite / (n * proTakt) > 64) n++;
@@ -496,7 +496,7 @@ const Songbaukasten = {
       g.fillRect(0, 0, namen, m.H);
       g.textAlign = 'center';
       g.textBaseline = 'middle';
-      const gr = Math.min(13, Math.max(9, zeile * 0.48));
+      const gr = Math.min(16, Math.max(10, zeile * 0.58));
       for (let z = 0; z < Z; z++) {
         const grund = z % this.leiter().length === 0;
         g.font = `${grund ? 800 : 600} ${gr}px system-ui, sans-serif`;
