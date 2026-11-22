@@ -62,8 +62,11 @@ const Pruefungsseite = {
 
   merken(s, w) { try { localStorage.setItem(`musiktrainer-pruefung-${s}`, String(w)); } catch { /* privat */ } },
   lies(s) { try { return localStorage.getItem(`musiktrainer-pruefung-${s}`); } catch { return null; } },
-  bester(note, klasse = this.klasse) { return Number(this.lies(`best-${klasse === 6 ? 'k6-' : ''}${note}`)) || 0; },
-  bestMerken(note, w) { this.merken(`best-${this.klasse === 6 ? 'k6-' : ''}${note}`, w); },
+  /* Bester Versuch (Prozent) je Zeile – aus dem Fortschritt des angemeldeten Kindes
+     (Spiel „rhythmus-pruefung“, punkte = Prozent), nicht mehr je Gerät: auf geteilten
+     iPads zählten sonst die Versuche anderer Kinder mit. */
+  stufe(note, klasse = this.klasse) { return (klasse === 6 ? 5 : 0) + (5 - note); },
+  bester(note, klasse = this.klasse) { return Fortschritt.bester('rhythmus-pruefung', this.stufe(note, klasse)).punkte || 0; },
   /* Sterne beim Üben (wie in den Spielen 1–6) aus der Genauigkeit */
   STERNE_AB: [55, 70, 80, 88, 95],   // ab diesen Prozent 2, 3, 4, 5, 6 Sterne
   sterne(prozent) { return prozent > 0 ? 1 + this.STERNE_AB.filter(g => prozent >= g).length : 0; },
@@ -546,13 +549,11 @@ const Pruefungsseite = {
       : `<text x="4" y="${yMarke.o - 7}" class="pz-marke-text">Deine Schläge</text>`) +
       frei.map(t => `<circle cx="${this.x(Math.max(0, Math.min(15.99, t.zeit)))}" cy="${yMarke[t.stimme]}" r="3.2" class="pz-marke${t.frei ? ' zuviel' : ''}"/>`).join('');
 
-    const alt = this.pruefung || this.mitCursor ? Infinity : this.bester(this.z.note);
-    if (prozent > alt) this.bestMerken(this.z.note, prozent);
     // Gewertete Durchgänge (Sterne sammeln) gehen wie bei den Spielen ins Konto und damit ins
     // School-Tool: Spiel „rhythmus-pruefung“, Stufe 0–4 = Klasse 5 Note 5–1, 5–9 = Klasse 6.
     // Üben (Cursor) und die Prüfung selbst melden nichts.
     if (!this.pruefung && !this.mitCursor && this.mitspielen) {
-      const stufe = (this.klasse === 6 ? 5 : 0) + (5 - this.z.note);
+      const stufe = this.stufe(this.z.note);
       Fortschritt.eintragen('rhythmus-pruefung', stufe, Math.max(1, this.sterne(prozent)), prozent,
         getroffen.length, noten.length, Math.round(20 * this.schlagDauer));
     }

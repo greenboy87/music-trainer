@@ -42,7 +42,10 @@ Toms fünf Zeilen je Klasse (Note 5 bis 1) zum Mitspielen auf den Pads – Klass
 Snare und Bassdrum, Klasse 6 nur Snare mit R/L und Handsatz (optional mitbewertet).
 Kein Spiel in `SPIELE` (eigene Seiten), aber „Sterne sammeln“ meldet wie ein Spiel:
 `Fortschritt.eintragen('rhythmus-pruefung', stufe …)`, Stufe 0–4 = Klasse 5 Note 5–1,
-5–9 = Klasse 6; Sterne über `STERNE_AB`. In `MT_SPIELE` im School-Tool eingetragen.
+5–9 = Klasse 6; Sterne über `STERNE_AB`. Der beste Versuch je Zeile kommt aus diesem
+Fortschritt (punkte = Prozent), also je Kind und vom Server – nicht je Gerät (früher
+`musiktrainer-pruefung-best-*`, auf geteilten iPads gemischt). Die Sterne zählen in die
+Gesamtzahl auf der Startseite mit (+60 möglich). In `MT_SPIELE` im School-Tool eingetragen.
 Die Prüfung meldet am Ende die Endnote als eigenes Spiel `rhythmus-pruefung-note`
 (Stufe 0 = Klasse 5, 1 = Klasse 6, Sterne = 7 − Note). Üben (Cursor) meldet nichts.
 „Prüfung starten“: Leiter ab Note 5, je Zeile 3 Versuche, bestanden ab 80 %,

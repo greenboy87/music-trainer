@@ -421,8 +421,9 @@ const App = {
 
   /* ---------- Startseite ---------- */
   zeigeStart() {
-    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0);
-    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0);
+    // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
+    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme();
+    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60;
     const bereiche = [...new Set(SPIELE.map(s => s.bereich))];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();
