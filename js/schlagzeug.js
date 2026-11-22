@@ -452,7 +452,8 @@ const Schlagzeugseite = {
     leer: { name: 'Leer', bpm: 100, beat: {} },
   },
   bpm: 100,
-  beat: {},             // Spur → Array mit 16 Wahrheitswerten
+  beat: {},             // Spur → Array mit 16 Lautstärken (0 = aus, bis 1 = voll)
+  stumm: {},            // Spur → true, wenn sie im Drumcomputer nicht mitspielt
   laeuft: false,        // Drumcomputer spielt
   metroAn: false,       // Metronom klickt – beide laufen über dieselbe Taktuhr
 
@@ -475,23 +476,27 @@ const Schlagzeugseite = {
       this.namen = this.lies('namen') !== 'aus';
       const bpm = Number(this.lies('bpm'));
       if (bpm >= 50 && bpm <= 200) this.bpm = bpm;
+      const st = JSON.parse(this.lies('stumm'));
+      this.stumm = st && typeof st === 'object' ? st : {};
       const b = JSON.parse(this.lies('beat'));
       if (b && typeof b === 'object') { this.beatSetzen(b); return; }
     } catch { /* kaputt oder privat */ }
     this.vorlageLaden('rock', false);
   },
 
-  /* Beat aus Text: x = Schlag, . = Pause */
+  /* Beat aus Text: x = voller Schlag, 1–9 = leiser (Zehntel), . = Pause */
   beatSetzen(text) {
     this.beat = {};
     this.SPUREN.forEach(k => {
       const s = typeof text[k] === 'string' ? text[k] : '';
-      this.beat[k] = Array.from({ length: 16 }, (_, i) => s[i] === 'x');
+      this.beat[k] = Array.from({ length: 16 }, (_, i) => (s[i] === 'x' ? 1 : /[1-9]/.test(s[i] || '') ? Number(s[i]) / 10 : 0));
     });
   },
   beatText() {
     const t = {};
-    this.SPUREN.forEach(k => { if (this.beat[k].some(Boolean)) t[k] = this.beat[k].map(x => (x ? 'x' : '.')).join(''); });
+    this.SPUREN.forEach(k => {
+      if (this.beat[k].some(Boolean)) t[k] = this.beat[k].map(v => (!v ? '.' : v >= 0.95 ? 'x' : String(Math.max(1, Math.round(v * 10))))).join('');
+    });
     return t;
   },
   beatMerken() { this.merken('beat', this.beatText()); },
@@ -874,12 +879,12 @@ const Schlagzeugseite = {
         <div class="sz-gitter${this.einfach ? ' einfach' : ''}" style="--n:${this.spuren().length}" role="grid" aria-label="Beat: 16 Sechzehntel je Instrument">
           <span class="sz-ecke"></span>${kopf}
           ${this.spuren().map(k => `
-            <button type="button" class="sz-spur" data-spur="${k}" style="--farbe:${this.SPUR_FARBE[k]}" title="${this.SPUR_NAMEN[k]} anhören" aria-label="${this.SPUR_NAMEN[k]} anhören">
+            <button type="button" class="sz-spur${this.stumm[k] ? ' stumm' : ''}" data-spur="${k}" style="--farbe:${this.SPUR_FARBE[k]}" aria-pressed="${!!this.stumm[k]}" title="${this.SPUR_NAMEN[k]}: antippen schaltet stumm oder wieder an" aria-label="${this.SPUR_NAMEN[k]} stumm schalten">
               <svg viewBox="0 0 24 24" aria-hidden="true">${this.SPUR_ICON[k]}</svg><span>${this.SPUR_KURZ[k]}</span></button>
-            ${this.beat[k].map((an, i) => `<button type="button" class="sz-zelle${an ? ' an' : ''}" data-k="${k}" data-i="${i}" style="--farbe:${this.SPUR_FARBE[k]}" aria-pressed="${an}" aria-label="${this.SPUR_NAMEN[k]}, Sechzehntel ${i + 1}"></button>`).join('')}`).join('')}
+            ${this.beat[k].map((v, i) => `<button type="button" class="sz-zelle${v ? ' an' : ''}${this.stumm[k] ? ' stumm' : ''}" data-k="${k}" data-i="${i}" style="--farbe:${this.SPUR_FARBE[k]};--vel:${v || 1}" aria-pressed="${!!v}" aria-label="${this.SPUR_NAMEN[k]}, Sechzehntel ${i + 1}"></button>`).join('')}`).join('')}
         </div>
       </div>
-      <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger kannst du über mehrere Kästchen streichen. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp, M: Metronom. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
+      <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger seitlich über mehrere Kästchen streichen, nach oben oder unten ziehen macht den Schlag lauter oder leiser. Instrument links antippen schaltet es stumm. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp, M: Metronom. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
     this.gitter = this.inhalt.querySelector('.sz-gitter');
     this.inhalt.querySelector('.sz-tempo-platz').appendChild(this.tempoEl);
     this.playKnopf();
@@ -902,7 +907,16 @@ const Schlagzeugseite = {
       this.beatMerken();
       this.computerZeigen();
     });
-    this.gitter.querySelectorAll('.sz-spur').forEach(b => b.addEventListener('click', () => Drums.spielen(b.dataset.spur)));
+    // Instrument antippen: stumm (ausgegraut) oder wieder an – angeschaltet klingt es kurz
+    this.gitter.querySelectorAll('.sz-spur').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.spur, stumm = !this.stumm[k];
+      if (stumm) this.stumm[k] = true; else delete this.stumm[k];
+      this.merken('stumm', this.stumm);
+      b.classList.toggle('stumm', stumm);
+      b.setAttribute('aria-pressed', String(stumm));
+      this.gitter.querySelectorAll(`.sz-zelle[data-k="${k}"]`).forEach(z => z.classList.toggle('stumm', stumm));
+      if (!stumm) Drums.spielen(k);
+    }));
     this.gitterBedienen();
   },
 
@@ -913,44 +927,76 @@ const Schlagzeugseite = {
     b.setAttribute('aria-pressed', String(this.laeuft));
   },
 
-  /* Antippen schaltet um; streicht der Finger weiter, setzen (oder löschen) alle Kästchen
-     unter ihm dasselbe wie das erste */
+  /* Antippen schaltet ein Kästchen um. Zieht der Finger zur Seite, setzen (oder löschen)
+     alle Kästchen unter ihm dasselbe wie das erste. Zieht er nach oben oder unten, ändert
+     er die Lautstärke des ersten Kästchens: hoch = lauter, runter = leiser. Die Richtung
+     entscheidet sich nach den ersten paar Pixeln. */
   gitterBedienen() {
     const g = this.gitter;
-    let malt = null;
+    let zug = null;
     const unter = e => {
       const z = document.elementFromPoint(e.clientX, e.clientY)?.closest('.sz-zelle');
       return z && g.contains(z) ? z : null;
     };
-    const setzen = (z, an) => {
+    const wert = z => this.beat[z.dataset.k][Number(z.dataset.i)];
+    const setzen = (z, an, still = false) => {
       const k = z.dataset.k, i = Number(z.dataset.i);
-      if (this.beat[k][i] === an) return;
-      this.beat[k][i] = an;
+      if (!!this.beat[k][i] === an) return;
+      this.beat[k][i] = an ? 1 : 0;
       z.classList.toggle('an', an);
+      z.style.setProperty('--vel', 1);
       z.setAttribute('aria-pressed', String(an));
-      if (an && !this.laeuft) Drums.spielen(k);
+      if (an && !this.laeuft && !still) Drums.spielen(k);
+    };
+    const lautstaerke = (z, v) => {
+      v = Math.round(Math.max(0.15, Math.min(1, v)) * 20) / 20;
+      this.beat[z.dataset.k][Number(z.dataset.i)] = v;
+      z.style.setProperty('--vel', v);
     };
     g.addEventListener('pointerdown', e => {
       const z = e.target.closest('.sz-zelle');
-      if (!z) return;
+      if (!z || zug) return;
       e.preventDefault();
       Ton.audio();
-      malt = !this.beat[z.dataset.k][Number(z.dataset.i)];
       try { g.setPointerCapture(e.pointerId); } catch { /* egal */ }
-      setzen(z, malt);
+      const warAn = !!wert(z);
+      // Ein leeres Kästchen geht sofort an (man hört es gleich); ein volles erst beim Loslassen aus
+      if (!warAn) setzen(z, true);
+      zug = { id: e.pointerId, z, warAn, x: e.clientX, y: e.clientY, art: null, start: wert(z) || 1 };
     });
     g.addEventListener('pointermove', e => {
-      if (malt === null) return;
-      const z = unter(e);
-      if (z) setzen(z, malt);
+      if (!zug || e.pointerId !== zug.id) return;
+      const dx = e.clientX - zug.x, dy = e.clientY - zug.y;
+      if (!zug.art) {
+        if (Math.hypot(dx, dy) < 10) return;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          zug.art = 'laut';
+          if (!wert(zug.z)) setzen(zug.z, true, true);
+          zug.z.classList.add('regelt');
+        } else {
+          zug.art = 'malen';
+          zug.malt = !zug.warAn;
+          if (zug.warAn) setzen(zug.z, false);
+        }
+      }
+      if (zug.art === 'laut') lautstaerke(zug.z, zug.start - dy / 140);
+      else { const z = unter(e); if (z) setzen(z, zug.malt); }
     });
-    const ende = () => { if (malt !== null) { malt = null; this.beatMerken(); } };
+    const ende = e => {
+      if (!zug || (e.pointerId !== undefined && e.pointerId !== zug.id)) return;
+      const { z, art, warAn } = zug;
+      zug = null;
+      z.classList.remove('regelt');
+      if (!art && warAn && e.type === 'pointerup') setzen(z, false);
+      if (art === 'laut' && !this.laeuft) Drums.spielen(z.dataset.k, undefined, wert(z));
+      this.beatMerken();
+    };
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => g.addEventListener(n, ende));
     // Tastatur: Eingabe/Leertaste auf einem Kästchen
     g.addEventListener('click', e => {
       const z = e.detail === 0 && e.target.closest('.sz-zelle');
       if (!z) return;
-      setzen(z, !this.beat[z.dataset.k][Number(z.dataset.i)]);
+      setzen(z, !wert(z));
       this.beatMerken();
     });
     g.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.closest('.sz-zelle')) e.stopPropagation(); });
@@ -987,7 +1033,7 @@ const Schlagzeugseite = {
   /* Ein Sechzehntel planen: Beat (nur die sichtbaren Spuren) und Metronom-Klick */
   schritt(i, zeit) {
     if (this.laeuft) this.spuren().forEach(k => {
-      if (this.beat[k][i]) Drums.spielen(k, zeit, k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1);
+      if (this.beat[k][i] && !this.stumm[k]) Drums.spielen(k, zeit, this.beat[k][i] * (k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1));
     });
     if (this.metroAn && i % 4 === 0) Metronom.klick(zeit, i === 0);
   },

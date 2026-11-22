@@ -818,6 +818,21 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
   background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--farbe) 55%, #ffffff), var(--farbe) 70%);
   box-shadow: 0 0 12px color-mix(in srgb, var(--farbe) 45%, transparent);
 }
+/* Lautstärke: der leuchtende Teil reicht von unten so hoch, wie der Schlag laut ist */
+.sz-zelle.an, :root[data-theme="light"] .sz-zelle.an {
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--farbe) 24%, #16122b) calc((1 - var(--vel, 1)) * 100%), transparent 0),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--farbe) 55%, #ffffff), var(--farbe) 70%);
+}
+:root[data-theme="light"] .sz-zelle.an {
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--farbe) 26%, #ffffff) calc((1 - var(--vel, 1)) * 100%), transparent 0),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--farbe) 55%, #ffffff), var(--farbe) 70%);
+}
+.sz-zelle.regelt { outline: 2px solid var(--text); outline-offset: 1px; }
+/* Stumm geschaltete Spur: ausgegraut, spielt nicht mit */
+.sz-spur.stumm { filter: grayscale(1); opacity: .4; }
+.sz-zelle.stumm { filter: grayscale(1); opacity: .3; }
 .sz-zelle.jetzt { filter: brightness(1.45); }
 :root[data-theme="light"] .sz-zelle.jetzt { filter: brightness(.88); }
 .sz-zelle.an.schlag { animation: sz-zelle .18s ease-out; }

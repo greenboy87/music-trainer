@@ -21,7 +21,9 @@ Schlagzeugseite teilen sich Metronom und Drumcomputer eine Taktuhr. Beide Seiten
 festes Bild über dem ganzen Fenster (`Vollbild.binden` in `js/vollbild.js`, Zurück-Pfeil im
 Kopf, nichts scrollt – Inhalte müssen auf iPad quer und hochkant ganz passen); ihr Knopf
 „Vollbild“ schaltet nur das echte Browser-Vollbild. Im Drumcomputer gibt es keine Metronom-Zeile: der
-Tempo-Teil der Leiste wird in dessen Steuerzeile umgehängt (`tempoHeim()`), das Raster beginnt oben. Dazu oben in der Leiste ein Vollbild-Knopf für den
+Tempo-Teil der Leiste wird in dessen Steuerzeile umgehängt (`tempoHeim()`), das Raster beginnt oben. Jedes Kästchen hat eine Lautstärke
+(`beat[k][i]` 0–1, gespeichert als `x` = voll, `1`–`9` = Zehntel, `.` = aus; nach oben/unten ziehen
+regelt sie), Instrument links antippen schaltet die Spur stumm (`stumm`). Dazu oben in der Leiste ein Vollbild-Knopf für den
 ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
 `#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne
