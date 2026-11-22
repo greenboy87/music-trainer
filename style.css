@@ -781,7 +781,7 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .sz-tippen.schlag { animation: sz-tipp .15s ease-out; }
 @keyframes sz-tipp { from { background: var(--active-soft); border-color: var(--accent); transform: scale(.95); } to { transform: none; } }
 .sz-ansicht { margin-left: auto; }
-.sz-ternaer[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); color: var(--accent); }
+.sz-schalt[aria-pressed="true"], .sz-ternaer[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); color: var(--accent); }
 .sz-ansicht button { min-height: 2.4rem; }
 @media (max-width: 620px) { .sz-ansicht { margin-left: 0; } }
 #sz-bpm-text { display: inline-block; min-width: 2.2rem; text-align: right; font-variant-numeric: tabular-nums; }
@@ -966,8 +966,13 @@ body.hat-vollbild { overflow: hidden; }
 .sz-seite.reiter-drumcomputer .sz-metro { display: none; }
 .sz-seite.vollbild.reiter-drumcomputer .sz-inhalt { justify-content: flex-start; }
 .sz-seite.vollbild.reiter-drumcomputer .sz-gitter { --zeile: clamp(22px, calc((100dvh - 210px) / (var(--n) + .5) - 6px), 64px); }
-.sz-seite.vollbild.reiter-drumcomputer .sz-steuerung { margin-bottom: .6rem; }
+.sz-seite.vollbild.reiter-drumcomputer .sz-steuerung { margin-bottom: .6rem; gap: .5rem .7rem; }
+.sz-seite.reiter-drumcomputer .sz-steuerung .sz-tempo input { width: clamp(80px, 11vw, 150px); }
+.sz-seite.reiter-drumcomputer .sz-play { min-width: 6.5rem; }
 .sz-tempo-platz { display: contents; }
+.sz-seite.vollbild.reiter-drumcomputer .sz-spur { height: var(--zeile); min-height: 0; overflow: hidden; }
+.sz-gitter.eng .sz-spur { gap: 0; padding: 0 .1rem; font-size: .58rem; }
+.sz-gitter.eng .sz-spur svg { width: min(22px, calc(var(--zeile) - 16px)); height: min(22px, calc(var(--zeile) - 16px)); }
 .sz-tempo-platz .sz-tippen { display: none; }
 @media (max-width: 520px) { .vollbild-knopf span { display: none; } .vollbild-knopf .icon { margin-right: 0; } }
 /* Klavier und Schlagzeug als festes Bild: Zurück-Pfeil im Kopf, nichts scrollt */
@@ -1078,7 +1083,10 @@ body.hat-vollbild .fusszeile { display: none; }
 #btn-vollbild .icon { margin: 0; }
 #btn-vollbild[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); }
 /* Pads: 3 oder 6 */
-.sz-pads-kopf { display: flex; justify-content: center; margin-bottom: .9rem; }
+.sz-pads-kopf { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .6rem 1rem; margin-bottom: .9rem; }
+.sz-pads.ohne-wahl .sz-pad-wahl { display: none; }
+.sz-seite.vollbild .sz-pads.ohne-wahl { width: min(100%, calc((100dvh - 250px) * 3.2)); }
+.sz-seite.vollbild .sz-pads.sechs.ohne-wahl { width: min(100%, calc((100dvh - 270px) * 1.45)); }
 .sz-pads.sechs { row-gap: clamp(.8rem, 2.4vw, 1.6rem); max-width: 720px; }
 .sz-seite.vollbild .sz-pads.sechs { width: min(100%, calc((100dvh - 330px) * 1.45)); }
 .sz-pads.sechs { max-width: 640px; }

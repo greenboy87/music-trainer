@@ -475,6 +475,7 @@ const Schlagzeugseite = {
       this.einfach = this.lies('ansicht') !== 'profi';
       this.namen = this.lies('namen') !== 'aus';
       this.ternaer = this.lies('ternaer') === 'an';
+      this.padWahl = this.lies('pad-wahl') === 'an';
       const bpm = Number(this.lies('bpm'));
       if (bpm >= 50 && bpm <= 200) this.bpm = bpm;
       const st = JSON.parse(this.lies('stumm'));
@@ -551,6 +552,9 @@ const Schlagzeugseite = {
 
     const taste = e => this.taste(e);
     const weg = () => { if (document.hidden) { this.stoppen(); this.metronom(false); } };
+    const groesse = () => requestAnimationFrame(() => this.zeilenAnpassen());
+    window.addEventListener('resize', groesse);
+    App.beimAufraeumen(() => window.removeEventListener('resize', groesse));
     document.addEventListener('keydown', taste);
     document.addEventListener('visibilitychange', weg);
     App.beimAufraeumen(() => {
@@ -577,7 +581,6 @@ const Schlagzeugseite = {
        Vorlage und Ansicht, damit das Raster ganz oben beginnt und ganz aufs iPad passt */
     const dc = id === 'drumcomputer';
     this.el.querySelector('.sz-seite').classList.toggle('reiter-drumcomputer', dc);
-    if (dc && this.metroAn) this.metronom(false);
     this.tempoHeim();
     if (id === 'pads') this.padsZeigen();
     else if (id === 'drumset') this.setZeigen();
@@ -601,7 +604,7 @@ const Schlagzeugseite = {
     }
     if (e.repeat) return;
     const k = e.key.toLowerCase();
-    if (k === 'm' && this.reiter !== 'drumcomputer' && !e.target.closest?.('input')) { e.preventDefault(); this.metronom(!this.metroAn); return; }
+    if (k === 'm' && !e.target.closest?.('input')) { e.preventDefault(); this.metronom(!this.metroAn); return; }
     if (this.reiter === 'pads') {
       const i = this.PAD_TASTEN.indexOf(k);
       if (i >= 0 && i < this.padAnzahl) { e.preventDefault(); this.padSchlag(i); }
@@ -633,8 +636,9 @@ const Schlagzeugseite = {
           <button type="button" data-anzahl="3" aria-pressed="${this.padAnzahl === 3}">3 Pads</button>
           <button type="button" data-anzahl="6" aria-pressed="${this.padAnzahl === 6}">6 Pads</button>
         </div>
+        <button type="button" class="small sz-schalt" id="sz-pad-wahl" aria-pressed="${!!this.padWahl}" title="Auswahl der Klänge unter den Pads zeigen oder verstecken – versteckt trifft man sie beim Spielen nicht aus Versehen">${Icons.raw('regler')}Klänge wählen</button>
       </div>
-      <div class="sz-pads${this.padAnzahl === 6 ? ' sechs' : ''}">
+      <div class="sz-pads${this.padAnzahl === 6 ? ' sechs' : ''}${this.padWahl ? '' : ' ohne-wahl'}">
         ${reihe.map(i => [this.pads[i], i]).map(([k, i]) => `
           <div class="sz-pad-feld">
             <button type="button" class="sz-pad" data-pad="${i}" data-fam="${Drums.FAMILIE[k]}" aria-label="${Drums.KLAENGE[k]} spielen">
@@ -646,7 +650,13 @@ const Schlagzeugseite = {
             </label>
           </div>`).join('')}
       </div>
-      <p class="hint sz-hinweis">Tippe auf die Pads – auch mit mehreren Fingern gleichzeitig. Unter jedem Pad stellst du den Klang ein.</p>`;
+      <p class="hint sz-hinweis">Tippe auf die Pads – auch mit mehreren Fingern gleichzeitig. Mit „Klänge wählen“ stellst du unter jedem Pad den Klang ein.</p>`;
+    this.inhalt.querySelector('#sz-pad-wahl').addEventListener('click', e => {
+      this.padWahl = !this.padWahl;
+      this.merken('pad-wahl', this.padWahl ? 'an' : 'aus');
+      e.currentTarget.setAttribute('aria-pressed', String(this.padWahl));
+      this.inhalt.querySelector('.sz-pads').classList.toggle('ohne-wahl', !this.padWahl);
+    });
     this.inhalt.querySelectorAll('[data-anzahl]').forEach(b => b.addEventListener('click', () => {
       this.padAnzahl = Number(b.dataset.anzahl);
       this.merken('pad-anzahl', String(this.padAnzahl));
@@ -875,6 +885,7 @@ const Schlagzeugseite = {
           <select id="sz-vorlage"><option value="">– wählen –</option>${this.vorlagen().map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('')}</select>
         </label>
         <button type="button" id="sz-loeschen" class="small">${Icons.raw('reset')}Alles löschen</button>
+        <button type="button" id="sz-metro-dc" class="small sz-schalt" aria-pressed="${!!this.metroAn}" title="Metronom mitlaufen lassen (Taste M)">${Icons.raw('timer')}Metronom</button>
         <button type="button" id="sz-ternaer" class="small sz-ternaer" aria-pressed="${!!this.ternaer}" title="Sechzehntel ternär (Shuffle): jede zweite Sechzehntel kommt später, lang–kurz wie in Triolen">Ternär</button>
         <div class="sz-tempo-platz"></div>
         <div class="klavier-groesse sz-ansicht" role="group" aria-label="Ansicht">
@@ -894,6 +905,7 @@ const Schlagzeugseite = {
       <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger seitlich über mehrere Kästchen streichen, nach oben oder unten ziehen macht den Schlag lauter oder leiser. Instrument links antippen schaltet es stumm. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp, M: Metronom. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
     this.gitter = this.inhalt.querySelector('.sz-gitter');
     this.inhalt.querySelector('.sz-tempo-platz').appendChild(this.tempoEl);
+    this.zeilenAnpassen();
     this.playKnopf();
     const play = this.inhalt.querySelector('#sz-play');
     play.addEventListener('click', () => (this.laeuft ? this.stoppen() : this.starten()));
@@ -909,6 +921,7 @@ const Schlagzeugseite = {
       this.beatMerken();
       this.computerZeigen();
     });
+    this.inhalt.querySelector('#sz-metro-dc').addEventListener('click', () => { Ton.audio(); this.metronom(!this.metroAn); });
     this.inhalt.querySelector('#sz-ternaer').addEventListener('click', e => {
       this.ternaer = !this.ternaer;
       this.merken('ternaer', this.ternaer ? 'an' : 'aus');
@@ -930,6 +943,22 @@ const Schlagzeugseite = {
       if (!stumm) Drums.spielen(k);
     }));
     this.gitterBedienen();
+  },
+
+  /* Zeilenhöhe so, dass das Raster genau in den Platz unter der Steuerzeile passt –
+     egal ob die Zeile ein- oder zweizeilig umbricht (iPad quer oder hochkant) */
+  zeilenAnpassen() {
+    const g = this.gitter, karte = this.el?.querySelector('.sz-seite');
+    if (!g || !g.isConnected || !karte?.classList.contains('vollbild')) return;
+    const kopf = g.querySelector('.sz-zaehl')?.offsetHeight || 20;
+    const rahmen = getComputedStyle(g.parentElement);
+    const unten = karte.getBoundingClientRect().bottom - parseFloat(getComputedStyle(karte).paddingBottom)
+      - parseFloat(rahmen.paddingBottom);
+    const n = this.spuren().length, luecke = parseFloat(getComputedStyle(g).rowGap) || 6;
+    const frei = unten - g.getBoundingClientRect().top - kopf - luecke * n;
+    const z = Math.max(22, Math.min(64, Math.floor(frei / n)));
+    g.style.setProperty('--zeile', `${z}px`);
+    g.classList.toggle('eng', z < 54);   // kleinere Icons, damit die Namen in die Zeile passen
   },
 
   playKnopf() {
@@ -1045,6 +1074,7 @@ const Schlagzeugseite = {
     if (an === this.metroAn) return;
     this.metroAn = an;
     this.leiste.an(an);
+    this.inhalt?.querySelector('#sz-metro-dc')?.setAttribute('aria-pressed', String(an));
     if (an) this.uhr.starten();
     else if (!this.laeuft) { this.uhr.stoppen(); Ton.stopp(); }
   },

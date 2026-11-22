@@ -23,7 +23,9 @@ Kopf, nichts scrollt – Inhalte müssen auf iPad quer und hochkant ganz passen)
 „Vollbild“ schaltet nur das echte Browser-Vollbild. Im Drumcomputer gibt es keine Metronom-Zeile: der
 Tempo-Teil der Leiste wird in dessen Steuerzeile umgehängt (`tempoHeim()`), das Raster beginnt oben. Jedes Kästchen hat eine Lautstärke
 (`beat[k][i]` 0–1, gespeichert als `x` = voll, `1`–`9` = Zehntel, `.` = aus; nach oben/unten ziehen
-regelt sie), Instrument links antippen schaltet die Spur stumm (`stumm`). Knopf „Ternär“
+regelt sie), Instrument links antippen schaltet die Spur stumm (`stumm`). Knopf „Metronom“ läuft im Drumcomputer mit;
+Zeilenhöhe rechnet `zeilenAnpassen()` aus dem freien Platz. Pads: „Klänge wählen“ blendet die
+Auswahl unter den Pads ein (`padWahl`, sonst versteckt). Knopf „Ternär“
 (`ternaer`): jede zweite Sechzehntel 1/12 Schlag später (Shuffle 2:1). Dazu oben in der Leiste ein Vollbild-Knopf für den
 ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
 Zum Dazuspielen: Ein laufender Beat (Drumcomputer) spielt beim Wechsel zwischen Schlagzeug und
