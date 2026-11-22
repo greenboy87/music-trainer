@@ -98,8 +98,9 @@ const Klavierseite = {
     el.innerHTML = `
       <section class="card klavier-seite">
         <div class="klavier-kopf">
-          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('piano')}Klavier</h2>
+          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('piano')}Klavier${Vollbild.wechsel('klavier')}</h2>
           <div class="klavier-einstellungen">
+            <button type="button" class="small sz-laeuft" id="k-mitspiel-stopp" hidden></button>
             ${Vollbild.knopf()}
             <label class="klavier-klang">Klang
               <select id="k-klang">${Object.entries(Ton.KLAENGE).map(([id, name]) =>
@@ -179,6 +180,18 @@ const Klavierseite = {
     document.addEventListener('keydown', pfeile);
     window.addEventListener('resize', groesse);
     window.addEventListener('blur', weg);
+    // Läuft ein Beat (Drumcomputer) oder Song (Songbaukasten) weiter, hier anhalten
+    const mitspiel = el.querySelector('#k-mitspiel-stopp');
+    const beat = Schlagzeugseite.laeuft, song = Songbaukasten.laeuft;
+    if (beat || song) {
+      mitspiel.hidden = false;
+      mitspiel.textContent = beat ? '■ Beat stoppen' : '■ Song stoppen';
+      mitspiel.addEventListener('click', () => {
+        if (Schlagzeugseite.laeuft) Schlagzeugseite.stoppen();
+        if (Songbaukasten.laeuft) Songbaukasten.stoppen();
+        mitspiel.hidden = true;
+      });
+    }
     App.beimAufraeumen(() => {
       document.removeEventListener('keydown', pfeile);
       window.removeEventListener('resize', groesse);

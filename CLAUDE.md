@@ -26,6 +26,11 @@ Tempo-Teil der Leiste wird in dessen Steuerzeile umgehängt (`tempoHeim()`), das
 regelt sie), Instrument links antippen schaltet die Spur stumm (`stumm`). Knopf „Ternär“
 (`ternaer`): jede zweite Sechzehntel 1/12 Schlag später (Shuffle 2:1). Dazu oben in der Leiste ein Vollbild-Knopf für den
 ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
+Zum Dazuspielen: Ein laufender Beat (Drumcomputer) spielt beim Wechsel zwischen Schlagzeug und
+Klavier weiter, ein laufender Song (Songbaukasten) zwischen Songbaukasten und Klavier
+(`App.aufraeumen(ziel)` entscheidet; die Seiten behalten dann ihre Taktuhr). Am Klavier
+erscheint „■ Beat/Song stoppen“. Die drei Seiten haben oben Knöpfe zum direkten Wechseln
+(`Vollbild.wechsel()`), weil sie die obere Leiste verdecken.
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
 `#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne
 auch in Liste und Zeile umschaltbar) → `#/pruefung/k5-liste`:

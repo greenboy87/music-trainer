@@ -147,8 +147,8 @@ const Songbaukasten = {
   zeigen(el, nummer) {
     this.el = el;
     this.verlauf = [];
-    this.laeuft = false;
-    this.metroAn = false;
+    const spielt = !!this.laeuft;   // vom Klavier zurück, Song läuft noch
+    if (!spielt) this.metroAn = false;
     this.x = 0;             // wie weit das Raster nach links geschoben ist (px)
     this.aktuell = null;    // Schritt, der gerade klingt
     let gemerkt = null;
@@ -169,6 +169,7 @@ const Songbaukasten = {
           <div class="sb-kopf-seite">
             <a class="sb-rund" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>
             <button type="button" class="sb-rund" id="sb-vollbild" title="Vollbild" aria-label="Vollbild">${Icons.raw('expand')}</button>
+            ${Vollbild.wechsel('songbaukasten')}
           </div>
           <h2 class="sb-titel">Songbaukasten<span id="sb-titel-nr"></span></h2>
           <div class="sb-kopf-seite rechts">
@@ -202,8 +203,11 @@ const Songbaukasten = {
     this.app = el.querySelector('.sb-app');
     this.buehne = el.querySelector('#sb-buehne');
     this.canvas = el.querySelector('#sb-feld');
-    this.uhr = new Taktuhr(() => this.song.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i),
-      { teile: () => this.song.teile, laenge: () => this.schritte() });
+    if (!spielt) {
+      this.uhr?.stoppen();
+      this.uhr = new Taktuhr(() => this.song.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i),
+        { teile: () => this.song.teile, laenge: () => this.schritte() });
+    }
 
     const $ = s => el.querySelector(s);
     $('#sb-play').addEventListener('click', () => this.umschalten());
@@ -261,13 +265,13 @@ const Songbaukasten = {
       document.removeEventListener('gesturestart', kneifen);
       ro.disconnect();
       thema.disconnect();
-      this.uhr.stoppen();
-      this.laeuft = false;
+      // Den Song hält App.aufraeumen an oder lässt ihn (zum Klavier) weiterlaufen
       clearTimeout(this.toastUhr);
       document.body.classList.remove('sb-offen');
     });
 
     this.alles();
+    if (spielt) this.knopfLaeuft(true);
     if (/^\d{5}$/.test(nummer || '')) this.oeffnen(nummer);
   },
 
@@ -656,21 +660,24 @@ const Songbaukasten = {
   starten() {
     this.laeuft = true;
     this.uhr.starten();
+    this.knopfLaeuft(true);
+  },
+
+  knopfLaeuft(an) {
     const k = this.el.querySelector('#sb-play');
-    k.innerHTML = Icons.raw('stop');
-    k.setAttribute('aria-label', 'Anhalten');
-    k.classList.add('laeuft');
+    if (!k) return;
+    k.innerHTML = Icons.raw(an ? 'stop' : 'play');
+    k.setAttribute('aria-label', an ? 'Anhalten' : 'Abspielen');
+    k.classList.toggle('laeuft', an);
   },
 
   stoppen() {
     this.laeuft = false;
     this.uhr.stoppen();
     this.aktuell = null;
-    const k = this.el.querySelector('#sb-play');
-    if (!k) return;
-    k.innerHTML = Icons.raw('play');
-    k.setAttribute('aria-label', 'Abspielen');
-    k.classList.remove('laeuft');
+    Ton.stopp();
+    if (!this.el.querySelector('#sb-play')) return;   // auf der Klavierseite angehalten
+    this.knopfLaeuft(false);
     this.malen();
   },
 

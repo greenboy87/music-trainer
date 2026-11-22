@@ -42,6 +42,18 @@ const Vollbild = {
     document.addEventListener('webkitfullscreenchange', zeigen);
   },
 
+  /* Direkt zwischen Klavier, Schlagzeug und Songbaukasten wechseln (die Seiten verdecken
+     die obere Leiste). Ein laufender Beat oder Song spielt beim Wechsel zum Klavier weiter. */
+  WECHSEL: [
+    { art: 'klavier', icon: 'piano', name: 'Klavier' },
+    { art: 'schlagzeug', icon: 'drum', name: 'Schlagzeug' },
+    { art: 'songbaukasten', icon: 'raster', name: 'Songbaukasten' },
+  ],
+  wechsel(aktuell) {
+    return `<span class="wechsel" role="group" aria-label="Instrument wechseln">${this.WECHSEL.filter(w => w.art !== aktuell)
+      .map(w => `<a class="wechsel-knopf" href="#/${w.art}" title="Zum ${w.name}" aria-label="Zum ${w.name}">${Icons.raw(w.icon)}</a>`).join('')}</span>`;
+  },
+
   knopf() {
     return `<button type="button" class="small vollbild-knopf" aria-pressed="false" title="Vollbild an oder aus">${Icons.raw('expand')}<span>Vollbild</span></button>`;
   },

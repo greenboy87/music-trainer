@@ -513,11 +513,10 @@ const Schlagzeugseite = {
     this.laden();
     if (reiter in this.REITER) this.reiter = reiter;
     else if (this.lies('reiter') in this.REITER) this.reiter = this.lies('reiter');
-    this.laeuft = false;
     el.innerHTML = `
       <section class="card sz-seite">
         <div class="klavier-kopf">
-          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('drum')}Schlagzeug</h2>
+          <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('drum')}Schlagzeug${Vollbild.wechsel('schlagzeug')}</h2>
           <div class="sz-kopf-rechts">
             ${Vollbild.knopf()}
             <button type="button" class="small sz-laeuft" id="sz-mini-stopp" hidden title="Drumcomputer anhalten (Leertaste)">■ Beat stoppen</button>
@@ -533,7 +532,11 @@ const Schlagzeugseite = {
     Vollbild.binden(el.querySelector('.sz-seite'));
     this.metroAn = false;
     this.tempoEl = null;
-    this.uhr = new Taktuhr(() => this.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i));
+    // Läuft der Beat noch (vom Klavier zurück), bleibt seine Uhr – sonst eine neue
+    if (!this.laeuft) {
+      this.uhr?.stoppen();
+      this.uhr = new Taktuhr(() => this.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i));
+    }
     this.leiste = new Tempoleiste(el.querySelector('.sz-metro'), {
       bpm: this.bpm,
       beiTempo: b => { this.bpm = b; this.merken('bpm', String(b)); },
@@ -553,8 +556,9 @@ const Schlagzeugseite = {
     App.beimAufraeumen(() => {
       document.removeEventListener('keydown', taste);
       document.removeEventListener('visibilitychange', weg);
-      this.laeuft = this.metroAn = false;
-      this.uhr.stoppen();
+      // Den Beat hält App.aufraeumen an oder lässt ihn (zum Klavier) weiterlaufen
+      if (this.metroAn) { this.metroAn = false; if (!this.laeuft) this.uhr.stoppen(); }
+      this.gitter = null;
     });
   },
 
@@ -582,7 +586,8 @@ const Schlagzeugseite = {
   },
 
   miniStopp() {
-    this.el.querySelector('#sz-mini-stopp').hidden = !this.laeuft || this.reiter === 'drumcomputer';
+    const k = this.el.querySelector('#sz-mini-stopp');   // fehlt, wenn gerade das Klavier offen ist
+    if (k) k.hidden = !this.laeuft || this.reiter === 'drumcomputer';
   },
 
   taste(e) {
@@ -1050,6 +1055,7 @@ const Schlagzeugseite = {
 
   /* Die Spalte, die gerade klingt, leuchtet; die Punkte des Metronoms zeigen das Viertel */
   laufmarke(i) {
+    if (!this.el?.isConnected) return;    // Beat läuft auf der Klavierseite weiter
     if (this.metroAn && i % 4 === 0) this.leiste.schlag(i / 4);
     if (!this.laeuft || !this.gitter) return;
     this.gitter.querySelectorAll('.jetzt').forEach(z => z.classList.remove('jetzt'));

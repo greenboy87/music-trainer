@@ -264,20 +264,27 @@ const App = {
   spaeter(fn, ms) { this.timer.push(setTimeout(fn, ms)); },
   beimAufraeumen(fn) { this.aufraeumer.push(fn); },
 
-  aufraeumen() {
+  /* ziel: die Seite, zu der es geht. Ein laufender Beat (Drumcomputer) spielt beim Wechsel
+     zwischen Schlagzeug und Klavier weiter, ein Song (Songbaukasten) zwischen Songbaukasten
+     und Klavier – zum Dazuspielen. Sonst hört alles auf. */
+  aufraeumen(ziel) {
     this.timer.forEach(clearTimeout);
     this.timer = [];
     this.aufraeumer.forEach(fn => fn());
     this.aufraeumer = [];
     if (this.runde?.uhr) clearInterval(this.runde.uhr);
     this.runde = null;
-    Ton.stopp();
+    const beat = Schlagzeugseite.laeuft && (ziel === 'klavier' || ziel === 'schlagzeug');
+    const song = Songbaukasten.laeuft && (ziel === 'klavier' || ziel === 'songbaukasten');
+    if (!beat) Schlagzeugseite.stoppen();
+    if (!song && Songbaukasten.laeuft) Songbaukasten.stoppen();
+    if (!beat && !song) Ton.stopp();
   },
 
   route() {
-    this.aufraeumen();
     const [pfad, abfrage] = location.hash.split('?');
     const [, art, id] = pfad.split('/');
+    this.aufraeumen(art);
     const spiel = SPIELE.find(s => s.id === id);
     /* Anmelde-Link aus dem QR-Code: #/anmelden?u=LenaMüller&p=… – meldet ein
        anderes Kind auf diesem iPad ab und gleich das neue an */
