@@ -22,7 +22,6 @@ const Drums = {
   FAMILIE: { hh: 'becken', ho: 'becken', hp: 'becken', crash: 'becken', ride: 'becken', rb: 'becken', s: 'snare', b: 'bass',
     t1: 'tom', t2: 'tom', t3: 'tom', clap: 'perc', bh: 'perc', bt: 'perc', kuh: 'perc' },
   TOM_HZ: { t1: 210, t2: 155, t3: 105 },
-  offen: null,          // Hüllkurve der offenen Hi-Hat – die geschlossene würgt sie ab
 
   /* Alle Schläge über eine Summe mit Begrenzer in Ton.ausgang, damit Ton.stopp() sie mit beendet */
   ziel() {
@@ -35,7 +34,6 @@ const Drums = {
       b.attack.value = 0.002; b.release.value = 0.12;
       this.bus.connect(b).connect(Ton.ausgang);
       this.busAusgang = Ton.ausgang;
-      this.offen = null;
     }
     return this.bus;
   },
@@ -45,7 +43,6 @@ const Drums = {
     const c = Ton.audio();
     const ziel = this.ziel();
     const t = zeit ?? c.currentTime + 0.005;
-    if (k === 'hh' || k === 'ho' || k === 'hp') this.abwuergen(t);
     if (k === 'b') this.bassdrum(c, t, ziel, staerke);
     else if (k === 's') this.snare(c, t, ziel, staerke);
     else if (this.TOM_HZ[k]) this.tom(c, t, ziel, k, staerke);
@@ -56,10 +53,8 @@ const Drums = {
     else if (k === 'hp') this.tritt(c, t, ziel, staerke);
     else if (k === 'crash') this.crash(c, t, ziel, staerke);
     else if (k === 'rb') this.kuppe(c, t, ziel, staerke);
-    else {
-      const g = this.becken(c, t, ziel, k, staerke);
-      if (k === 'ho') this.offen = g;
-    }
+    // Offene und geschlossene Hi-Hat sind unabhängig: keine würgt die andere ab
+    else this.becken(c, t, ziel, k, staerke);
   },
 
   /* Ride als echte Aufnahme wie in der Beat-Werkstatt der Rhythmus-Werkstatt: drei Anschläge
@@ -107,13 +102,6 @@ const Drums = {
     g.gain.value = pr.pegel * st;
     q.connect(g).connect(ziel);
     q.start(t, pr.versatz);
-  },
-
-  abwuergen(t) {
-    if (!this.offen) return;
-    this.offen.gain.cancelScheduledValues(t);
-    this.offen.gain.setTargetAtTime(0.0001, t, 0.012);
-    this.offen = null;
   },
 
   rauschen(c, sek) {
