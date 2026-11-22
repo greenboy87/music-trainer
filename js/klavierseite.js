@@ -100,7 +100,7 @@ const Klavierseite = {
         <div class="klavier-kopf">
           <h2><a class="karte-zurueck" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>${Icons.raw('piano')}Klavier${Vollbild.wechsel('klavier')}</h2>
           <div class="klavier-einstellungen">
-            <button type="button" class="small sz-laeuft" id="k-mitspiel-stopp" hidden></button>
+            <button type="button" class="small sz-laeuft" id="k-mitspiel"></button>
             ${Vollbild.knopf()}
             <label class="klavier-klang">Klang
               <select id="k-klang">${Object.entries(Ton.KLAENGE).map(([id, name]) =>
@@ -180,18 +180,26 @@ const Klavierseite = {
     document.addEventListener('keydown', pfeile);
     window.addEventListener('resize', groesse);
     window.addEventListener('blur', weg);
-    // Läuft ein Beat (Drumcomputer) oder Song (Songbaukasten) weiter, hier anhalten
-    const mitspiel = el.querySelector('#k-mitspiel-stopp');
-    const beat = Schlagzeugseite.laeuft, song = Songbaukasten.laeuft;
-    if (beat || song) {
-      mitspiel.hidden = false;
-      mitspiel.textContent = beat ? '■ Beat stoppen' : '■ Song stoppen';
-      mitspiel.addEventListener('click', () => {
-        if (Schlagzeugseite.laeuft) Schlagzeugseite.stoppen();
-        if (Songbaukasten.laeuft) Songbaukasten.stoppen();
-        mitspiel.hidden = true;
-      });
-    }
+    /* Zum Dazuspielen: der Beat aus dem Drumcomputer (der gespeicherte, auch wenn das
+       Schlagzeug noch nicht offen war) – oder der Song, wenn man vom Songbaukasten mit
+       laufendem Song kam. Ein Knopf startet und stoppt. */
+    const mitspiel = el.querySelector('#k-mitspiel');
+    const quelle = Songbaukasten.laeuft ? Songbaukasten : Schlagzeugseite;
+    const name = quelle === Songbaukasten ? 'Song' : 'Beat';
+    const zeigen = () => {
+      mitspiel.innerHTML = quelle.laeuft ? `■ ${name} stoppen` : `${Icons.raw('play')}${name} starten`;
+      mitspiel.setAttribute('aria-pressed', String(!!quelle.laeuft));
+      mitspiel.title = quelle === Songbaukasten ? 'Den Song aus dem Songbaukasten abspielen oder anhalten'
+        : 'Den Beat aus dem Drumcomputer abspielen oder anhalten – zum Dazuspielen';
+    };
+    zeigen();
+    mitspiel.addEventListener('click', () => {
+      Ton.audio();
+      if (quelle.laeuft) quelle.stoppen();
+      else if (quelle === Songbaukasten) quelle.starten();
+      else Schlagzeugseite.vonAussenStarten();
+      zeigen();
+    });
     App.beimAufraeumen(() => {
       document.removeEventListener('keydown', pfeile);
       window.removeEventListener('resize', groesse);

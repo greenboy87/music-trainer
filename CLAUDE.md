@@ -29,7 +29,8 @@ ganzen music-trainer. Doppeltipp-Zoom ist per `touch-action: manipulation` aus.
 Zum Dazuspielen: Ein laufender Beat (Drumcomputer) spielt beim Wechsel zwischen Schlagzeug und
 Klavier weiter, ein laufender Song (Songbaukasten) zwischen Songbaukasten und Klavier
 (`App.aufraeumen(ziel)` entscheidet; die Seiten behalten dann ihre Taktuhr). Am Klavier
-erscheint „■ Beat/Song stoppen“. Die drei Seiten haben oben Knöpfe zum direkten Wechseln
+startet und stoppt ein Knopf den Beat (auch den gespeicherten, ohne das Schlagzeug zu öffnen:
+`Schlagzeugseite.vonAussenStarten()`) oder – kam man mit laufendem Song – den Song. Die drei Seiten haben oben Knöpfe zum direkten Wechseln
 (`Vollbild.wechsel()`), weil sie die obere Leiste verdecken.
 Prüfungszeilen Klasse 5 und 6 (`js/pruefung.js`): `#/pruefung` Klasse wählen →
 `#/pruefung/k5` Modus wählen (Üben mit Cursor, Sterne sammeln, Prüfung – Üben/Sterne

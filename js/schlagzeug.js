@@ -586,7 +586,7 @@ const Schlagzeugseite = {
   },
 
   miniStopp() {
-    const k = this.el.querySelector('#sz-mini-stopp');   // fehlt, wenn gerade das Klavier offen ist
+    const k = this.el?.querySelector('#sz-mini-stopp');   // fehlt, wenn gerade das Klavier offen ist
     if (k) k.hidden = !this.laeuft || this.reiter === 'drumcomputer';
   },
 
@@ -1016,6 +1016,13 @@ const Schlagzeugseite = {
 
   /* Beat starten: Läuft das Metronom schon, steigt der Beat an der Stelle im Takt ein,
      an der die Uhr gerade ist – beide bleiben zusammen */
+  /* Beat starten, ohne dass die Schlagzeugseite offen ist (Knopf am Klavier) */
+  vonAussenStarten() {
+    if (!this.beat?.b) this.laden();
+    if (!this.uhr) this.uhr = new Taktuhr(() => this.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i));
+    this.starten();
+  },
+
   starten() {
     if (this.laeuft) return;
     this.laeuft = true;
