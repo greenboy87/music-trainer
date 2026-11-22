@@ -781,6 +781,7 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .sz-tippen.schlag { animation: sz-tipp .15s ease-out; }
 @keyframes sz-tipp { from { background: var(--active-soft); border-color: var(--accent); transform: scale(.95); } to { transform: none; } }
 .sz-ansicht { margin-left: auto; }
+.sz-ternaer[aria-pressed="true"] { background: var(--active-soft); border-color: var(--accent); color: var(--accent); }
 .sz-ansicht button { min-height: 2.4rem; }
 @media (max-width: 620px) { .sz-ansicht { margin-left: 0; } }
 #sz-bpm-text { display: inline-block; min-width: 2.2rem; text-align: right; font-variant-numeric: tabular-nums; }

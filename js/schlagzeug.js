@@ -474,6 +474,7 @@ const Schlagzeugseite = {
       this.hhOffen = this.lies('hh-offen') === 'an';
       this.einfach = this.lies('ansicht') !== 'profi';
       this.namen = this.lies('namen') !== 'aus';
+      this.ternaer = this.lies('ternaer') === 'an';
       const bpm = Number(this.lies('bpm'));
       if (bpm >= 50 && bpm <= 200) this.bpm = bpm;
       const st = JSON.parse(this.lies('stumm'));
@@ -869,6 +870,7 @@ const Schlagzeugseite = {
           <select id="sz-vorlage"><option value="">– wählen –</option>${this.vorlagen().map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('')}</select>
         </label>
         <button type="button" id="sz-loeschen" class="small">${Icons.raw('reset')}Alles löschen</button>
+        <button type="button" id="sz-ternaer" class="small sz-ternaer" aria-pressed="${!!this.ternaer}" title="Sechzehntel ternär (Shuffle): jede zweite Sechzehntel kommt später, lang–kurz wie in Triolen">Ternär</button>
         <div class="sz-tempo-platz"></div>
         <div class="klavier-groesse sz-ansicht" role="group" aria-label="Ansicht">
           <button type="button" data-ansicht="einfach" aria-pressed="${this.einfach}" title="Nur Bassdrum, Snare, Hi-Hat und Becken">Einfach</button>
@@ -901,6 +903,11 @@ const Schlagzeugseite = {
       this.leiste.setzen(this.bpm);
       this.beatMerken();
       this.computerZeigen();
+    });
+    this.inhalt.querySelector('#sz-ternaer').addEventListener('click', e => {
+      this.ternaer = !this.ternaer;
+      this.merken('ternaer', this.ternaer ? 'an' : 'aus');
+      e.currentTarget.setAttribute('aria-pressed', String(this.ternaer));
     });
     this.inhalt.querySelector('#sz-loeschen').addEventListener('click', () => {
       this.vorlageLaden('leer');
@@ -1031,9 +1038,12 @@ const Schlagzeugseite = {
   },
 
   /* Ein Sechzehntel planen: Beat (nur die sichtbaren Spuren) und Metronom-Klick */
+  /* Ternär (Shuffle): jede zweite Sechzehntel rückt vom halben auf zwei Drittel ihres
+     Achtels – lang–kurz wie Triolen. Das sind 1/12 Schlag später. */
   schritt(i, zeit) {
+    const t = this.ternaer && i % 2 ? zeit + 60 / this.bpm / 12 : zeit;
     if (this.laeuft) this.spuren().forEach(k => {
-      if (this.beat[k][i] && !this.stumm[k]) Drums.spielen(k, zeit, this.beat[k][i] * (k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1));
+      if (this.beat[k][i] && !this.stumm[k]) Drums.spielen(k, t, this.beat[k][i] * (k.startsWith('h') || k === 'ride' ? (i % 4 ? 0.75 : 1) : 1));
     });
     if (this.metroAn && i % 4 === 0) Metronom.klick(zeit, i === 0);
   },
