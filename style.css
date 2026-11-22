@@ -945,6 +945,14 @@ body.hat-vollbild { overflow: hidden; }
 .sz-seite.vollbild .sz-pads { width: min(100%, calc((100dvh - 300px) * 3.2)); max-width: none; }
 .sz-seite.vollbild .sz-gitter { --zeile: clamp(30px, 6.4vh, 64px); }
 .sz-seite.vollbild .sz-hinweis { display: none; }
+/* Drumcomputer im festen Bild: ohne Metronom-Zeile, oben beginnend, Zeilen so hoch,
+   dass auch „Fortgeschritten“ (10 Spuren) ohne Scrollen passt */
+.sz-seite.reiter-drumcomputer .sz-metro { display: none; }
+.sz-seite.vollbild.reiter-drumcomputer .sz-inhalt { justify-content: flex-start; }
+.sz-seite.vollbild.reiter-drumcomputer .sz-gitter { --zeile: clamp(22px, calc((100dvh - 210px) / (var(--n) + .5) - 6px), 64px); }
+.sz-seite.vollbild.reiter-drumcomputer .sz-steuerung { margin-bottom: .6rem; }
+.sz-tempo-platz { display: contents; }
+.sz-tempo-platz .sz-tippen { display: none; }
 @media (max-width: 520px) { .vollbild-knopf span { display: none; } .vollbild-knopf .icon { margin-right: 0; } }
 /* Klavier und Schlagzeug als festes Bild: Zurück-Pfeil im Kopf, nichts scrollt */
 body.hat-vollbild { overscroll-behavior: none; }

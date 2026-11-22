@@ -527,6 +527,23 @@ const Songbaukasten = {
     return { art: 'drum', s, z: Math.min(2, Math.floor((py - m.tonH - m.luecke) / m.trommel)) };
   },
 
+  /* Tippen auf einen Notennamen am Rand spielt den Ton (oder den Schlag) an */
+  nameBei(e) {
+    const m = this.m, r = this.canvas.getBoundingClientRect();
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    if (!m.namen || px >= m.namen) return false;
+    e.preventDefault();
+    Ton.audio();
+    if (py < m.tonH) {
+      const z = m.Z - 1 - Math.min(m.Z - 1, Math.floor(py / m.zeile));
+      const aus = Ton.anschlag(this.midi(z), this.song.klang);
+      setTimeout(aus, 400);
+    } else if (py >= m.tonH + m.luecke) {
+      Drums.spielen(this.spurKlang(Math.min(2, Math.floor((py - m.tonH - m.luecke) / m.trommel))), undefined, 0.9);
+    }
+    return true;
+  },
+
   zelleSetzen(k, an, still = false) {
     const set = k.art === 'drum' ? this.drums : this.noten;
     const schl = `${k.s}:${k.z}`;
@@ -549,6 +566,7 @@ const Songbaukasten = {
     let modus = null, art = null, geaendert = false, zeiger = null, letzte = null;
     c.addEventListener('pointerdown', e => {
       if (zeiger !== null) return;
+      if (this.nameBei(e)) return;
       const k = this.zelleBei(e);
       if (!k) return;
       e.preventDefault();

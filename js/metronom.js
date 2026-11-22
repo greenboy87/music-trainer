@@ -103,6 +103,10 @@ class Tempoleiste {
         </div>
       </div>`;
     this.el = ort.querySelector('.metro-leiste');
+    // Fest merken: der Drumcomputer hängt den Tempo-Teil in seine eigene Zeile um
+    this.regler = this.el.querySelector('.metro-regler');
+    this.zahl = this.el.querySelector('.metro-zahl');
+    this.tippKnopf = this.el.querySelector('.sz-tippen');
     this.punkte = [...this.el.querySelectorAll('.metro-punkte i')];
     this.knopf = this.el.querySelector('.metro-an');
     this.knopf.addEventListener('click', () => beiMetronom());
@@ -131,8 +135,8 @@ class Tempoleiste {
 
   setzen(bpm) {
     this.bpm = Math.max(50, Math.min(200, Math.round(bpm)));
-    this.el.querySelector('.metro-regler').value = this.bpm;
-    this.el.querySelector('.metro-zahl').textContent = this.bpm;
+    this.regler.value = this.bpm;
+    this.zahl.textContent = this.bpm;
     this.beiTempo(this.bpm);
   }
 
@@ -142,7 +146,7 @@ class Tempoleiste {
     if (!this.tipps || jetzt - this.tipps[this.tipps.length - 1] > 2000) this.tipps = [];
     this.tipps.push(jetzt);
     if (this.tipps.length > 5) this.tipps.shift();
-    const k = this.el.querySelector('.sz-tippen');
+    const k = this.tippKnopf;
     k.classList.remove('schlag');
     void k.getBoundingClientRect();
     k.classList.add('schlag');

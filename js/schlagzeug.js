@@ -538,6 +538,7 @@ const Schlagzeugseite = {
     this.inhalt = el.querySelector('.sz-inhalt');
     Vollbild.binden(el.querySelector('.sz-seite'));
     this.metroAn = false;
+    this.tempoEl = null;
     this.uhr = new Taktuhr(() => this.bpm, (i, zeit) => this.schritt(i, zeit), i => this.laufmarke(i));
     this.leiste = new Tempoleiste(el.querySelector('.sz-metro'), {
       bpm: this.bpm,
@@ -574,6 +575,12 @@ const Schlagzeugseite = {
       b.setAttribute('aria-selected', String(b.dataset.reiter === id));
     });
     this.gitter = null;
+    /* Drumcomputer: keine Metronom-Zeile – das Tempo wandert in die Zeile mit Start,
+       Vorlage und Ansicht, damit das Raster ganz oben beginnt und ganz aufs iPad passt */
+    const dc = id === 'drumcomputer';
+    this.el.querySelector('.sz-seite').classList.toggle('reiter-drumcomputer', dc);
+    if (dc && this.metroAn) this.metronom(false);
+    this.tempoHeim();
     if (id === 'pads') this.padsZeigen();
     else if (id === 'drumset') this.setZeigen();
     else this.computerZeigen();
@@ -595,7 +602,7 @@ const Schlagzeugseite = {
     }
     if (e.repeat) return;
     const k = e.key.toLowerCase();
-    if (k === 'm' && !e.target.closest?.('input')) { e.preventDefault(); this.metronom(!this.metroAn); return; }
+    if (k === 'm' && this.reiter !== 'drumcomputer' && !e.target.closest?.('input')) { e.preventDefault(); this.metronom(!this.metroAn); return; }
     if (this.reiter === 'pads') {
       const i = this.PAD_TASTEN.indexOf(k);
       if (i >= 0 && i < this.padAnzahl) { e.preventDefault(); this.padSchlag(i); }
@@ -852,7 +859,15 @@ const Schlagzeugseite = {
     return Object.entries(this.VORLAGEN).filter(([, v]) => Object.keys(v.beat).every(k => sp.includes(k)));
   },
 
+  /* Der Tempo-Teil der Leiste: im Drumcomputer in dessen Zeile geliehen, sonst daheim.
+     Vor jedem Neuzeichnen zurückholen, sonst verschwindet er mit dem alten Inhalt. */
+  tempoHeim() {
+    if (!this.tempoEl) this.tempoEl = this.leiste.el.querySelector('.sz-tempo');
+    if (this.tempoEl && this.tempoEl.parentElement !== this.leiste.el) this.leiste.el.appendChild(this.tempoEl);
+  },
+
   computerZeigen() {
+    this.tempoHeim();
     const kopf = Array.from({ length: 16 }, (_, i) => `<span class="sz-zaehl${i % 4 ? '' : ' schlag'}">${i % 4 ? this.SILBEN[i % 4] : i / 4 + 1}</span>`).join('');
     this.inhalt.innerHTML = `
       <div class="sz-steuerung">
@@ -861,13 +876,14 @@ const Schlagzeugseite = {
           <select id="sz-vorlage"><option value="">– wählen –</option>${this.vorlagen().map(([id, v]) => `<option value="${id}">${v.name}</option>`).join('')}</select>
         </label>
         <button type="button" id="sz-loeschen" class="small">${Icons.raw('reset')}Alles löschen</button>
+        <div class="sz-tempo-platz"></div>
         <div class="klavier-groesse sz-ansicht" role="group" aria-label="Ansicht">
           <button type="button" data-ansicht="einfach" aria-pressed="${this.einfach}" title="Nur Bassdrum, Snare, Hi-Hat und Becken">Einfach</button>
           <button type="button" data-ansicht="profi" aria-pressed="${!this.einfach}" title="Alle Instrumente">Fortgeschritten</button>
         </div>
       </div>
       <div class="sz-gitter-rahmen">
-        <div class="sz-gitter${this.einfach ? ' einfach' : ''}" role="grid" aria-label="Beat: 16 Sechzehntel je Instrument">
+        <div class="sz-gitter${this.einfach ? ' einfach' : ''}" style="--n:${this.spuren().length}" role="grid" aria-label="Beat: 16 Sechzehntel je Instrument">
           <span class="sz-ecke"></span>${kopf}
           ${this.spuren().map(k => `
             <button type="button" class="sz-spur" data-spur="${k}" style="--farbe:${this.SPUR_FARBE[k]}" title="${this.SPUR_NAMEN[k]} anhören" aria-label="${this.SPUR_NAMEN[k]} anhören">
@@ -877,6 +893,7 @@ const Schlagzeugseite = {
       </div>
       <p class="hint sz-hinweis">Kästchen antippen setzt einen Schlag – mit gedrücktem Finger kannst du über mehrere Kästchen streichen. Jede Vierergruppe ist ein Viertel (1 e + e). Leertaste: Start/Stopp, M: Metronom. Der Beat läuft weiter, wenn du zu den Pads oder zum Drumset wechselst.</p>`;
     this.gitter = this.inhalt.querySelector('.sz-gitter');
+    this.inhalt.querySelector('.sz-tempo-platz').appendChild(this.tempoEl);
     this.playKnopf();
     const play = this.inhalt.querySelector('#sz-play');
     play.addEventListener('click', () => (this.laeuft ? this.stoppen() : this.starten()));
