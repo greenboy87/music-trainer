@@ -167,12 +167,15 @@ const RhythmusEcho = {
     const leiste = el.querySelector('.echo-zeitleiste');
     const tipps = [];
     let zustand = 'bereit', beginnDu = 0;
+    /* Klopfer mit der normalen Uhr messen, nicht mit der Audio-Uhr: steht die auf dem
+       iPad still (Ton „unterbrochen“), lagen sonst alle Klopfer außerhalb – „0× geklopft“ */
+    const uhr = () => performance.now() / 1000;
 
     const tippen = () => {
       if (zustand === 'bereit') return abspielen();
       if (zustand !== 'aufnahme' && zustand !== 'gleich') return;
       Ton.snare(0, 0.8);
-      tipps.push((Ton.jetzt() - Ton.verzoegerung() - beginnDu) / schlag);
+      tipps.push((uhr() - beginnDu) / schlag);
       pad.classList.remove('puls'); void pad.offsetWidth; pad.classList.add('puls');
     };
     pad.addEventListener('pointerdown', e => { e.preventDefault(); tippen(); });
@@ -188,8 +191,10 @@ const RhythmusEcho = {
       pad.innerHTML = `${Icons.raw('ear')}Hör zu …`;
       const { beginn } = Rhythmus.abspielen(takt, tempo);
       for (let i = 8; i < 16; i++) Ton.klick(i * schlag, i % 4 === 0);
-      beginnDu = beginn + 8 * schlag;
       const start = Ton.jetzt();
+      // Beginn des Nachklopfens auf der normalen Uhr; die Ausgabeverzögerung kommt dazu,
+      // weil die Kinder auf das hören, was später aus dem Lautsprecher kommt
+      beginnDu = uhr() + (beginn + 8 * schlag - start) + Ton.verzoegerung();
       for (let i = 0; i < 16; i++) {
         App.spaeter(() => {
           punkte.forEach((p, k) => p.classList.toggle('an', k === i % 4));
@@ -200,7 +205,7 @@ const RhythmusEcho = {
           if (i === 12) { zustand = 'aufnahme'; phase.textContent = 'Jetzt klopfen!'; pad.classList.add('aktiv'); pad.innerHTML = `${Icons.raw('hand')}Klopf hier`; }
         }, ((beginn - 4 * schlag - start) + i * schlag) * 1000);
       }
-      App.spaeter(auswerten, ((beginnDu - start) + 4.4 * schlag) * 1000);
+      App.spaeter(auswerten, ((beginn + 8 * schlag - start) + 4.4 * schlag) * 1000);
     };
 
     const auswerten = () => {

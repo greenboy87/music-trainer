@@ -9,8 +9,10 @@ const Ton = {
   ausgang: null,
 
   audio() {
-    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (!this.ctx || this.ctx.state === 'closed') { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ausgang = null; }
+    // iPad: nach Sperrbildschirm, Anruf oder anderer Musik steht der Ton auf „interrupted“ –
+    // dann läuft auch currentTime nicht weiter. Bei jedem Zugriff wieder anstoßen.
+    if (this.ctx.state !== 'running') this.ctx.resume?.().catch?.(() => {});
     if (!this.ausgang) this.neuerAusgang();
     return this.ctx;
   },
