@@ -53,7 +53,7 @@ Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM
 `BESTANDEN`, `VERSUCHE`, Endnote am Ende (gespeichert, s. o.). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
-Klavier-Prüfung Klasse 8 (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
+Klavier-Prüfung (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal
 gezeichnet mit Wiederholung, gespielt 2×, beim 2. Mal Ende auf Takt 4, Schlag 1 (liegen
 lassen). Tastennummern wie Toms Aufkleber am Keyboard (`NUMMER`, keine Fingersätze) unter den Noten und auf den Tasten. Rechte/linke Hand/beide; „Schritt für Schritt“ (Cursor wartet auf die richtigen

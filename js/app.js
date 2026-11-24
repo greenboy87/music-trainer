@@ -470,8 +470,8 @@ const App = {
           ${b === 'Rhythmus' ? `
             <a class="card spiel-karte" href="#/pruefung" style="--farbe:#5eead4">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
-              <span class="spiel-titel">Prüfungen Klasse 5, 6 und 8</span>
-              <span class="hint">Klasse 5 und 6: Rhythmus-Zeilen auf den Pads. Klasse 8: ein Intro auf dem Klavier.</span>
+              <span class="spiel-titel">Prüfungen</span>
+              <span class="hint">Rhythmus-Zeilen auf den Pads (Klasse 5 und 6) und ein Intro auf dem Klavier.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme()} / 78</span>
             </a>` : ''}
         </div>`).join('')}`;

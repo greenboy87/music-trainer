@@ -1,4 +1,4 @@
-/* Klavier-Prüfung Klasse 8 (#/klavierpruefung): das Intro von „In the End“ auf dem
+/* Klavier-Prüfung (#/klavierpruefung): das Intro von „In the End“ auf dem
    Keyboard. Die Zeile wird zweimal gespielt, beim zweiten Mal endet sie auf dem
    ersten Ton von Takt 4 und bleibt liegen.
 
@@ -63,17 +63,17 @@ const Klavierpruefung = {
     App.beimAufraeumen(() => { this.stopp(); this.zoomFrei(); });
     this.zoomSperren();
     if (!Konto.angemeldet()) {
-      return rahmen(`<h2>Klavier-Prüfung Klasse 8</h2>
+      return rahmen(`<h2>Klavier-Prüfung</h2>
         <p class="hint">Die Noten gibt es nur für angemeldete Schülerinnen und Schüler – das Stück ist
           urheberrechtlich geschützt und darf nur im Unterricht genutzt werden.</p>
         <a class="knopf primary" href="#/anmelden">Anmelden</a>`);
     }
     if (!this.stueck) {
-      rahmen('<h2>Klavier-Prüfung Klasse 8</h2><p class="hint">Noten werden geladen …</p>');
+      rahmen('<h2>Klavier-Prüfung</h2><p class="hint">Noten werden geladen …</p>');
       try { this.stueck = this.lesen((await Konto.api(`/api/stueck/${this.ID}`)).stueck); }
       catch (e) {
         if (App.art !== 'klavierpruefung') return;
-        return rahmen(`<h2>Klavier-Prüfung Klasse 8</h2><p class="hint">${e.status === 404
+        return rahmen(`<h2>Klavier-Prüfung</h2><p class="hint">${e.status === 404
           ? 'Die Noten sind noch nicht eingerichtet. Sag deiner Lehrkraft Bescheid.'
           : e.status === 401 ? 'Deine Anmeldung ist abgelaufen – bitte neu anmelden.'
           : 'Die Noten ließen sich nicht laden. Bist du online?'}</p>`);
@@ -117,7 +117,7 @@ const Klavierpruefung = {
     const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
     this.el.querySelector('.kp-seite').innerHTML = `
       <div class="kp-kopf">
-        <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span>
+        <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung · ${s.titel} <span class="hint">${s.von} · Intro</span>
           <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
           <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
         <div class="kp-hilfe" id="kp-hilfe" hidden>
