@@ -60,6 +60,7 @@ Drei Pads (Reihenfolge umdrehbar: Hi-Hat · Bassdrum · Snare oder Snare · Bass
 Drumset des Schlagzeugs (nur Hi-Hat, Snare, Bassdrum). „Mitspielen“ ohne Sterne, „Sterne sammeln“ = ganzer Groove,
 Spiel `drumgrooves`, Stufe 0–4. Dazu das Spiel `groove-hoeren` (Bereich „Drums“, `unter: 'Drumgrooves'`; Startseite: `App.drumsKarten`). Alle drei
 stehen im School-Tool in `MT_SPIELE`.
+Drumgrooves Part II (`#/drumgrooves2`, `modus: 'part2'`, Klasse 9): fünf Level aus Toms Folie (`DG.GROOVES2`, Level 5 mit zwei Takten und eigener Snare), Spiel `drumgrooves-2` (Stufe 0–4), Karte in der Unterkategorie Drumgrooves.
 Groove + Fill (`#/groovefill`, derselbe Trainer mit `modus: 'fill'`): 1 Takt Groove 2 + 1 Takt Fill (Snare, Toms),
 4×. Acht Fills (`DG.FILLS`, 1–4 Viertel, 5–8 Achtel). Aufbau: nur Fill (Computer spielt den Groove) → Groove + Fill.
 Sechs Pads (oben Toms Q W E, unten Hi-Hat · Snare · Bassdrum A S D – Snare immer in der Mitte). Spiel `groove-fill`

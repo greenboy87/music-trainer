@@ -309,6 +309,7 @@ const App = {
     else if (art === 'klavierpruefung') Klavierpruefung.zeigen(this.el);
     else if (art === 'drumgrooves') Drumgrooves.zeigen(this.el);
     else if (art === 'groovefill') Drumgrooves.zeigen(this.el, 'fill');
+    else if (art === 'drumgrooves2') Drumgrooves.zeigen(this.el, 'part2');
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
     this.werkzeugKnoepfe(art, pfad);
@@ -447,6 +448,12 @@ const App = {
               <span class="spiel-titel">Groove-Trainer</span>
               <span class="hint">Die fünf Grooves auf den Pads oder am Drumset mitspielen – Schritt für Schritt aufgebaut.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme()} / 30</span>
+            </a>
+            <a class="card spiel-karte" href="#/drumgrooves2" style="--farbe:#f472b6">
+              <span class="spiel-icon">${Icons.raw('drum')}</span>
+              <span class="spiel-titel">Drumgrooves Part II</span>
+              <span class="hint">Fünf Level mit mehr Bassdrum – Level 5 mit zwei Takten.</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme('part2')} / 30</span>
             </a>` },
       { name: 'Groove + Fill', info: 'Ein Takt Groove, ein Takt Fill – so endet ein Teil im Song.', trainer: `
             <a class="card spiel-karte" href="#/groovefill" style="--farbe:#818cf8">
@@ -465,8 +472,8 @@ const App = {
 
   zeigeStart() {
     // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
-    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill');
-    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18 + 30 + 48;
+    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill') + Drumgrooves.sterneSumme('part2');
+    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18 + 30 + 48 + 30;
     const bereiche = [...new Set(SPIELE.map(s => s.bereich))];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();

@@ -11,6 +11,9 @@
       Fill auf Snare und Toms, insgesamt 4×. Acht einfache Fills, vier in Vierteln, vier in
       Achteln. Aufbau: erst nur der Fill (den Groove spielt der Computer), dann beides.
       Sechs Pads (oben die Toms) oder das Drumset. Spiel „groove-fill“, Stufe 0–7 = Fill 1–8.
+   2b. Drumgrooves Part II (#/drumgrooves2, Klasse 9): derselbe Groove-Trainer mit den fünf Levels
+      der Stunde „Drumgrooves Part II“ (Bassdrum mit mehr Achteln, Level 5 zwei Takte). Spiel
+      „drumgrooves-2“, Stufe 0–4 = Level 1–5.
    3. Spiele (SPIELE, Bereich „Drums“, Feld unter = Unterkategorie): „Welcher Groove?“
       (Drumgrooves) und „Welcher Fill?“ (Groove + Fill). Auf der Startseite stehen sie mit den
       beiden Trainern unter der Kategorie „Drums“.
@@ -23,6 +26,14 @@ const DG = {
     { nr: 3, note: 3, bass: [0, 4, 5] },
     { nr: 4, note: 2, bass: [0, 3, 4] },
     { nr: 5, note: 1, bass: [0, 3, 5] },
+  ],
+  /* Drumgrooves Part II (Klasse 9): Level 1–5 = Note 5–1; Level 5 hat zwei Takte (Positionen 8–15) */
+  GROOVES2: [
+    { nr: 1, note: 5, bass: [0, 1, 4] },
+    { nr: 2, note: 4, bass: [0, 1, 3, 4] },
+    { nr: 3, note: 3, bass: [0, 3, 4, 5] },
+    { nr: 4, note: 2, bass: [0, 1, 5] },
+    { nr: 5, note: 1, takte: 2, bass: [0, 3, 5, 7, 8, 11, 12], snare: [2, 6, 10, 13, 14] },
   ],
   SNARE: [2, 6],
   HH: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -54,8 +65,9 @@ const DG = {
   schlaege(g, stimmen = ['hh', 's', 'b']) {
     const l = [];
     // Handsatz wie in der Stunde: Hi-Hat rechts (übergekreuzt), Snare links, Bassdrum Fuß
-    if (stimmen.includes('hh')) this.HH.forEach(p => l.push({ k: 'hh', p, h: 'R' }));
-    if (stimmen.includes('s')) this.SNARE.forEach(p => l.push({ k: 's', p, h: 'L' }));
+    const takte = g.takte || 1;
+    if (stimmen.includes('hh')) for (let p = 0; p < takte * 8; p++) l.push({ k: 'hh', p, h: 'R' });
+    if (stimmen.includes('s')) (g.snare || [...this.SNARE, ...(takte > 1 ? this.SNARE.map(p => p + 8) : [])]).forEach(p => l.push({ k: 's', p, h: 'L' }));
     if (stimmen.includes('b')) g.bass.forEach(p => l.push({ k: 'b', p, h: 'F' }));
     return l;
   },
@@ -141,6 +153,7 @@ const Drumgrooves = {
   MODI: {
     groove: { spiel: 'drumgrooves', titel: 'Drumgrooves', takte: 1, teile: ['hs', 'bs', 'alle'] },
     fill: { spiel: 'groove-fill', titel: 'Groove + Fill', takte: 2, teile: ['fill', 'beide'] },
+    part2: { spiel: 'drumgrooves-2', titel: 'Drumgrooves Part II', takte: 1, teile: ['hs', 'bs', 'alle'] },
   },
   TEILE: {
     hs: { name: 'Hi-Hat + Snare', stimmen: ['hh', 's'] },
@@ -158,22 +171,25 @@ const Drumgrooves = {
   modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: false, sticks: true, instrument: 'pads', reihe: 'hsb',
 
   m() { return this.MODI[this.modus]; },
-  lies(s, modus = this.modus) { try { return localStorage.getItem(`musiktrainer-dg-${modus === 'fill' ? 'fill-' : ''}${s}`); } catch { return null; } },
-  merken(s, w) { try { localStorage.setItem(`musiktrainer-dg-${this.modus === 'fill' ? 'fill-' : ''}${s}`, String(w)); } catch { /* privat */ } },
-  auswahl() { return this.modus === 'fill' ? DG.FILLS : DG.GROOVES; },
-  groove() { return this.modus === 'fill' ? DG.GROOVES[this.FILL_GROOVE] : DG.GROOVES[this.g]; },
+  lies(s, modus = this.modus) { try { return localStorage.getItem(`musiktrainer-dg-${modus === 'groove' ? '' : `${modus}-`}${s}`); } catch { return null; } },
+  merken(s, w) { try { localStorage.setItem(`musiktrainer-dg-${this.modus === 'groove' ? '' : `${this.modus}-`}${s}`, String(w)); } catch { /* privat */ } },
+  liste(modus = this.modus) { return modus === 'fill' ? DG.FILLS : modus === 'part2' ? DG.GROOVES2 : DG.GROOVES; },
+  auswahl() { return this.liste(); },
+  groove() { return this.modus === 'fill' ? DG.GROOVES[this.FILL_GROOVE] : this.liste()[this.g]; },
+  /* Takte eines Durchgangs: Fill = Groove + Fill, sonst so lang wie der Groove */
+  takte() { return this.modus === 'fill' ? 2 : this.groove().takte || 1; },
   /* Groove 1 hat keine Bassdrum: dort gibt es nur einen Teil */
-  teile() { return this.modus === 'groove' && !this.groove().bass.length ? ['hs'] : this.m().teile; },
+  teile() { return this.modus !== 'fill' && !this.groove().bass.length ? ['hs'] : this.m().teile; },
   teilJetzt() { return this.art === 'sterne' ? this.teile()[this.teile().length - 1] : this.teil; },
   sterneSumme(modus = 'groove') {
     const m = this.MODI[modus];
-    return (modus === 'fill' ? DG.FILLS : DG.GROOVES).reduce((s, _, i) => s + Fortschritt.bester(m.spiel, i).sterne, 0);
+    return this.liste(modus).reduce((s, _, i) => s + Fortschritt.bester(m.spiel, i).sterne, 0);
   },
 
   /* Was in einem Durchgang erklingt: [{ k, p, v, auto }] – auto spielt der Computer */
   durchgang() {
     const teil = this.teilJetzt();
-    if (this.modus === 'groove') return DG.schlaege(this.groove(), this.TEILE[teil].stimmen);
+    if (this.modus !== 'fill') return DG.schlaege(this.groove(), this.TEILE[teil].stimmen);
     const groove = DG.schlaege(this.groove()).map(n => ({ ...n, auto: teil === 'fill' }));
     return [...groove, ...DG.fillSchlaege(DG.FILLS[this.g], 8)];
   },
@@ -219,8 +235,9 @@ const Drumgrooves = {
             <li><strong>Sterne sammeln:</strong> Groove + Fill, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ⇄ umdrehen. Oder das Drumset.</li>
           </ul>` : `
-          <p>Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel,
-            die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.</p>
+          <p>${this.modus === 'part2'
+            ? 'Fünf Level von Level 1 (Note 5) bis Level 5 (Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat, die <strong>Bassdrum</strong> spielt mehr Achtel. Level 5 hat zwei Takte.'
+            : 'Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.'}</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
             <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Groove ${this.DURCHGAENGE}× durch. Zum Üben, gibt keine Sterne.
@@ -229,9 +246,10 @@ const Drumgrooves = {
             <li><strong>Pads</strong> oder <strong>Drumset</strong> – mit ⇄ drehst du die Pads um. Tasten am Computer: A, S, D.</li>
             <li><strong>Bodypercussion:</strong> Hi-Hat = Brust (rechte Hand), Snare = Oberschenkel (linke Hand), Bassdrum = stampfen (rechter Fuß).</li>
           </ul>`;
+    const wort = this.modus === 'part2' ? 'Level' : 'Groove';
     const wahl = fill
       ? DG.FILLS.map((f, i) => knopf('g', i, `Fill ${f.nr}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g)).join('')
-      : DG.GROOVES.map((gr, i) => knopf('g', i, `Groove ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('');
+      : this.liste().map((gr, i) => knopf('g', i, `${wort} ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('');
     this.el.querySelector('.dg-seite').innerHTML = `
       <div class="kp-kopf">
         <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>${this.m().titel}
@@ -293,11 +311,11 @@ const Drumgrooves = {
     el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
     el.querySelector('#dg-drehen').hidden = this.instrument !== 'pads';
     el.querySelector('#dg-sticks-feld').hidden = this.instrument !== 'set';
-    const takte = this.m().takte;
+    const takte = this.takte();
     const alle = this.modus === 'fill'
       ? [...DG.schlaege(this.groove()), ...DG.fillSchlaege(DG.FILLS[this.g], 8)]
       : DG.schlaege(this.groove());
-    const aus = this.modus === 'groove' ? ['hh', 's', 'b'].filter(k => !this.meineInstrumente().includes(k)) : [];
+    const aus = this.modus !== 'fill' ? ['hh', 's', 'b'].filter(k => !this.meineInstrumente().includes(k)) : [];
     const ausTakt = this.modus === 'fill' && this.teilJetzt() === 'fill' ? 0 : null;
     el.querySelector('.dg-noten').innerHTML = DG.svg(alle, { takte, aus, ausTakt, cursor: true, klasse: 'dg-gross' }) +
       '<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div><span class="dg-takt-zaehler" hidden></span>';
@@ -440,7 +458,7 @@ const Drumgrooves = {
   starten(hoeren) {
     this.stopp();
     this.el.querySelector('#kp-ergebnis').textContent = '';
-    const laenge = this.m().takte * 4;
+    const laenge = this.takte() * 4;
     const durchgaenge = hoeren ? 2 : this.DURCHGAENGE;
     const noten = this.durchgang();
     const erwartet = [], auto = [];
@@ -529,10 +547,10 @@ const Drumgrooves = {
     const alt = Fortschritt.bester(spiel, this.g).punkte || 0;
     Fortschritt.eintragen(spiel, this.g, sterne, p, ok, l.erwartet.length, Math.round(l.durchgaenge * l.laenge * this.spb()));
     const letzte = this.g >= this.auswahl().length - 1;
-    const wort = this.modus === 'fill' ? 'Fill' : 'Groove';
+    const wort = this.modus === 'fill' ? 'Fill' : this.modus === 'part2' ? 'Level' : 'Groove';
     erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
       <span>${p} %${l.falsch ? ` · ${l.falsch}× daneben` : ''}${p > alt && alt ? ' · <strong>Neuer Bestwert!</strong>' : ''}.
-      ${p >= 95 ? (letzte ? `Perfekt – alle ${wort}s!` : `Perfekt – weiter zum nächsten ${wort}!`) : p >= 80 ? 'Super – noch ein paar Mal!' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
+      ${p >= 95 ? (letzte ? `Perfekt – alle ${wort}s!` : `Perfekt – weiter zum nächsten ${wort === 'Level' ? 'Level' : wort}!`) : p >= 80 ? 'Super – noch ein paar Mal!' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
     const felder = [...erg.querySelectorAll('.stern.an')];
     felder.forEach(f => f.classList.remove('an'));
     const leiter = [72, 74, 76, 79, 81, 84];
