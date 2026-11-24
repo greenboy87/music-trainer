@@ -628,7 +628,9 @@ const Drumgrooves = {
       holz.setAttribute('x1', fx); holz.setAttribute('y1', fy); holz.setAttribute('x2', sx); holz.setAttribute('y2', sy);
       el.querySelector('.dg-stick-kopf').setAttribute('cx', sx);
       el.querySelector('.dg-stick-kopf').setAttribute('cy', sy);
-      el.querySelector('.dg-stick-griff').setAttribute('transform', `translate(${fx} ${fy})`);
+      // R/L dort, wo man den Stick hält: im hinteren Drittel, ein Stück vor dem Ende
+      const H = 0.74;
+      el.querySelector('.dg-stick-griff').setAttribute('transform', `translate(${sx + (fx - sx) * H} ${sy + (fy - sy) * H})`);
     }
   },
 };
