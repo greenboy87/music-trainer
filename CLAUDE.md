@@ -63,7 +63,7 @@ stehen im School-Tool in `MT_SPIELE`.
 Groove + Fill (`#/groovefill`, derselbe Trainer mit `modus: 'fill'`): 1 Takt Groove 2 + 1 Takt Fill (Snare, Toms),
 4×. Acht Fills (`DG.FILLS`, 1–4 Viertel, 5–8 Achtel). Aufbau: nur Fill (Computer spielt den Groove) → Groove + Fill.
 Sechs Pads (oben Toms Q W E, unten Hi-Hat · Snare · Bassdrum A S D – Snare immer in der Mitte). Spiel `groove-fill`
-(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Groove + Fill“). Notenhälse enden an den Spitzen der Becken-Kreuze.
+(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Groove + Fill“). Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
 
 Klavier-Prüfung (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal

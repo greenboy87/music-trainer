@@ -84,17 +84,11 @@ const DG = {
       const xs = x(p) + 5.4;
       const blass = ausTakt !== null && Math.floor(p / 8) === ausTakt ? ' dg-aus' : '';
       const oben = hier.every(n => n.v) ? Math.min(...hier.map(n => this.INSTR[n.k].y)) - 32 : BALKEN;
-      // Hals an den Kreuzen (Becken) unterbrechen: er endet an ihren Spitzen und läuft nicht hindurch
-      const kreuze = hier.filter(n => this.INSTR[n.k].x).map(n => this.INSTR[n.k].y).sort((a, b) => a - b);
-      let von = tief - 1;
-      const stueck = (y1, y2) => { if (y1 - y2 > 0.5) s += `<line x1="${xs}" x2="${xs}" y1="${y1}" y2="${y2}" class="nh${blass}"/>`; };
-      for (const ky of [...kreuze].reverse()) {
-        if (ky >= von) { von = Math.min(von, ky - 5); continue; }   // Kreuz ist selbst die tiefste Note
-        stueck(von, ky + 5);
-        von = ky - 5;
-      }
-      if (!hier.some(n => !this.INSTR[n.k].x)) von = Math.min(von, kreuze[kreuze.length - 1] - 5);
-      stueck(von, oben);
+      // Nur Becken (Kreuze) an dieser Stelle: der Hals beginnt an der oberen Spitze des Kreuzes und läuft
+      // nicht hindurch. Mit Snare oder Bassdrum darunter geht er durchgehend vom tiefsten Notenkopf hoch.
+      const nurKreuze = hier.every(n => this.INSTR[n.k].x);
+      const von = nurKreuze ? Math.min(...hier.map(n => this.INSTR[n.k].y)) - 5 : tief - 1;
+      s += `<line x1="${xs}" x2="${xs}" y1="${von}" y2="${oben}" class="nh${blass}"/>`;
       hier.forEach(n => {
         const i = this.INSTR[n.k];
         const kl = `dg-n${aus.includes(n.k) || blass ? ' dg-aus' : ''}${markiert && markiert.k === n.k && markiert.p === p ? ' dg-markiert' : ''}`;
