@@ -146,7 +146,7 @@ const Drumgrooves = {
   PAD_TASTEN: ['a', 's', 'd'],
   TOM_TASTEN: ['q', 'w', 'e'],
   REIHEN: { hsb: ['hh', 's', 'b'], bsh: ['b', 's', 'hh'] },   // Snare immer in der Mitte
-  modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: true, instrument: 'pads', reihe: 'hsb',
+  modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: false, instrument: 'pads', reihe: 'hsb',
 
   m() { return this.MODI[this.modus]; },
   lies(s, modus = this.modus) { try { return localStorage.getItem(`musiktrainer-dg-${modus === 'fill' ? 'fill-' : ''}${s}`); } catch { return null; } },
@@ -188,7 +188,7 @@ const Drumgrooves = {
     if (b >= 50 && b <= 130) this.bpm = b;
     this.metro = gemein('metro') !== 'aus';
     this.leuchten = gemein('leuchten') === 'an';
-    this.koerper = gemein('koerper') !== 'aus';
+    this.koerper = gemein('koerper') === 'an';   // Bodypercussion standardmäßig aus
     if (!this.teile().includes(this.teil)) this.teil = this.teile()[0];
     App.beimAufraeumen(() => { this.stopp(); Klavierpruefung.zoomFrei(); window.removeEventListener('keydown', this.tasteFn); });
     Klavierpruefung.zoomSperren();
