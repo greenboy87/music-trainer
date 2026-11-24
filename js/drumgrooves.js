@@ -574,15 +574,21 @@ const Drumgrooves = {
         <circle class="dg-stick-kopf" r="9"/>
         <g class="dg-stick-griff"><circle r="17"/><text dy="6">${h}</text></g>
       </g>`).join('')}</g>`,
-  /* Wie hoch ein Stick bzw. der Schlägel gerade ist: 0 im Moment des Schlags, 1 ausgeholt */
-  hebung(plan, t, D = 0.22) {
+  /* Bewegung wie beim echten Schlag: Der Stick liegt ruhig knapp über dem Fell (heb = RUHE). Erst kurz vor
+     dem nächsten Schlag holt er aus (hoch) und schlägt im Moment des Schlags aufs Fell (heb = 0), dann liegt
+     er wieder ruhig darüber. Muss er zu einem anderen Teil, wandert er während des Ausholens dorthin.
+     Gibt die Höhe (0–1) und wie weit er auf dem Weg vom letzten zum nächsten Ziel ist (0–1). */
+  RUHE: 0.06,
+  hebung(plan, t, AUSHOLEN = 0.4) {
     let vor = null, nach = null;
     for (const e of plan) { if (e.t <= t) vor = e; else { nach = e; break; } }
-    if (!vor && !nach) return { vor, nach, heb: 1 };
-    if (!vor) return { vor, nach, heb: Math.max(0, Math.min(1, (nach.t - t) / D)) };
-    if (!nach) return { vor, nach, heb: Math.max(0, Math.min(1, (t - vor.t) / D)) };
-    const d = Math.min(D, (nach.t - vor.t) / 2);
-    return { vor, nach, heb: Math.max(0, Math.min(1, (t - vor.t) / d, (nach.t - t) / d)) };
+    if (!nach) return { vor, nach, heb: vor && t - vor.t < 0.08 ? (t - vor.t) / 0.08 * this.RUHE : this.RUHE, weg: 1 };
+    const a = Math.min(AUSHOLEN, vor ? (nach.t - vor.t) * 0.85 : AUSHOLEN);
+    const u = 1 - (nach.t - t) / a;            // 0 = beginnt auszuholen, 1 = trifft
+    if (u <= 0) return { vor, nach, heb: this.RUHE, weg: 0 };
+    // schnell hoch, dann kräftig runter
+    const heb = u < 0.55 ? this.RUHE + (1 - this.RUHE) * Math.sin(u / 0.55 * Math.PI / 2) : Math.cos((u - 0.55) / 0.45 * Math.PI / 2);
+    return { vor, nach, heb, weg: Math.min(1, u / 0.55) };
   },
   sticksZeigen(t) {
     const g = this.el?.querySelector('.dg-set .dg-sticks');
@@ -591,7 +597,7 @@ const Drumgrooves = {
     if (!this.sticks) return;
     const l = this.lauf;
     // Bassdrum-Pedal: der Schlägel kickt aus der Ruhe (unten) hoch aufs Fell, das Brett wird getreten
-    const fuss = this.hebung(t === null || !l ? [] : l.plan.F, t ?? 0, 0.3).heb;
+    const fuss = this.hebung(t === null || !l ? [] : l.plan.F, t ?? 0, 0.35).heb;
     const ballY = 588 + 58 * fuss;
     g.querySelector('.dg-pedal-stange').setAttribute('y2', ballY);
     g.querySelector('.dg-pedal-ball').setAttribute('cy', ballY);
@@ -599,23 +605,13 @@ const Drumgrooves = {
     g.querySelector('.dg-pedal').style.display = this.instrumente().includes('b') ? '' : 'none';
     for (const h of ['R', 'L']) {
       const plan = t === null || !l ? [] : l.plan[h];
-      let vor = null, nach = null;
-      for (const e of plan) { if (e.t <= t) vor = e; else { nach = e; break; } }
       const ziel = k => this.STICK_ZIEL[k] || this.STICK_ZIEL[this.STICK_RUHE[h]];
-      // Wohin der Stick gerade zeigt und wie hoch er ist (0 = auf dem Fell, 1 = oben)
-      let pos, heb;
-      const D = 0.22;                       // Schläge, die er zum Ausholen und Zurückfedern braucht
-      if (!vor && !nach) { pos = ziel(this.STICK_RUHE[h]); heb = 1; }
-      else if (!vor) { pos = ziel(nach.k); heb = Math.min(1, (nach.t - t) / D); }
-      else if (!nach) { pos = ziel(vor.k); heb = Math.min(1, (t - vor.t) / D); }
-      else {
-        const a = ziel(vor.k), b = ziel(nach.k);
-        const f = Math.min(1, Math.max(0, (t - vor.t) / (nach.t - vor.t)));
-        const w = f * f * (3 - 2 * f);
-        pos = [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w];
-        const d = Math.min(D, (nach.t - vor.t) / 2);
-        heb = Math.min(1, (t - vor.t) / d, (nach.t - t) / d);
-      }
+      const { vor, nach, heb: h0, weg } = this.hebung(plan, t ?? 0);
+      let heb = h0;
+      const von = ziel(vor ? vor.k : nach ? nach.k : this.STICK_RUHE[h]);
+      const bis = nach ? ziel(nach.k) : von;
+      const w = weg * weg * (3 - 2 * weg);
+      const pos = [von[0] + (bis[0] - von[0]) * w, von[1] + (bis[1] - von[1]) * w];
       heb = Math.max(0, heb);
       const [gx, gy] = this.STICK_GRIFF[h];
       const sx = pos[0], sy = pos[1] - 48 * heb;           // Spitze (gehoben)
