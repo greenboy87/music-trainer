@@ -14,7 +14,8 @@
      Töne getroffen wurden.
    – Schritt für Schritt: Der Cursor läuft mit, bleibt aber an der nächsten Note
      stehen, bis die richtige(n) Taste(n) gedrückt sind.
-   – Sterne sammeln: wie Mitspielen, aber ohne leuchtende Tasten.
+   – Sterne sammeln: wie Mitspielen, aber gewertet und nie mit leuchtenden Tasten
+     (beim Mitspielen per Schalter „Tasten leuchten“, anfangs aus).
    Wahlweise spielt die andere Hand mit. Gewertet wird nur „Sterne sammeln“: Sterne wie bei der
    Rhythmus-Prüfung (ab 95 % sechs), gespeichert als Spiel „klavier-pruefung“, Stufe 0 = rechte
    Hand, 1 = linke Hand, 2 = beide – damit im Konto und im School-Tool. */
@@ -35,7 +36,7 @@ const Klavierpruefung = {
   FENSTER: 0.18,                // Mitspielen: so viele Sekunden daneben zählt noch
 
   stueck: null,
-  hand: 'rh', art: 'schritt', bpm: 60, andere: true, metro: true, namen: false,
+  hand: 'rh', art: 'schritt', bpm: 60, andere: true, metro: true, namen: false, leuchten: false,
   HAENDE: ['rh', 'lh', 'beide'],
   SPIEL: 'klavier-pruefung',
 
@@ -52,7 +53,8 @@ const Klavierpruefung = {
     this.andere = this.lies('andere') !== 'aus';
     this.metro = this.lies('metro') !== 'aus';
     this.namen = this.lies('namen') === 'an';
-    this.gross = this.lies('gross') === 'an';   // Notennamen auf den Tasten: standardmäßig aus
+    this.gross = this.lies('gross') === 'an';
+    this.leuchten = this.lies('leuchten') === 'an';   // Notennamen auf den Tasten: standardmäßig aus
     const rahmen = inhalt => {
       el.innerHTML = `
         <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungen</a>
@@ -131,6 +133,7 @@ const Klavierpruefung = {
           <span id="kp-bpm-text" aria-live="polite">${this.bpm}</span>
           <button type="button" class="kp-pm" data-bpm="5" aria-label="Schneller">+</button></span>
         <label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>Andere Hand spielt mit</label>
+        <label class="schalter kp-licht" id="kp-leuchten-feld" title="Tasten leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Tasten leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label>
         <label class="schalter"><input type="checkbox" role="switch" id="kp-metro" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>Metronom</label>
         <label class="schalter"><input type="checkbox" role="switch" id="kp-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Notennamen</label>
       </div>
@@ -138,10 +141,10 @@ const Klavierpruefung = {
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
         <p class="kp-info hint" id="kp-info"></p>
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
-        <button type="button" class="small" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: ohne die Randtasten G und h">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button>
         ${Vollbild.knopf()}
       </div>
-      <div class="kp-noten">${this.svg()}</div>
+      <div class="kp-noten">${this.svg()}<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div></div>
+      <div class="kp-tasten-kopf"><button type="button" class="small kp-gross" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: ohne die Randtasten G und h">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button></div>
       <div class="klaviatur kp-tasten${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>`;
     // Wie das Klavier: festes Bild über dem ganzen Fenster, Tasten von Rand zu Rand
     Vollbild.binden(this.el.querySelector('.kp-seite'));
@@ -155,11 +158,12 @@ const Klavierpruefung = {
     el.querySelectorAll('button[data-hand]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hand === this.hand)));
     el.querySelectorAll('[data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === this.art)));
     el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide';
+    el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
     el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
     el.querySelector('#kp-info').innerHTML = {
       schritt: `<strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.`,
-      mit: `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo, die Tasten leuchten mit. Zum Üben – gibt keine Sterne.`,
-      sterne: `<strong>Sterne sammeln:</strong> Wie Mitspielen, aber die Tasten leuchten nicht mehr. Ab 95 % gibt es sechs Sterne.`,
+      mit: `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Zum Üben – gibt keine Sterne. Wenn du willst, leuchten die Tasten mit.`,
+      sterne: `<strong>Sterne sammeln:</strong> Wie Mitspielen, aber es zählt. Ab 95 % gibt es sechs Sterne.`,
     }[this.art];
     this.zuruecksetzen();
     this.besteZeigen();
@@ -322,8 +326,9 @@ const Klavierpruefung = {
     const schalter = (id, feld) => el.querySelector(id).addEventListener('change', e => {
       this[feld] = e.target.checked; this.merken(feld, this[feld] ? 'an' : 'aus');
       if (feld === 'namen') this.tastenEl.classList.toggle('ohne-namen', !this.namen);
+      if (feld === 'leuchten' && this.lauf) { this.zielSchluessel = null; this.zielZeigen(); }
     });
-    schalter('#kp-andere', 'andere'); schalter('#kp-metro', 'metro'); schalter('#kp-namen', 'namen');
+    schalter('#kp-andere', 'andere'); schalter('#kp-metro', 'metro'); schalter('#kp-namen', 'namen'); schalter('#kp-leuchten', 'leuchten');
     el.querySelector('#kp-gross').addEventListener('click', e => {
       this.gross = !this.gross; this.merken('gross', this.gross ? 'an' : 'aus');
       const b = e.currentTarget;
@@ -430,6 +435,16 @@ const Klavierpruefung = {
     if (schlag > l.schlag) {
       l.schlag = schlag;
       if ((this.metro || schlag < 0) && schlag < this.ende()) Ton.klick(0, ((schlag % 4) + 4) % 4 === 0);
+      // Einzähltakt groß über den Noten: 1 – 2 – 3 – 4, auf jedem Schlag neu angestoßen
+      const ez = this.el.querySelector('.kp-noten .pz-einzaehler');
+      if (ez) {
+        ez.hidden = schlag >= 0;
+        if (schlag < 0) {
+          const zahl = ez.firstChild;
+          zahl.textContent = schlag + 5;
+          zahl.classList.remove('schlag'); void zahl.offsetWidth; zahl.classList.add('schlag');
+        }
+      }
     }
     if (l.t < 16 && t >= 16) this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
     l.t = t;
@@ -482,14 +497,14 @@ const Klavierpruefung = {
     if (l.erwartet.filter(x => x.n === e.n).every(x => x.ok)) this.markieren(e.n.bild, 'kp-ok', true);
   },
 
-  /* Leuchtende Tasten: im Schrittmodus die nächste, beim Mitspielen die gerade fälligen */
+  /* Leuchtende Tasten: Schritt für Schritt die nächste, Mitspielen (Schalter) die gerade fälligen */
   zielZeigen() {
     const l = this.lauf;
     let ziele = [];
     if (l?.schritte) {
       const s = l.schritte[l.s];
       if (s) ziele = s.noten.flatMap(n => n.midis.map(m => [m, n.hand]));
-    } else if (l && this.art === 'mit') {   // Sterne sammeln: nichts leuchtet
+    } else if (l && this.art === 'mit' && this.leuchten) {   // Mitspielen: nur mit Schalter, Sterne sammeln nie
       ziele = this.meine().filter(n => l.t >= n.start - 0.15 && l.t < n.start + Math.min(n.dauer, 1) - 0.1)
         .flatMap(n => n.midis.map(m => [m, n.hand]));
     }
@@ -556,6 +571,8 @@ const Klavierpruefung = {
     this.raf = null;
     const l = this.lauf;
     this.lauf = null;
+    const ez = this.el?.querySelector('.kp-noten .pz-einzaehler');
+    if (ez) ez.hidden = true;
     l?.auto.forEach(a => { a.an?.forEach(aus => aus()); a.an = null; });
     if (!this.el?.querySelector('.kp-seite')) return;
     const los = this.el.querySelector('#kp-los');

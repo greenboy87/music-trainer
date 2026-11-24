@@ -57,8 +57,8 @@ Klavier-Prüfung Klasse 8 (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte i
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal
 gezeichnet mit Wiederholung, gespielt 2×, beim 2. Mal Ende auf Takt 4, Schlag 1 (liegen
 lassen). Tastennummern wie Toms Aufkleber am Keyboard (`NUMMER`, keine Fingersätze) unter den Noten und auf den Tasten. Rechte/linke Hand/beide; „Schritt für Schritt“ (Cursor wartet auf die richtigen
-Tasten, Akkorde zusammen) „Mitspielen“ (Einzähltakt, Treffer ±0,18 s, Tasten leuchten, keine Sterne) und „Sterne sammeln“
-(wie Mitspielen ohne leuchtende Tasten; Sterne wie die Rhythmus-Prüfung, Spiel `klavier-pruefung`,
+Tasten, Akkorde zusammen) „Mitspielen“ (Einzähltakt, Treffer ±0,18 s, keine Sterne) und „Sterne sammeln“
+(wie Mitspielen, gewertet; Tasten leuchten bei Schritt für Schritt immer, bei Mitspielen per Schalter (anfangs aus), bei Sterne sammeln nie; Sterne wie die Rhythmus-Prüfung, Spiel `klavier-pruefung`,
 Stufe 0/1/2 = rechts/links/beide, im School-Tool eingetragen). Andere Hand spielt wahlweise mit. Kein Zoom, kein Markieren. **Urheberrecht:** Die Noten stehen nie
 im Repository (öffentlich), sondern in der Cloudflare-Variable `STUECKE`; der Worker gibt
 sie nur angemeldeten Kindern (`GET /api/stueck/<id>`, § 60a UrhG). Lokal liegen sie in

@@ -33,6 +33,7 @@ const Icons = {
     raster:    '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><rect x="9" y="9" width="6" height="6" fill="currentColor" stroke="none"/>',
     regler:    '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     expand:    '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
+    tastenLicht: '<path d="M12 1.8a4.3 4.3 0 0 0-2.6 7.7c.5.4.8 1 .8 1.6h3.6c0-.6.3-1.2.8-1.6A4.3 4.3 0 0 0 12 1.8z"/><path d="M10.4 12.9h3.2"/><rect x="2.5" y="15" width="19" height="7.5" rx="1.2"/><path d="M7.2 22.5v-2.6M12 22.5v-2.6M16.8 22.5v-2.6"/><path d="M5.8 15v4.9h2.8V15M15.4 15v4.9h2.8V15" fill="currentColor" stroke="none" opacity=".8"/>',
     lupePlus:  '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/>',
     lupeMinus: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6"/>',
     shrink:    '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>',
