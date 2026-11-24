@@ -14,10 +14,12 @@
      Töne getroffen wurden.
    – Schritt für Schritt: Der Cursor läuft mit, bleibt aber an der nächsten Note
      stehen, bis die richtige(n) Taste(n) gedrückt sind.
-   Wahlweise spielt die andere Hand mit. Nichts geht an den Server. */
+   Wahlweise spielt die andere Hand mit. Gewertet wird nur „Mitspielen“: Sterne wie bei der
+   Rhythmus-Prüfung (ab 95 % sechs), gespeichert als Spiel „klavier-pruefung“, Stufe 0 = rechte
+   Hand, 1 = linke Hand, 2 = beide – damit im Konto und im School-Tool. */
 const Klavierpruefung = {
   ID: 'in-the-end',
-  VON: 45, BIS: 69,             // Tasten A bis a¹
+  VON: 43, BIS: 71,             // Tasten G bis h¹ (gespielt wird A bis a¹, je eine weiße Taste Rand)
   SCHWARZ: [1, 3, 6, 8, 10],
   FARBE: { rh: '#e07b2e', lh: '#3d86d0' },
   /* Toms Tastennummern (Aufkleber am Keyboard, keine Fingersätze): links A=1, B=2, H=–,
@@ -26,11 +28,13 @@ const Klavierpruefung = {
             rh: { 62: '1', 64: '2', 65: '3', 67: '4', 69: '5' } },
   /* Zeichnung: je Zeile vier Takte im Klaviersystem */
   OBEN: 80, UNTEN_Y: 170,       // y der untersten Linie (Violin, Bass)
-  X0: 92, TAKT: 174, RAND: 18, SCHLAG: 36,
+  X0: 92, TAKT: 214, RAND: 20, SCHLAG: 45,
   FENSTER: 0.18,                // Mitspielen: so viele Sekunden daneben zählt noch
 
   stueck: null,
-  hand: 'rh', art: 'schritt', bpm: 60, andere: true, metro: true, namen: true,
+  hand: 'rh', art: 'schritt', bpm: 60, andere: true, metro: true, namen: false,
+  HAENDE: ['rh', 'lh', 'beide'],
+  SPIEL: 'klavier-pruefung',
 
   lies(s) { try { return localStorage.getItem(`musiktrainer-kp-${s}`); } catch { return null; } },
   merken(s, w) { try { localStorage.setItem(`musiktrainer-kp-${s}`, String(w)); } catch { /* privat */ } },
@@ -44,13 +48,14 @@ const Klavierpruefung = {
     if (b >= 40 && b <= 120) this.bpm = b;
     this.andere = this.lies('andere') !== 'aus';
     this.metro = this.lies('metro') !== 'aus';
-    this.namen = this.lies('namen') !== 'aus';
+    this.namen = this.lies('namen') === 'an';   // Notennamen auf den Tasten: standardmäßig aus
     const rahmen = inhalt => {
       el.innerHTML = `
         <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungen</a>
         <section class="card kp-seite">${inhalt}</section>`;
     };
-    App.beimAufraeumen(() => this.stopp());
+    App.beimAufraeumen(() => { this.stopp(); this.zoomFrei(); });
+    this.zoomSperren();
     if (!Konto.angemeldet()) {
       return rahmen(`<h2>Klavier-Prüfung Klasse 8</h2>
         <p class="hint">Die Noten gibt es nur für angemeldete Schülerinnen und Schüler – das Stück ist
@@ -117,7 +122,10 @@ const Klavierpruefung = {
         <div class="klavier-groesse" role="group" aria-label="Übeart">
           ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}
         </div>
-        <label class="kp-tempo">Tempo <input type="range" id="kp-bpm" min="40" max="120" step="5" value="${this.bpm}"><span id="kp-bpm-text">${this.bpm}</span></label>
+        <span class="kp-tempo" role="group" aria-label="Tempo">Tempo
+          <button type="button" class="kp-pm" data-bpm="-5" aria-label="Langsamer">−</button>
+          <span id="kp-bpm-text" aria-live="polite">${this.bpm}</span>
+          <button type="button" class="kp-pm" data-bpm="5" aria-label="Schneller">+</button></span>
         <label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>Andere Hand spielt mit</label>
         <label class="schalter"><input type="checkbox" role="switch" id="kp-metro" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>Metronom</label>
         <label class="schalter"><input type="checkbox" role="switch" id="kp-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Notennamen</label>
@@ -139,7 +147,7 @@ const Klavierpruefung = {
 
   leisteZeigen() {
     const el = this.el;
-    el.querySelectorAll('[data-hand]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hand === this.hand)));
+    el.querySelectorAll('button[data-hand]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hand === this.hand)));
     el.querySelectorAll('[data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === this.art)));
     el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide';
     el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
@@ -147,7 +155,45 @@ const Klavierpruefung = {
       ? `<strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.`
       : `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Am Ende siehst du, wie viele Töne du getroffen hast.`;
     this.zuruecksetzen();
+    this.besteZeigen();
   },
+  /* Beste Sterne je Hand an den Knöpfen */
+  besteZeigen() {
+    this.el.querySelectorAll('button[data-hand]').forEach(b => {
+      const st = Fortschritt.bester(this.SPIEL, this.HAENDE.indexOf(b.dataset.hand)).sterne;
+      let m = b.querySelector('.kp-best');
+      if (!m) { m = document.createElement('span'); m.className = 'kp-best'; b.append(m); }
+      m.innerHTML = st ? ` ${Icons.raw('star')}${st}` : '';
+    });
+  },
+  sterneSumme() { return this.HAENDE.reduce((s, _, i) => s + Fortschritt.bester(this.SPIEL, i).sterne, 0); },
+
+  /* Kein Zoomen (Zwei-Finger, Doppeltipp) und kein Markieren, solange die Seite offen ist –
+     beim Spielen mit mehreren Fingern vergrößert Safari sonst versehentlich */
+  zoomSperren() {
+    if (this.sperre) return;
+    const halt = e => e.preventDefault();
+    const zwei = e => { if (e.touches && e.touches.length > 1) e.preventDefault(); };
+    let letzter = 0;
+    const doppel = e => { const t = Date.now(); if (t - letzter < 350 && !e.target.closest('input, textarea')) e.preventDefault(); letzter = t; };
+    const meta = document.querySelector('meta[name="viewport"]');
+    const vorher = meta?.content;
+    if (meta) meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    document.documentElement.classList.add('kp-gesperrt');
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(n => document.addEventListener(n, halt, { passive: false }));
+    document.addEventListener('touchmove', zwei, { passive: false });
+    document.addEventListener('touchend', doppel, { passive: false });
+    document.addEventListener('selectstart', halt);
+    this.sperre = () => {
+      if (meta && vorher) meta.content = vorher;
+      document.documentElement.classList.remove('kp-gesperrt');
+      ['gesturestart', 'gesturechange', 'gestureend'].forEach(n => document.removeEventListener(n, halt));
+      document.removeEventListener('touchmove', zwei);
+      document.removeEventListener('touchend', doppel);
+      document.removeEventListener('selectstart', halt);
+    };
+  },
+  zoomFrei() { this.sperre?.(); this.sperre = null; },
 
   /* ---------- Noten ---------- */
   taktX(t) { return this.X0 + t * this.TAKT; },
@@ -253,19 +299,18 @@ const Klavierpruefung = {
 
   bedienen() {
     const el = this.el;
-    el.querySelectorAll('[data-hand]').forEach(b => b.addEventListener('click', () => {
+    el.querySelectorAll('button[data-hand]').forEach(b => b.addEventListener('click', () => {
       this.hand = b.dataset.hand; this.merken('hand', this.hand); this.stopp(); this.leisteZeigen();
     }));
     el.querySelectorAll('[data-art]').forEach(b => b.addEventListener('click', () => {
       this.art = b.dataset.art; this.merken('art', this.art); this.stopp(); this.leisteZeigen();
     }));
-    const bpm = el.querySelector('#kp-bpm');
-    bpm.addEventListener('input', () => {
-      this.bpm = Number(bpm.value);
+    el.querySelectorAll('[data-bpm]').forEach(b => b.addEventListener('click', () => {
+      this.bpm = Math.min(120, Math.max(40, this.bpm + Number(b.dataset.bpm)));
       el.querySelector('#kp-bpm-text').textContent = this.bpm;
       this.merken('bpm', this.bpm);
       if (this.lauf) this.lauf.tempoNeu = true;
-    });
+    }));
     const schalter = (id, feld) => el.querySelector(id).addEventListener('change', e => {
       this[feld] = e.target.checked; this.merken(feld, this[feld] ? 'an' : 'aus');
       if (feld === 'namen') this.tastenEl.classList.toggle('ohne-namen', !this.namen);
@@ -296,7 +341,7 @@ const Klavierpruefung = {
     const ende = e => { Ton.audio(); this.los(e.pointerId); this.finger.delete(e.pointerId); };
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => t.addEventListener(n, ende));
     t.addEventListener('contextmenu', e => e.preventDefault());
-    const groesse = () => this.tastenEl?.style.setProperty('--taste', `${this.tastenEl.clientWidth / 15}px`);
+    const groesse = () => this.tastenEl?.style.setProperty('--taste', `${this.tastenEl.clientWidth / this.tastenEl.querySelectorAll('.kt.w').length}px`);
     window.addEventListener('resize', groesse);
     App.beimAufraeumen(() => window.removeEventListener('resize', groesse));
   },
@@ -466,9 +511,20 @@ const Klavierpruefung = {
         ${l.falsch <= 2 ? 'Probier es jetzt mit „Mitspielen“.' : ''}`;
     } else {
       const ok = l.erwartet.filter(e => e.ok).length;
-      const p = Math.round(ok / l.erwartet.length * 100);
-      erg.innerHTML = `${ok} von ${l.erwartet.length} Tönen getroffen (${p} %)${l.falsch ? ` · ${l.falsch}× daneben` : ''}.
-        ${p >= 90 ? 'Super – versuch es etwas schneller!' : p >= 60 ? 'Schon gut – noch ein paar Mal.' : 'Übe es erst „Schritt für Schritt“ oder langsamer.'}`;
+      // Falsche Töne ziehen ab, sonst wäre wildes Drücken ein Trick
+      const p = Math.max(0, Math.round((ok - l.falsch * 0.5) / l.erwartet.length * 100));
+      const sterne = Math.max(1, Pruefungsseite.sterne(p));
+      const stufe = this.HAENDE.indexOf(this.hand);
+      const alt = Fortschritt.bester(this.SPIEL, stufe).punkte || 0;
+      Fortschritt.eintragen(this.SPIEL, stufe, sterne, p, ok, l.erwartet.length, Math.round(this.ende() * this.spb()));
+      erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
+        <span>${p} % · ${ok} von ${l.erwartet.length} Tönen${l.falsch ? ` · ${l.falsch}× daneben` : ''}${p > alt && alt ? ' · <strong>Neuer Bestwert!</strong>' : ''}.
+        ${p >= 95 ? 'Perfekt – versuch es schneller!' : p >= 80 ? 'Super – noch ein paar Mal!' : p >= 55 ? 'Schon gut – weiter üben.' : 'Übe es erst „Schritt für Schritt“ oder langsamer.'}</span>`;
+      const felder = [...erg.querySelectorAll('.stern.an')];
+      felder.forEach(f => f.classList.remove('an'));
+      const leiter = [72, 74, 76, 79, 81, 84];
+      felder.forEach((f, i) => App.spaeter(() => { f.classList.add('an'); Ton.klavier(leiter[i], 0, 0.35, 0.12); }, 250 + i * 220));
+      this.besteZeigen();
     }
   },
 

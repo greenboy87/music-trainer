@@ -428,8 +428,8 @@ const App = {
   /* ---------- Startseite ---------- */
   zeigeStart() {
     // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
-    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme();
-    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60;
+    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme();
+    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18;
     const bereiche = [...new Set(SPIELE.map(s => s.bereich))];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();
@@ -472,7 +472,7 @@ const App = {
               <span class="spiel-icon">${Icons.raw('drum')}</span>
               <span class="spiel-titel">Prüfungen Klasse 5, 6 und 8</span>
               <span class="hint">Klasse 5 und 6: Rhythmus-Zeilen auf den Pads. Klasse 8: ein Intro auf dem Klavier.</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme()} / 60</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme()} / 78</span>
             </a>` : ''}
         </div>`).join('')}`;
     const feld = document.getElementById('name');
