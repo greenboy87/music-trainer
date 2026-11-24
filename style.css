@@ -1298,12 +1298,12 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-seite button, .kp-seite a, .kp-seite label { touch-action: manipulation; }
 .kp-seite .kp-tasten, .kp-seite .kp-noten { touch-action: none; }
 .kp-noten { display: flex; flex-direction: column; align-items: center; }
-.notenbild.kp-system { width: 100%; max-width: none; max-height: 34vh; }
+.notenbild.kp-system { width: 100%; max-width: none; max-height: 30vh; }
 .kp-seite .kp-tasten { height: clamp(140px, 27vh, 260px); }
 /* Im festen Bild: Noten oben, die Tasten füllen den Rest – über die ganze Breite des Geräts */
 .kp-seite.vollbild { padding-bottom: 0; }
 .kp-seite.vollbild .kp-noten { flex: none; }
-.kp-seite.vollbild .kp-system { max-height: 34vh; max-height: 34dvh; }
+.kp-seite.vollbild .kp-system { max-height: 27vh; max-height: 27dvh; }
 .kp-seite.vollbild .kp-tasten { flex: 1 1 auto; height: auto; min-height: 200px; border-radius: 0;
   margin: .5rem calc(-1 * max(1.2rem, env(safe-area-inset-right))) 0 calc(-1 * max(1.2rem, env(safe-area-inset-left))); }
 .kp-seite.vollbild .kp-leiste { margin: .4rem 0; }
