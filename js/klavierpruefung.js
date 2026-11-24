@@ -118,7 +118,8 @@ const Klavierpruefung = {
     this.el.querySelector('.kp-seite').innerHTML = `
       <div class="kp-kopf">
         <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span>
-          <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button></h2>
+          <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
+          <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
         <div class="kp-hilfe" id="kp-hilfe" hidden>
           <p>Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
             (Fermate <span class="ns">\u{1D110}</span>) und lässt ihn liegen.</p>
@@ -151,7 +152,6 @@ const Klavierpruefung = {
       <div class="kp-start">
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
-        ${Vollbild.knopf()}
       </div>
       <div class="kp-noten">${this.svg()}<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div></div>
       <div class="kp-tasten-kopf"><button type="button" class="small kp-gross" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: ohne die Randtasten G und h">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button></div>
@@ -278,7 +278,7 @@ const Klavierpruefung = {
     const xe = this.x(12);
     s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
     s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
-    return `<svg class="notenbild kp-system" viewBox="0 ${oben - 66} ${breite} ${this.UNTEN_Y - oben + 100}" role="img" aria-label="Noten">${s}</svg>`;
+    return `<svg class="notenbild kp-system" viewBox="0 ${oben - 50} ${breite} ${this.UNTEN_Y - oben + 82}" role="img" aria-label="Noten">${s}</svg>`;
   },
   hilfslinien(x, y, hand) {
     const unten = hand === 'rh' ? this.OBEN : this.UNTEN_Y;
