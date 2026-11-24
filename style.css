@@ -1287,9 +1287,10 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
 .kp-noten { position: relative; }
 .kp-tasten-kopf { display: flex; justify-content: space-between; align-items: center; margin-top: .3rem; }
 .kp-seite .kp-tasten-kopf + .klaviatur.kp-tasten { margin-top: .25rem; }
+.kp-schalter { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem 1.6rem; }
 .kp-gross { padding: .2rem .6rem; }
 .kp-licht svg { width: 1.6rem; height: 1.6rem; }
-.kp-licht:has(input:checked) svg path:first-child { fill: #facc15; stroke: #ca8a04; }
+#kp-leuchten-feld:has(input:checked) svg path:first-child { fill: #facc15; stroke: #ca8a04; }
 .kp-sterne { display: inline-flex; gap: .15rem; }
 .kp-sterne .stern svg { width: 1.3rem; height: 1.3rem; }
 /* Klavier-Prüfung: kein Zoomen, kein Markieren, kein Lupen-/Kopiermenü */

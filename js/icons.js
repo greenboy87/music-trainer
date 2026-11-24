@@ -35,6 +35,7 @@ const Icons = {
     expand:    '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
     tastenLicht: '<path d="M12 1.8a4.3 4.3 0 0 0-2.6 7.7c.5.4.8 1 .8 1.6h3.6c0-.6.3-1.2.8-1.6A4.3 4.3 0 0 0 12 1.8z"/><path d="M10.4 12.9h3.2"/><rect x="2.5" y="15" width="19" height="7.5" rx="1.2"/><path d="M7.2 22.5v-2.6M12 22.5v-2.6M16.8 22.5v-2.6"/><path d="M5.8 15v4.9h2.8V15M15.4 15v4.9h2.8V15" fill="currentColor" stroke="none" opacity=".8"/>',
     tastenName: '<rect x="4.5" y="1.8" width="15" height="20.4" rx="1.8"/><text x="12" y="19" text-anchor="middle" font-size="10" font-weight="800" font-family="system-ui, sans-serif" fill="currentColor" stroke="none">C</text>',
+    metronom:  '<path d="M9.2 2.5h5.6l4.4 19H4.8z"/><path d="M4.8 17.5h14.4"/><path d="M12 15.5 16.5 5.5"/><circle cx="15" cy="8.8" r="1.3" fill="currentColor"/>',
     lupePlus:  '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/>',
     lupeMinus: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6"/>',
     shrink:    '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>',
