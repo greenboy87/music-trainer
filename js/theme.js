@@ -22,11 +22,15 @@ const Theme = {
   },
 
   updateButton() {
-    const btn = document.getElementById('btn-theme');
-    if (!btn) return;
     const dark = this.current() === 'dark';
-    btn.innerHTML = Icons.raw(dark ? 'sun' : 'moon') + (dark ? 'Hell' : 'Dunkel');
-    btn.title = dark ? 'Zum hellen Design wechseln' : 'Zum dunklen Design wechseln';
+    const titel = dark ? 'Zum hellen Design wechseln' : 'Zum dunklen Design wechseln';
+    const btn = document.getElementById('btn-theme');
+    if (btn) { btn.innerHTML = Icons.raw(dark ? 'sun' : 'moon') + (dark ? 'Hell' : 'Dunkel'); btn.title = titel; }
+    // Kleine Knöpfe auf den Seiten mit festem Bild (dort ist die obere Leiste verdeckt)
+    document.querySelectorAll('.theme-knopf').forEach(k => {
+      k.innerHTML = Icons.raw(dark ? 'sun' : 'moon');
+      k.title = titel; k.setAttribute('aria-label', titel);
+    });
   },
 };
 

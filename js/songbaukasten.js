@@ -169,6 +169,7 @@ const Songbaukasten = {
           <div class="sb-kopf-seite">
             <a class="sb-rund" href="#/" title="Zurück zur Übersicht" aria-label="Zurück zur Übersicht">${Icons.raw('back')}</a>
             <button type="button" class="sb-rund" id="sb-vollbild" title="Vollbild" aria-label="Vollbild">${Icons.raw('expand')}</button>
+            <button type="button" class="sb-rund theme-knopf" id="sb-theme"></button>
             ${Vollbild.wechsel('songbaukasten')}
           </div>
           <h2 class="sb-titel"><span id="sb-titel-nr"></span></h2>
@@ -277,6 +278,9 @@ const Songbaukasten = {
 
   /* Knopf oben links (wie beim Original): echtes Vollbild des Browsers, wo es das gibt */
   vollbildEinrichten() {
+    // Hell/Dunkel: die obere Leiste ist hier verdeckt
+    this.el.querySelector('#sb-theme').addEventListener('click', () => Theme.toggle());
+    Theme.updateButton();
     const k = this.el.querySelector('#sb-vollbild');
     if (!Vollbild.moeglich()) { k.hidden = true; return; }
     let selbst = false;

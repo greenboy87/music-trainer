@@ -1416,3 +1416,8 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .dg-hand.F { background: #a78bfa; }
 /* Groove + Fill: acht Fill-Knöpfe mit Rhythmus – kompakt, damit Übeart und Tempo in derselben Zeile bleiben */
 .dg-grooves.fills button { padding: .3rem .45rem; font-size: .78rem; white-space: nowrap; }
+
+/* Hell/Dunkel auf den Seiten mit festem Bild, neben „Vollbild“ */
+.theme-knopf { min-height: 2.6rem; min-width: 2.6rem; padding: 0 .6rem; margin-right: .4rem; }
+.theme-knopf .icon { margin: 0; }
+.sb-rund.theme-knopf { min-height: 0; min-width: 0; padding: 0; margin-right: 0; }

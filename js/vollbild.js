@@ -66,6 +66,12 @@ const Vollbild = {
      Browsers (ohne Adress- und Tableiste) ein und aus. */
   binden(karte) {
     const k = karte.querySelector('.vollbild-knopf');
+    // Die obere Leiste ist verdeckt: Hell/Dunkel gleich neben dem Vollbild-Knopf
+    if (k && !karte.querySelector('.theme-knopf')) {
+      k.insertAdjacentHTML('beforebegin', '<button type="button" class="small theme-knopf"></button>');
+      karte.querySelector('.theme-knopf').addEventListener('click', () => Theme.toggle());
+      Theme.updateButton();
+    }
     const neu = () => requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
     let selbst = false;   // echtes Vollbild von hier aus eingeschaltet (nicht schon vorher an)
     karte.classList.add('vollbild');
