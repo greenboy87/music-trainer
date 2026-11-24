@@ -293,12 +293,17 @@ const Klavierpruefung = {
     const b = 100 / weisse.length;
     let html = weisse.map((m, i) => `<button type="button" class="kt w" data-m="${m}" style="left:${i * b}%;width:${b}%" aria-label="${Klavierseite.name(m)}">
       <span class="kt-name">${Klavierseite.name(m)}</span></button>`).join('');
-    weisse.forEach((m, i) => {
-      if (i === weisse.length - 1 || this.weiss(m + 1)) return;
-      const [kreuz, be] = Klavierseite.namenSchwarz(m + 1);
-      html += `<button type="button" class="kt s" data-m="${m + 1}" style="left:${(i + 0.7) * b}%;width:${b * 0.6}%" aria-label="${kreuz} oder ${be}">
+    // Schwarze Tasten etwas breiter als am echten Klavier (leichter zu treffen). Liegt am Rand
+    // noch eine schwarze Taste (Größer: Gis links, Ais rechts), ist sie halb zu sehen – zur
+    // Orientierung, die Klaviatur schneidet den Rest ab.
+    const sb = 0.68;
+    const schwarz = (m, rechts) => {
+      const [kreuz, be] = Klavierseite.namenSchwarz(m);
+      html += `<button type="button" class="kt s" data-m="${m}" style="left:${(rechts - sb / 2) * b}%;width:${b * sb}%" aria-label="${kreuz} oder ${be}">
         <span class="kt-name">${kreuz}<br>${be}</span></button>`;
-    });
+    };
+    if (!this.weiss(weisse[0] - 1)) schwarz(weisse[0] - 1, 0);
+    weisse.forEach((m, i) => { if (!this.weiss(m + 1)) schwarz(m + 1, i + 1); });
     this.tastenEl = this.el.querySelector('.kp-tasten');
     this.tastenEl.innerHTML = html;
     for (const h of ['lh', 'rh']) for (const [m, z] of Object.entries(this.NUMMER[h])) {
