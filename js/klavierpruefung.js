@@ -106,7 +106,7 @@ const Klavierpruefung = {
     const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
     this.el.querySelector('.kp-seite').innerHTML = `
       <div class="kp-kopf">
-        <h2>${Icons.raw('piano')}Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span></h2>
+        <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span></h2>
         <p class="hint">Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
           und lässt ihn liegen. Die Zahlen stehen auch auf den Tasten.</p>
       </div>
@@ -126,9 +126,12 @@ const Klavierpruefung = {
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
         <p class="kp-info hint" id="kp-info"></p>
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
+        ${Vollbild.knopf()}
       </div>
       <div class="kp-noten">${this.svg()}</div>
       <div class="klaviatur kp-tasten${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>`;
+    // Wie das Klavier: festes Bild über dem ganzen Fenster, Tasten von Rand zu Rand
+    Vollbild.binden(this.el.querySelector('.kp-seite'));
     this.tastenZeichnen();
     this.bedienen();
     this.leisteZeigen();

@@ -1284,6 +1284,13 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
 .kp-noten { display: flex; flex-direction: column; align-items: center; }
 .kp-system { max-width: 900px; width: 100%; max-height: 30vh; }
 .kp-seite .kp-tasten { height: clamp(140px, 27vh, 260px); }
+/* Im festen Bild: Noten oben, die Tasten füllen den Rest – über die ganze Breite des Geräts */
+.kp-seite.vollbild { padding-bottom: 0; }
+.kp-seite.vollbild .kp-noten { flex: none; }
+.kp-seite.vollbild .kp-system { max-height: 27vh; max-height: 27dvh; }
+.kp-seite.vollbild .kp-tasten { flex: 1 1 auto; height: auto; min-height: 200px; border-radius: 0;
+  margin: .5rem calc(-1 * max(1.2rem, env(safe-area-inset-right))) 0 calc(-1 * max(1.2rem, env(safe-area-inset-left))); }
+.kp-seite.vollbild .kp-leiste { margin: .4rem 0; }
 .kp-seite h2 { margin-bottom: .2rem; }
 .kp-kopf .hint { margin: 0; }
 .kp-endtext { text-anchor: middle; font-size: 12px; font-weight: 700; fill: currentColor; opacity: .7; }
