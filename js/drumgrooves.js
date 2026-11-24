@@ -561,7 +561,7 @@ const Drumgrooves = {
      Von oben gesehen: die Spitze trifft das Fell, der Griff liegt beim Spieler (unten). Farben wie der Handsatz
      der Rhythmus-Prüfung Klasse 6: rechts orange, links türkis; das Bassdrum-Pedal lila. Zwischen zwei Schlägen hebt sich der Stick (Spitze rückt nach oben, Schatten bleibt
      auf dem Fell) und wandert zum nächsten Ziel; im Moment des Schlags liegt die Spitze auf dem Ziel. */
-  STICK_ZIEL: { hh: [193, 343], s: [270, 466], t1: [424, 252], t2: [612, 252], t3: [786, 448] },
+  STICK_ZIEL: { hh: [180, 336], s: [270, 466], t1: [424, 252], t2: [612, 252], t3: [786, 448] },
   STICK_GRIFF: { R: [128, 68], L: [-104, 116] },         // vom Ziel zum Griff – wie Toms Skizze, nicht über Kreuz
   STICK_RUHE: { R: 'hh', L: 's' },
   STICK_SVG: `<g class="dg-sticks" pointer-events="none">
