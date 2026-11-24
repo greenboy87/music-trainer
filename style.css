@@ -1326,6 +1326,8 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-seite .klaviatur.kp-tasten { margin-top: .6rem; }
 .kp-ergebnis { font-weight: 600; display: inline-flex; align-items: center; gap: .4rem; }
 .kp-tasten .kt.ziel { box-shadow: inset 0 -38% 0 0 var(--hand); box-shadow: inset 0 calc(var(--taste, 60px) * -1.1) 0 0 color-mix(in srgb, var(--hand) 55%, transparent); }
+/* Kürzere schwarze Tasten: mehr Platz auf den weißen, die Zahlen bleiben frei */
+.kp-tasten .kt.s { height: 50%; }
 .kp-tasten .kt.s.ziel { box-shadow: inset 0 -40px 0 0 var(--hand); }
 .kp-tasten .kt.falsch { animation: kp-falsch .35s; }
 @keyframes kp-falsch { 0%, 60% { background: #f87171; } }
