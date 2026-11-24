@@ -729,4 +729,5 @@ const BEREICH_INFO = {
   'Bassschlüssel': 'Der Bassschlüssel legt das kleine f fest: 4. Linie, zwischen den Punkten.',
   'Bassschlüssel Vorzeichen': 'Erst spielen, wenn der Bassschlüssel sitzt.',
   'Oktavlagen': 'Jede Oktave beginnt mit c: C – c – c¹ – c² – c³.',
+  'Drumgrooves': 'Hi-Hat, Snare und Bassdrum – wie in der Stunde „Der Drumgroove“.',
 };

@@ -677,7 +677,7 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 .bau [hidden] { display: none !important; }
 
 /* ---------- Schlagzeug zum freien Spielen (js/schlagzeug.js) ---------- */
-.sz-seite, .pz-seite {
+.sz-seite, .pz-seite, .dg-seite, .dg-quiz-farben {
   --sz-becken: #f5b82e; --sz-snare: #fb923c; --sz-bass: #60a5fa; --sz-tom: #34d399; --sz-perc: #f472b6;
 }
 [data-fam="becken"] { --farbe: var(--sz-becken); }
@@ -1346,3 +1346,43 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
   min-width: 1.6em; height: 1.6em; padding: 0 .2em; border-radius: 99px; display: grid; place-items: center;
   font-size: clamp(.8rem, calc(var(--taste, 60px) * .24), 1.2rem); font-weight: 800; color: #fff; background: var(--hand); }
 .kt.s .kp-nr { top: 50%; font-size: clamp(.7rem, calc(var(--taste, 60px) * .18), 1rem); }
+
+/* ---------- Drumgrooves ---------- */
+.dg-grooves button { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.dg-grooves button small { font-size: .7rem; opacity: .75; font-weight: 600; }
+.notenbild.dg-system { width: 100%; max-width: none; height: auto; color: var(--text); overflow: visible; }
+.notenbild.dg-gross { max-height: 24vh; max-height: 24dvh; }
+.notenbild.dg-quiz { max-width: 460px; }
+.dg-takt { font-size: 21px; }
+.dg-zahl { font-size: 15px; font-weight: 800; text-anchor: middle; fill: currentColor; }
+.dg-zahl.und { opacity: .55; }
+.dg-kreuz { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+.dg-n { color: var(--text); transition: opacity .2s; }
+.dg-n.dg-aus { opacity: .2; }
+.dg-n.dg-ok { color: var(--green); }
+.dg-n.dg-falsch { color: var(--danger); }
+.dg-n.dg-markiert { color: var(--accent); }
+.dg-n .nk { fill: currentColor; }
+.dg-noten { position: relative; }
+.dg-takt-zaehler { position: absolute; right: .4rem; top: 0; font-weight: 800; font-size: .9rem; color: var(--accent); }
+.dg-teile button { font-size: .85rem; }
+.dg-instrument { display: inline-flex; align-items: center; gap: .6rem; }
+#dg-drehen { display: inline-flex; align-items: center; gap: .3rem; font-size: 1.1rem; }
+#dg-drehen span { font-size: .85rem; }
+.dg-spielfeld { display: flex; justify-content: center; margin-top: .5rem; }
+.dg-pads { width: 100%; max-width: none; }
+.dg-pad[data-aus] { opacity: .25; filter: grayscale(.8); }
+.dg-pad .sz-pad-name { display: flex; flex-direction: column; gap: .3rem; }
+.dg-koerper { font-size: .75em; font-weight: 600; opacity: .8; }
+.dg-pads.ohne-koerper .dg-koerper { display: none; }
+.dg-pad.ziel { box-shadow: 0 0 0 4px var(--farbe), 0 0 28px var(--farbe); }
+.dg-set { width: 100%; }
+.dg-set .sz-teil[data-aus] { opacity: .25; }
+.dg-set .sz-teil.ziel { filter: drop-shadow(0 0 18px #fde047); }
+.kp-seite.vollbild .dg-spielfeld { flex: 1 1 auto; min-height: 180px; margin: .5rem calc(-1 * max(1.2rem, env(safe-area-inset-right))) 0 calc(-1 * max(1.2rem, env(safe-area-inset-left)));
+  padding: 0 max(1.2rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1.2rem, env(safe-area-inset-left)); }
+.kp-seite.vollbild .dg-pads { height: 100%; }
+.kp-seite.vollbild .dg-pads .sz-pad { aspect-ratio: auto; height: 100%; }
+.kp-seite.vollbild .dg-set { height: 100%; display: flex; justify-content: center; }
+.kp-seite.vollbild .dg-set .sz-set { width: auto; height: 100%; max-width: 100%; }
+.optionen.breit .notenbild.dg-quiz { max-width: 540px; }
