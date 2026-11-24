@@ -4,7 +4,8 @@
 
    Urheberrecht: Die Noten stehen nicht hier im (öffentlichen) Code, sondern kommen
    vom Worker (GET /api/stueck/in-the-end, Variable STUECKE im Cloudflare-Dashboard)
-   und nur für angemeldete Kinder. Format je Hand: Einträge „Schlag:Dauer:Stufe[+Stufe]:Finger[+Finger]“,
+   und nur für angemeldete Kinder. Format je Hand: Einträge „Schlag:Dauer:Stufe[+Stufe]:…“ (der vierte Teil
+   wird nicht mehr gebraucht),
    Schlag und Dauer in Vierteln ab Beginn, Stufe wie in Notenbild (c' = 0, H = -8),
    vz = Vorzeichen der Tonart (-1 = ein ♭: jedes H ist ein B).
 
@@ -18,7 +19,11 @@ const Klavierpruefung = {
   ID: 'in-the-end',
   VON: 45, BIS: 69,             // Tasten A bis a¹
   SCHWARZ: [1, 3, 6, 8, 10],
-  FARBE: { rh: '#e07b2e', lh: '#2f6fb0' },
+  FARBE: { rh: '#e07b2e', lh: '#3d86d0' },
+  /* Toms Tastennummern (Aufkleber am Keyboard, keine Fingersätze): links A=1, B=2, H=–,
+     c=3 … f=6; rechts d¹=1 … a¹=5. Stehen unter bzw. über den Noten und auf den Tasten. */
+  NUMMER: { lh: { 45: '1', 46: '2', 47: '–', 48: '3', 50: '4', 52: '5', 53: '6' },
+            rh: { 62: '1', 64: '2', 65: '3', 67: '4', 69: '5' } },
   /* Zeichnung: je Zeile vier Takte im Klaviersystem */
   OBEN: 80, UNTEN_Y: 170,       // y der untersten Linie (Violin, Bass)
   X0: 92, TAKT: 174, RAND: 18, SCHLAG: 36,
@@ -103,7 +108,7 @@ const Klavierpruefung = {
       <div class="kp-kopf">
         <h2>${Icons.raw('piano')}Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span></h2>
         <p class="hint">Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
-          und lässt ihn liegen. Zahlen = Finger.</p>
+          und lässt ihn liegen. Die Zahlen stehen auch auf den Tasten.</p>
       </div>
       <div class="kp-leiste">
         <div class="klavier-groesse" role="group" aria-label="Hand">
@@ -190,12 +195,11 @@ const Klavierpruefung = {
             : `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 31}" class="nh"/>`;
         }
       });
-      // Finger: rechte Hand über dem oberen System, linke unter dem unteren
-      if (n.finger.length) {
-        g += n.hand === 'rh'
-          ? `<text x="${x}" y="${this.OBEN - 50}" class="kp-finger">${n.finger.join('')}</text>`
-          : n.finger.map((f, k) => `<text x="${x}" y="${this.UNTEN_Y + 17 + k * 14}" class="kp-finger">${f}</text>`).join('');
-      }
+      // Tastennummern: rechte Hand über dem oberen System, linke unter dem unteren (hoher Ton zuerst)
+      const nr = [...n.midis].sort((a, b) => b - a).map(m => this.NUMMER[n.hand][m]).filter(Boolean);
+      g += n.hand === 'rh'
+        ? nr.map(z => `<text x="${x}" y="${this.OBEN - 50}" class="kp-finger">${z}</text>`).join('')
+        : nr.map((z, k) => `<text x="${x}" y="${this.UNTEN_Y + 17 + k * 14}" class="kp-finger">${z}</text>`).join('');
       s += `<g class="kp-n" data-i="${n.i}" data-hand="${n.hand}" style="--hand:${this.FARBE[n.hand]}">${g}</g>`;
     }
     // Achtelpaare mit Balken
@@ -236,6 +240,10 @@ const Klavierpruefung = {
     });
     this.tastenEl = this.el.querySelector('.kp-tasten');
     this.tastenEl.innerHTML = html;
+    for (const h of ['lh', 'rh']) for (const [m, z] of Object.entries(this.NUMMER[h])) {
+      const k = this.taste(Number(m));
+      if (k) k.insertAdjacentHTML('afterbegin', `<span class="kp-nr" style="--hand:${this.FARBE[h]}">${z}</span>`);
+    }
     this.tastenEl.style.setProperty('--taste', `${this.tastenEl.clientWidth / weisse.length}px`);
   },
   taste(m) { return this.tastenEl.querySelector(`[data-m="${m}"]`); },

@@ -1305,3 +1305,8 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
 .kp-tasten .kt.s.ziel { box-shadow: inset 0 -40px 0 0 var(--hand); }
 .kp-tasten .kt.falsch { animation: kp-falsch .35s; }
 @keyframes kp-falsch { 0%, 60% { background: #f87171; } }
+/* Toms Tastennummern als Aufkleber auf den Tasten */
+.kp-nr { position: absolute; left: 50%; top: 64%; transform: translateX(-50%); pointer-events: none;
+  min-width: 1.6em; height: 1.6em; padding: 0 .2em; border-radius: 99px; display: grid; place-items: center;
+  font-size: clamp(.8rem, calc(var(--taste, 60px) * .24), 1.2rem); font-weight: 800; color: #fff; background: var(--hand); }
+.kt.s .kp-nr { top: 50%; font-size: clamp(.7rem, calc(var(--taste, 60px) * .18), 1rem); }

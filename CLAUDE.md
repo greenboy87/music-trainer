@@ -56,7 +56,7 @@ Cloudflare-Workers: ANLEITUNG.md.
 Klavier-Prüfung Klasse 8 (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (A bis a¹), Zeile einmal
 gezeichnet mit Wiederholung, gespielt 2×, beim 2. Mal Ende auf Takt 4, Schlag 1 (liegen
-lassen). Rechte/linke Hand/beide; „Schritt für Schritt“ (Cursor wartet auf die richtigen
+lassen). Tastennummern wie Toms Aufkleber am Keyboard (`NUMMER`, keine Fingersätze) unter den Noten und auf den Tasten. Rechte/linke Hand/beide; „Schritt für Schritt“ (Cursor wartet auf die richtigen
 Tasten, Akkorde zusammen) und „Mitspielen“ (Einzähltakt, Treffer ±0,18 s). Andere Hand
 spielt wahlweise mit. Meldet nichts an den Server. **Urheberrecht:** Die Noten stehen nie
 im Repository (öffentlich), sondern in der Cloudflare-Variable `STUECKE`; der Worker gibt
