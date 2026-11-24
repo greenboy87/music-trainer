@@ -9,12 +9,13 @@
    Schlag und Dauer in Vierteln ab Beginn, Stufe wie in Notenbild (c' = 0, H = -8),
    vz = Vorzeichen der Tonart (-1 = ein ♭: jedes H ist ein B).
 
-   Üben: rechte Hand, linke Hand oder beide. Zwei Arten:
+   Üben: rechte Hand, linke Hand oder beide. Drei Arten:
    – Mitspielen: Cursor läuft im Tempo, ein Takt wird eingezählt, am Ende wie viele
      Töne getroffen wurden.
    – Schritt für Schritt: Der Cursor läuft mit, bleibt aber an der nächsten Note
      stehen, bis die richtige(n) Taste(n) gedrückt sind.
-   Wahlweise spielt die andere Hand mit. Gewertet wird nur „Mitspielen“: Sterne wie bei der
+   – Sterne sammeln: wie Mitspielen, aber ohne leuchtende Tasten.
+   Wahlweise spielt die andere Hand mit. Gewertet wird nur „Sterne sammeln“: Sterne wie bei der
    Rhythmus-Prüfung (ab 95 % sechs), gespeichert als Spiel „klavier-pruefung“, Stufe 0 = rechte
    Hand, 1 = linke Hand, 2 = beide – damit im Konto und im School-Tool. */
 const Klavierpruefung = {
@@ -45,7 +46,7 @@ const Klavierpruefung = {
     this.el = el;
     this.stopp();
     if (['rh', 'lh', 'beide'].includes(this.lies('hand'))) this.hand = this.lies('hand');
-    if (['schritt', 'mit'].includes(this.lies('art'))) this.art = this.lies('art');
+    if (['schritt', 'mit', 'sterne'].includes(this.lies('art'))) this.art = this.lies('art');
     const b = Number(this.lies('bpm'));
     if (b >= 40 && b <= 120) this.bpm = b;
     this.andere = this.lies('andere') !== 'aus';
@@ -123,7 +124,7 @@ const Klavierpruefung = {
           ${knopf('hand', 'rh', 'Rechte Hand', this.hand === 'rh')}${knopf('hand', 'lh', 'Linke Hand', this.hand === 'lh')}${knopf('hand', 'beide', 'Beide', this.hand === 'beide')}
         </div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
-          ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}
+          ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
         </div>
         <span class="kp-tempo" role="group" aria-label="Tempo">Tempo
           <button type="button" class="kp-pm" data-bpm="-5" aria-label="Langsamer">−</button>
@@ -155,9 +156,11 @@ const Klavierpruefung = {
     el.querySelectorAll('[data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === this.art)));
     el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide';
     el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
-    el.querySelector('#kp-info').innerHTML = this.art === 'schritt'
-      ? `<strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.`
-      : `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Am Ende siehst du, wie viele Töne du getroffen hast.`;
+    el.querySelector('#kp-info').innerHTML = {
+      schritt: `<strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.`,
+      mit: `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo, die Tasten leuchten mit. Zum Üben – gibt keine Sterne.`,
+      sterne: `<strong>Sterne sammeln:</strong> Wie Mitspielen, aber die Tasten leuchten nicht mehr. Ab 95 % gibt es sechs Sterne.`,
+    }[this.art];
     this.zuruecksetzen();
     this.besteZeigen();
   },
@@ -391,12 +394,13 @@ const Klavierpruefung = {
 
   starten() {
     this.zuruecksetzen();
-    const vorlauf = this.art === 'mit' ? 4 : 0;
+    const imTempo = this.art !== 'schritt';
+    const vorlauf = imTempo ? 4 : 0;
     this.lauf = {
       t: -vorlauf,                     // Schläge ab Beginn, beim Mitspielen erst der Einzähltakt
       zuletzt: this.uhr(),
       schritte: this.art === 'schritt' ? this.schritte() : null, s: 0,
-      erwartet: this.art === 'mit' ? this.meine().flatMap(n => n.midis.map(m => ({ m, start: n.start, n, ok: false }))) : null,
+      erwartet: imTempo ? this.meine().flatMap(n => n.midis.map(m => ({ m, start: n.start, n, ok: false }))) : null,
       falsch: 0,
       auto: this.andere && this.hand !== 'beide' ? this.fremde().map(n => ({ n, an: null, fertig: false })) : [],
       schlag: Math.floor(-vorlauf) - 1,
@@ -485,7 +489,7 @@ const Klavierpruefung = {
     if (l?.schritte) {
       const s = l.schritte[l.s];
       if (s) ziele = s.noten.flatMap(n => n.midis.map(m => [m, n.hand]));
-    } else if (l) {
+    } else if (l && this.art === 'mit') {   // Sterne sammeln: nichts leuchtet
       ziele = this.meine().filter(n => l.t >= n.start - 0.15 && l.t < n.start + Math.min(n.dauer, 1) - 0.1)
         .flatMap(n => n.midis.map(m => [m, n.hand]));
     }
@@ -523,6 +527,11 @@ const Klavierpruefung = {
     if (l.schritte) {
       erg.innerHTML = `${Icons.raw('check')} Geschafft!${l.falsch ? ` ${l.falsch}× daneben gedrückt.` : ' Kein einziger falscher Ton.'}
         ${l.falsch <= 2 ? 'Probier es jetzt mit „Mitspielen“.' : ''}`;
+    } else if (this.art === 'mit') {
+      const ok = l.erwartet.filter(e => e.ok).length;
+      const p = Math.max(0, Math.round((ok - l.falsch * 0.5) / l.erwartet.length * 100));
+      erg.innerHTML = `${p} % · ${ok} von ${l.erwartet.length} Tönen${l.falsch ? ` · ${l.falsch}× daneben` : ''}.
+        ${p >= 80 ? 'Gut! Jetzt probier es bei „Sterne sammeln“.' : 'Weiter üben – gern etwas langsamer.'}`;
     } else {
       const ok = l.erwartet.filter(e => e.ok).length;
       // Falsche Töne ziehen ab, sonst wäre wildes Drücken ein Trick
@@ -533,7 +542,7 @@ const Klavierpruefung = {
       Fortschritt.eintragen(this.SPIEL, stufe, sterne, p, ok, l.erwartet.length, Math.round(this.ende() * this.spb()));
       erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
         <span>${p} % · ${ok} von ${l.erwartet.length} Tönen${l.falsch ? ` · ${l.falsch}× daneben` : ''}${p > alt && alt ? ' · <strong>Neuer Bestwert!</strong>' : ''}.
-        ${p >= 95 ? 'Perfekt – versuch es schneller!' : p >= 80 ? 'Super – noch ein paar Mal!' : p >= 55 ? 'Schon gut – weiter üben.' : 'Übe es erst „Schritt für Schritt“ oder langsamer.'}</span>`;
+        ${p >= 95 ? 'Perfekt – versuch es schneller!' : p >= 80 ? 'Super – noch ein paar Mal!' : p >= 55 ? 'Schon gut – weiter üben.' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
       const felder = [...erg.querySelectorAll('.stern.an')];
       felder.forEach(f => f.classList.remove('an'));
       const leiter = [72, 74, 76, 79, 81, 84];
