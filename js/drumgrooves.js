@@ -206,7 +206,7 @@ const Drumgrooves = {
     const teil = this.teilJetzt();
     if (this.modus !== 'fill') return DG.schlaege(this.groove(), this.TEILE[teil].stimmen);
     const groove = DG.schlaege(this.groove()).map(n => ({ ...n, auto: teil === 'fill' }));
-    return [...groove, ...DG.fillSchlaege(DG.FILLS[this.g], 8)];
+    return [...groove, ...DG.fillSchlaege(DG.FILLS[this.g], 8).map(n => ({ ...n, fill: true }))];
   },
   /* Instrumente, die man selbst spielt bzw. die überhaupt vorkommen */
   meineInstrumente() { return [...new Set(this.durchgang().filter(n => !n.auto).map(n => n.k))]; },
@@ -263,7 +263,7 @@ const Drumgrooves = {
           </ul>`;
     const wort = this.modus === 'part2' ? 'Level' : 'Groove';
     const wahl = fill
-      ? DG.FILLS.map((f, i) => knopf('g', i, `${f.kurz}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g)).join('')
+      ? DG.FILLS.map((f, i) => knopf('g', i, `${f.nr}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g).replace('<button ', `<button title="Fill ${f.nr}: ${f.kurz}" `)).join('')
       : this.liste().map((gr, i) => knopf('g', i, `${wort} ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('');
     this.el.querySelector('.dg-seite').innerHTML = `
       <div class="kp-kopf">
@@ -619,10 +619,13 @@ const Drumgrooves = {
     if (!nach) return { vor, nach, heb: vor && t - vor.t < 0.08 ? (t - vor.t) / 0.08 * this.RUHE : this.RUHE, weg: 1 };
     const a = Math.min(AUSHOLEN, vor ? (nach.t - vor.t) * 0.85 : AUSHOLEN);
     const u = 1 - (nach.t - t) / a;            // 0 = beginnt auszuholen, 1 = trifft
-    if (u <= 0) return { vor, nach, heb: this.RUHE, weg: 0 };
+    // Zum nächsten Ziel gleitet der Stick ruhig über die ganze Lücke (höchstens 1,5 Schläge lang)
+    const ab = vor ? Math.max(vor.t, nach.t - 1.5) : nach.t - 1.5;
+    const weg = Math.max(0, Math.min(1, (t - ab) / Math.max(0.01, nach.t - ab) * 1.15));
+    if (u <= 0) return { vor, nach, heb: this.RUHE, weg };
     // schnell hoch, dann kräftig runter
     const heb = u < 0.55 ? this.RUHE + (1 - this.RUHE) * Math.sin(u / 0.55 * Math.PI / 2) : Math.cos((u - 0.55) / 0.45 * Math.PI / 2);
-    return { vor, nach, heb, weg: Math.min(1, u / 0.55) };
+    return { vor, nach, heb, weg };
   },
   sticksZeigen(t) {
     const g = this.el?.querySelector('.dg-set .dg-sticks');
@@ -640,15 +643,18 @@ const Drumgrooves = {
     for (const h of ['R', 'L']) {
       const plan = t === null || !l ? [] : l.plan[h];
       // Auf derselben Trommel nebeneinander: auf den Toms R rechts, L links; auf der Snare liegt L in der Mitte, R daneben
-      const ziel = k => {
+      // Auf derselben Trommel nebeneinander: auf den Toms und der Snare im Fill R rechts, L links von der Mitte;
+      // im Groove spielt L die Snare allein in der Mitte
+      const ziel = e => {
+        const k = e ? e.k : this.STICK_RUHE[h];
         const z = this.STICK_ZIEL[k] || this.STICK_ZIEL[this.STICK_RUHE[h]];
-        const dx = ['t1', 't2', 't3'].includes(k) ? (h === 'R' ? 22 : -22) : k === 's' && h === 'R' ? 34 : 0;
-        return [z[0] + dx, z[1]];
+        const neben = ['t1', 't2', 't3'].includes(k) ? 22 : k === 's' && e?.fill ? 18 : 0;
+        return [z[0] + (h === 'R' ? neben : -neben), z[1]];
       };
       const { vor, nach, heb: h0, weg } = this.hebung(plan, t ?? 0);
       let heb = h0;
-      const von = ziel(vor ? vor.k : nach ? nach.k : this.STICK_RUHE[h]);
-      const bis = nach ? ziel(nach.k) : von;
+      const von = ziel(vor || nach || null);
+      const bis = nach ? ziel(nach) : von;
       const w = weg * weg * (3 - 2 * weg);
       const pos = [von[0] + (bis[0] - von[0]) * w, von[1] + (bis[1] - von[1]) * w];
       heb = Math.max(0, heb);
