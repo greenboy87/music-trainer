@@ -62,9 +62,9 @@ Spiel `drumgrooves`, Stufe 0–4. Dazu das Spiel `groove-hoeren` (Bereich „Dru
 stehen im School-Tool in `MT_SPIELE`.
 Drumgrooves Part II (`#/drumgrooves2`, `modus: 'part2'`, Klasse 9): fünf Level aus Toms Folie (`DG.GROOVES2`, Level 5 mit zwei Takten und eigener Snare), Spiel `drumgrooves-2` (Stufe 0–4), Karte in der Unterkategorie Drumgrooves.
 Groove + Fill (`#/groovefill`, derselbe Trainer mit `modus: 'fill'`): 1 Takt Groove 2 + 1 Takt Fill (Snare, Toms),
-4×. Acht Fills (`DG.FILLS`, 1–4 Viertel, 5–8 Achtel). Aufbau: nur Fill (Computer spielt den Groove) → Groove + Fill.
+4×. Acht Fills (`DG.FILLS` aus `DG.FILL_RHYTHMEN`: 1 2+ 3 4+, 1+ 2 3+ 4+, 1 2+ 3+ 4+, 1+ 2+ 3 4, je nur Snare und Snare → Toms abwärts; Stufe = Rhythmus × 2 + Toms). Aufbau: nur Fill (Computer spielt den Groove) → Groove + Fill.
 Sechs Pads (oben Toms Q W E, unten Hi-Hat · Snare · Bassdrum A S D – Snare immer in der Mitte). Spiel `groove-fill`
-(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Drums“, `unter: 'Groove + Fill'`). Drumset-Ansicht: beim Vorspielen (Anhören, Computer-Groove unter dem Fill) schlagen Sticks R (orange) und L (türkis, Farben wie der Handsatz der Rhythmus-Prüfung) und das Bassdrum-Pedal F (lila); Schalter „Sticks“. Handsatz: Hi-Hat immer R, Snare immer L, Toms im Wechsel. Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
+(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Drums“, `unter: 'Groove + Fill'`). Drumset-Ansicht: beim Vorspielen (Anhören, Computer-Groove unter dem Fill) schlagen Sticks R (orange) und L (türkis, Farben wie der Handsatz der Rhythmus-Prüfung) und das Bassdrum-Pedal F (lila); Schalter „Sticks“. Handsatz: im Groove Hi-Hat R, Snare L; im Fill wie die Rhythmus-Werkstatt (`DG.handsatz`, nach `handsatzBerechnen` in rhythmus-werkstatt/js/noten.js: Zählzeit R, zwei Achtel R L, Viertel hintereinander R L). Gleiche Trommel: Sticks nebeneinander. Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
 
 Klavier-Prüfung (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal

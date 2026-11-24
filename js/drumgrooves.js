@@ -8,8 +8,7 @@
       den ganzen Groove: Spiel „drumgrooves“, Stufe 0–4 = Groove 1–5, Sterne wie bei der
       Rhythmus-Prüfung (ab 95 % sechs). Der Groove läuft nach dem Einzählen 4×.
    2. Groove + Fill (#/groovefill): 1 Takt Groove (Groove 2: Bassdrum auf 1 und 3) + 1 Takt
-      Fill auf Snare und Toms, insgesamt 4×. Acht einfache Fills, vier in Vierteln, vier in
-      Achteln. Aufbau: erst nur der Fill (den Groove spielt der Computer), dann beides.
+      Fill auf Snare und Toms, insgesamt 4×. Vier Fill-Rhythmen aus Vierteln und Achteln (1 2+ 3 4+ usw.), je nur Snare und Snare → Toms. Aufbau: erst nur der Fill (den Groove spielt der Computer), dann beides.
       Sechs Pads (oben die Toms) oder das Drumset. Spiel „groove-fill“, Stufe 0–7 = Fill 1–8.
    2b. Drumgrooves Part II (#/drumgrooves2, Klasse 9): derselbe Groove-Trainer mit den fünf Levels
       der Stunde „Drumgrooves Part II“ (Bassdrum mit mehr Achteln, Level 5 zwei Takte). Spiel
@@ -39,16 +38,20 @@ const DG = {
   HH: [0, 1, 2, 3, 4, 5, 6, 7],
   ZAEHL: ['1', '+', '2', '+', '3', '+', '4', '+'],
   /* Fills: je Achtel-Position ein Instrument (Viertel: nur auf 1 2 3 4) */
-  FILLS: [
-    { nr: 1, art: 'Viertel', name: 'Snare', v: true, schlaege: ['s', 's', 's', 's'] },
-    { nr: 2, art: 'Viertel', name: 'Snare – Tom 1', v: true, schlaege: ['s', 's', 't1', 't1'] },
-    { nr: 3, art: 'Viertel', name: 'Snare – Toms abwärts', v: true, schlaege: ['s', 't1', 't2', 't3'] },
-    { nr: 4, art: 'Viertel', name: 'Tom 1 – Floor-Tom', v: true, schlaege: ['t1', 't1', 't3', 't3'] },
-    { nr: 5, art: 'Achtel', name: 'Snare', schlaege: ['s', 's', 's', 's', 's', 's', 's', 's'] },
-    { nr: 6, art: 'Achtel', name: 'Snare – Tom 1 – Floor-Tom', schlaege: ['s', 's', 's', 's', 't1', 't1', 't3', 't3'] },
-    { nr: 7, art: 'Achtel', name: 'Snare – Toms abwärts', schlaege: ['s', 's', 't1', 't1', 't2', 't2', 't3', 't3'] },
-    { nr: 8, art: 'Achtel', name: 'Toms abwärts', schlaege: ['t1', 't1', 't2', 't2', 't3', 't3', 't3', 't3'] },
+  /* Fills: vier Rhythmen aus Vierteln und Achteln (je Treffer [Position, Viertel?]), jeder einmal nur auf
+     der Snare und einmal Snare → Toms abwärts (je Zählzeit ein Instrument: Snare, Tom 1, Tom 2, Floor-Tom) */
+  FILL_RHYTHMEN: [
+    { kurz: '1 2+ 3 4+', treffer: [[0, 1], [2, 0], [3, 0], [4, 1], [6, 0], [7, 0]] },
+    { kurz: '1+ 2 3+ 4+', treffer: [[0, 0], [1, 0], [2, 1], [4, 0], [5, 0], [6, 0], [7, 0]] },
+    { kurz: '1 2+ 3+ 4+', treffer: [[0, 1], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]] },
+    { kurz: '1+ 2+ 3 4', treffer: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [6, 1]] },
   ],
+  get FILLS() {
+    return this._fills ||= this.FILL_RHYTHMEN.flatMap((r, i) => ['Snare', 'Toms'].map((art, j) => ({
+      nr: i * 2 + j + 1, kurz: r.kurz, art,
+      treffer: r.treffer.map(([p, v]) => ({ p, v: !!v, k: art === 'Snare' ? 's' : ['s', 't1', 't2', 't3'][Math.floor(p / 2)] })),
+    })));
+  },
   /* Instrumente: Name, Bodypercussion aus der Stunde, Farbfamilie, y im Notensystem (oberste Linie 20,
      Linienabstand 10), x = Kreuz statt Notenkopf */
   INSTR: {
@@ -72,14 +75,26 @@ const DG = {
     return l;
   },
   /* Die Schläge eines Fills, ab Position ab */
-  /* Fills: Snare immer links (wie im Groove), Toms im Wechsel – immer die andere Hand als zuvor, zuerst rechts */
-  fillSchlaege(f, ab = 0) {
-    let zuvor = 'L';
-    return f.schlaege.map((k, i) => {
-      const h = k === 's' ? 'L' : zuvor === 'L' ? 'R' : 'L';
-      zuvor = h;
-      return { k, p: ab + (f.v ? i * 2 : i), v: !!f.v, h };
+  /* Handsatz wie in der Rhythmus-Werkstatt (noten.js handsatzBerechnen): jede Zählzeit für sich im
+     gröbsten passenden Raster – Viertel R, zwei Achtel R L, Achtelpause + Achtel L; Viertel direkt
+     hintereinander wechseln R L R L. */
+  handsatz(treffer) {
+    const schlaege = new Map();
+    treffer.forEach((t, i) => { const b = Math.floor(t.p / 2); if (!schlaege.has(b)) schlaege.set(b, []); schlaege.get(b).push(i); });
+    const hand = treffer.map(() => 'R');
+    const nurViertel = b => { const l = schlaege.get(b); return l && l.length === 1 && treffer[l[0]].p % 2 === 0; };
+    schlaege.forEach((liste, b) => {
+      const viertel = liste.every(i => treffer[i].p % 2 === 0);
+      liste.forEach(i => { hand[i] = viertel ? 'R' : treffer[i].p % 2 === 0 ? 'R' : 'L'; });
     });
+    [...schlaege.keys()].sort((a, b) => a - b).forEach(b => {
+      if (nurViertel(b) && nurViertel(b - 1)) hand[schlaege.get(b)[0]] = hand[schlaege.get(b - 1)[0]] === 'R' ? 'L' : 'R';
+    });
+    return hand;
+  },
+  fillSchlaege(f, ab = 0) {
+    const hand = this.handsatz(f.treffer);
+    return f.treffer.map((t, i) => ({ k: t.k, p: ab + t.p, v: t.v, h: hand[i] }));
   },
   zaehlName(p) { const z = this.ZAEHL[p % 8]; return z === '+' ? `${this.ZAEHL[(p % 8) - 1]}+` : z; },
   bassText(g) { return g.bass.map(p => this.zaehlName(p)).join(' · '); },
@@ -228,7 +243,7 @@ const Drumgrooves = {
     const fill = this.modus === 'fill';
     const hilfe = fill ? `
           <p>Ein Takt <strong>Groove</strong> (Groove 2: Hi-Hat in Achteln, Snare auf 2 und 4, Bassdrum auf 1 und 3), dann ein Takt
-            <strong>Fill</strong> auf Snare und Toms – insgesamt ${this.DURCHGAENGE}×. Fill 1–4 in Vierteln, Fill 5–8 in Achteln.</p>
+            <strong>Fill</strong> auf Snare und Toms – insgesamt ${this.DURCHGAENGE}×. Vier Rhythmen aus Vierteln und Achteln, jeder nur auf der Snare und auf Snare + Toms.</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst nur der Fill (den Groove spielt der Computer), dann Groove + Fill.</li>
             <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt. Zum Üben, gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
@@ -248,7 +263,7 @@ const Drumgrooves = {
           </ul>`;
     const wort = this.modus === 'part2' ? 'Level' : 'Groove';
     const wahl = fill
-      ? DG.FILLS.map((f, i) => knopf('g', i, `Fill ${f.nr}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g)).join('')
+      ? DG.FILLS.map((f, i) => knopf('g', i, `${f.kurz}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g)).join('')
       : this.liste().map((gr, i) => knopf('g', i, `${wort} ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('');
     this.el.querySelector('.dg-seite').innerHTML = `
       <div class="kp-kopf">
@@ -260,7 +275,7 @@ const Drumgrooves = {
         </div>
       </div>
       <div class="kp-leiste">
-        <div class="klavier-groesse dg-grooves" role="group" aria-label="${fill ? 'Fill' : 'Groove'}">${wahl}</div>
+        <div class="klavier-groesse dg-grooves${fill ? ' fills' : ''}" role="group" aria-label="${fill ? 'Fill' : 'Groove'}">${wahl}</div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
           ${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
         </div>
@@ -624,7 +639,12 @@ const Drumgrooves = {
     g.querySelector('.dg-pedal').style.display = this.instrumente().includes('b') ? '' : 'none';
     for (const h of ['R', 'L']) {
       const plan = t === null || !l ? [] : l.plan[h];
-      const ziel = k => this.STICK_ZIEL[k] || this.STICK_ZIEL[this.STICK_RUHE[h]];
+      // Auf derselben Trommel nebeneinander: auf den Toms R rechts, L links; auf der Snare liegt L in der Mitte, R daneben
+      const ziel = k => {
+        const z = this.STICK_ZIEL[k] || this.STICK_ZIEL[this.STICK_RUHE[h]];
+        const dx = ['t1', 't2', 't3'].includes(k) ? (h === 'R' ? 22 : -22) : k === 's' && h === 'R' ? 34 : 0;
+        return [z[0] + dx, z[1]];
+      };
       const { vor, nach, heb: h0, weg } = this.hebung(plan, t ?? 0);
       let heb = h0;
       const von = ziel(vor ? vor.k : nach ? nach.k : this.STICK_RUHE[h]);
@@ -689,9 +709,9 @@ SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
     icon: 'ear',
     farbe: '#a5b4fc',
     stufen: [
-      { name: 'Viertel-Fills', info: 'Fill 1 bis 4', fills: [0, 1, 2, 3], tempo: 80 },
-      { name: 'Achtel-Fills', info: 'Fill 5 bis 8', fills: [4, 5, 6, 7], tempo: 80 },
-      { name: 'Alle Fills', info: 'Viertel und Achtel gemischt', fills: [0, 1, 2, 3, 4, 5, 6, 7], tempo: 88 },
+      { name: 'Nur Snare', info: 'Welcher Rhythmus?', fills: [0, 2, 4, 6], tempo: 80 },
+      { name: 'Snare und Toms', info: 'Welcher Rhythmus?', fills: [1, 3, 5, 7], tempo: 80 },
+      { name: 'Alle Fills', info: 'Snare oder Toms, alle Rhythmen', fills: [0, 1, 2, 3, 4, 5, 6, 7], tempo: 88 },
     ],
     aufgabe(st) {
       const i = zufall(st.fills);
@@ -704,7 +724,7 @@ SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
         optionen: reihe.map(x => DG.svg(DG.fillSchlaege(DG.FILLS[x]), { zaehlen: false, klasse: 'dg-quiz' })),
         breit: true,
         richtig: reihe.indexOf(i),
-        loesung: `Das war Fill ${f.nr}: ${f.name} in ${f.art}n.`,
+        loesung: `Das war „${f.kurz}“ ${f.art === 'Snare' ? 'auf der Snare' : 'von der Snare über die Toms abwärts'}.`,
       };
     },
   });

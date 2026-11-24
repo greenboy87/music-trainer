@@ -1414,3 +1414,5 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .dg-pedal-ball { fill: #fff7e6; stroke: var(--stick); stroke-width: 4; }
 .dg-pedal-f { fill: var(--stick); font-size: 15px; font-weight: 900; text-anchor: middle; }
 .dg-hand.F { background: #a78bfa; }
+/* Groove + Fill: acht Fill-Knöpfe mit Rhythmus – kompakt, damit Übeart und Tempo in derselben Zeile bleiben */
+.dg-grooves.fills button { padding: .3rem .45rem; font-size: .78rem; white-space: nowrap; }
