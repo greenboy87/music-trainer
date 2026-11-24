@@ -20,6 +20,8 @@
 const Klavierpruefung = {
   ID: 'in-the-end',
   VON: 43, BIS: 71,             // Tasten G bis h¹ (gespielt wird A bis a¹, je eine weiße Taste Rand)
+  GROSS: [45, 69],              // „Größer“: nur A bis a¹, die Tasten werden breiter
+  gross: false,
   SCHWARZ: [1, 3, 6, 8, 10],
   FARBE: { rh: '#e07b2e', lh: '#3d86d0' },
   /* Toms Tastennummern (Aufkleber am Keyboard, keine Fingersätze): links A=1, B=2, H=–,
@@ -48,7 +50,8 @@ const Klavierpruefung = {
     if (b >= 40 && b <= 120) this.bpm = b;
     this.andere = this.lies('andere') !== 'aus';
     this.metro = this.lies('metro') !== 'aus';
-    this.namen = this.lies('namen') === 'an';   // Notennamen auf den Tasten: standardmäßig aus
+    this.namen = this.lies('namen') === 'an';
+    this.gross = this.lies('gross') === 'an';   // Notennamen auf den Tasten: standardmäßig aus
     const rahmen = inhalt => {
       el.innerHTML = `
         <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungen</a>
@@ -134,6 +137,7 @@ const Klavierpruefung = {
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
         <p class="kp-info hint" id="kp-info"></p>
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
+        <button type="button" class="small" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: ohne die Randtasten G und h">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button>
         ${Vollbild.knopf()}
       </div>
       <div class="kp-noten">${this.svg()}</div>
@@ -277,7 +281,8 @@ const Klavierpruefung = {
   weiss(m) { return !this.SCHWARZ.includes(m % 12); },
   tastenZeichnen() {
     const weisse = [];
-    for (let m = this.VON; m <= this.BIS; m++) if (this.weiss(m)) weisse.push(m);
+    const [von, bis] = this.gross ? this.GROSS : [this.VON, this.BIS];
+    for (let m = von; m <= bis; m++) if (this.weiss(m)) weisse.push(m);
     const b = 100 / weisse.length;
     let html = weisse.map((m, i) => `<button type="button" class="kt w" data-m="${m}" style="left:${i * b}%;width:${b}%" aria-label="${Klavierseite.name(m)}">
       <span class="kt-name">${Klavierseite.name(m)}</span></button>`).join('');
@@ -316,6 +321,15 @@ const Klavierpruefung = {
       if (feld === 'namen') this.tastenEl.classList.toggle('ohne-namen', !this.namen);
     });
     schalter('#kp-andere', 'andere'); schalter('#kp-metro', 'metro'); schalter('#kp-namen', 'namen');
+    el.querySelector('#kp-gross').addEventListener('click', e => {
+      this.gross = !this.gross; this.merken('gross', this.gross ? 'an' : 'aus');
+      const b = e.currentTarget;
+      b.setAttribute('aria-pressed', String(this.gross));
+      b.innerHTML = `${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span>`;
+      this.tastenZeichnen();
+      this.zielSchluessel = null;
+      if (this.lauf) this.zielZeigen();
+    });
     el.querySelector('#kp-los').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(); });
 
     // Finger: drücken, gleiten, loslassen – wie am Klavier
