@@ -117,9 +117,20 @@ const Klavierpruefung = {
     const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
     this.el.querySelector('.kp-seite').innerHTML = `
       <div class="kp-kopf">
-        <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span></h2>
-        <p class="hint">Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
-          und lässt ihn liegen. Die Zahlen stehen auch auf den Tasten.</p>
+        <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span>
+          <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button></h2>
+        <div class="kp-hilfe" id="kp-hilfe" hidden>
+          <p>Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
+            (Fermate <span class="ns">\u{1D110}</span>) und lässt ihn liegen.</p>
+          <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>
+          <ul>
+            <li><strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.</li>
+            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Zum Üben, gibt keine Sterne.
+              Mit dem Schalter ${Icons.raw('tastenLicht')} leuchten die Tasten mit.</li>
+            <li><strong>Sterne sammeln:</strong> Wie Mitspielen, aber es zählt. Ab 95 % gibt es sechs Sterne.</li>
+            <li><strong>Größer:</strong> Nur die Tasten von A bis a¹, dafür breiter.</li>
+          </ul>
+        </div>
       </div>
       <div class="kp-leiste">
         <div class="klavier-groesse" role="group" aria-label="Hand">
@@ -139,7 +150,6 @@ const Klavierpruefung = {
       </div>
       <div class="kp-start">
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
-        <p class="kp-info hint" id="kp-info"></p>
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
         ${Vollbild.knopf()}
       </div>
@@ -160,11 +170,6 @@ const Klavierpruefung = {
     el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide';
     el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
     el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
-    el.querySelector('#kp-info').innerHTML = {
-      schritt: `<strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.`,
-      mit: `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Zum Üben – gibt keine Sterne. Wenn du willst, leuchten die Tasten mit.`,
-      sterne: `<strong>Sterne sammeln:</strong> Wie Mitspielen, aber es zählt. Ab 95 % gibt es sechs Sterne.`,
-    }[this.art];
     this.zuruecksetzen();
     this.besteZeigen();
   },
@@ -271,8 +276,7 @@ const Klavierpruefung = {
     }
  // Ende beim 2. Mal: Pfeil über dem ersten Ton von Takt 4, liegen lassen
     const xe = this.x(12);
-    s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 92}" class="kp-endtext">2. Mal: hier Ende, liegen lassen</text>` +
-      `<text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
+    s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
     s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
     return `<svg class="notenbild kp-system" viewBox="0 ${oben - 66} ${breite} ${this.UNTEN_Y - oben + 100}" role="img" aria-label="Noten">${s}</svg>`;
   },
@@ -342,6 +346,13 @@ const Klavierpruefung = {
       this.tastenZeichnen();
       this.zielSchluessel = null;
       if (this.lauf) this.zielZeigen();
+    });
+    // Erklärung hinter dem i: auf, zu, oder irgendwo anders hintippen
+    const i = el.querySelector('#kp-i'), hilfe = el.querySelector('#kp-hilfe');
+    const hilfeZeigen = an => { hilfe.hidden = !an; i.setAttribute('aria-expanded', String(an)); };
+    i.addEventListener('click', e => { e.stopPropagation(); hilfeZeigen(hilfe.hidden); });
+    el.querySelector('.kp-seite').addEventListener('pointerdown', e => {
+      if (!hilfe.hidden && !hilfe.contains(e.target) && e.target !== i) hilfeZeigen(false);
     });
     el.querySelector('#kp-los').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(); });
 

@@ -1297,7 +1297,6 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-seite { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .kp-seite button, .kp-seite a, .kp-seite label { touch-action: manipulation; }
 .kp-seite .kp-tasten, .kp-seite .kp-noten { touch-action: none; }
-.kp-info { margin: 0; flex: 1 1 300px; }
 .kp-noten { display: flex; flex-direction: column; align-items: center; }
 .kp-system { max-width: 1100px; width: 100%; max-height: 30vh; }
 .kp-seite .kp-tasten { height: clamp(140px, 27vh, 260px); }
@@ -1310,8 +1309,17 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-seite.vollbild .kp-leiste { margin: .4rem 0; }
 .kp-seite h2 { margin-bottom: .2rem; }
 .kp-kopf .hint { margin: 0; }
-.kp-endtext { text-anchor: middle; font-size: 12px; font-weight: 700; fill: currentColor; opacity: .7; }
-.kp-endpfeil.jetzt .kp-endtext, .kp-endpfeil.jetzt .kp-fermate { fill: var(--accent); opacity: 1; }
+.kp-kopf { position: relative; }
+.kp-i { width: 1.7rem; height: 1.7rem; min-height: 0; padding: 0; border-radius: 50%; font: italic 700 1rem/1 Georgia, serif;
+  display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--accent); color: var(--accent); background: transparent; }
+.kp-i[aria-expanded="true"] { background: var(--accent); color: #fff; }
+.kp-hilfe { position: absolute; z-index: 20; top: 100%; left: 0; max-width: min(34rem, 100%); padding: .8rem 1rem;
+  border-radius: var(--radius-sm); background: var(--card-solid); border: 1px solid var(--card-border); box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+  font-size: .9rem; }
+.kp-hilfe p { margin: 0 0 .5rem; }
+.kp-hilfe ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; }
+.kp-hilfe svg { width: 1.3em; height: 1.3em; vertical-align: -.25em; }
+.kp-endpfeil.jetzt .kp-fermate { fill: var(--accent); opacity: 1; }
 .kp-takt { font-size: 21px; }
 .kp-finger { font-size: 13px; font-weight: 800; text-anchor: middle; fill: var(--hand, currentColor); }
 .kp-fermate { font-size: 30px; text-anchor: middle; }
