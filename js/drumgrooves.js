@@ -1,4 +1,4 @@
-/* Drumgrooves und Groove + Fill (eigene Kategorien, nach Toms Stunde „Der Drumgroove“, Klasse 7).
+/* Drums: Drumgrooves und Groove + Fill (Kategorie „Drums“ mit zwei Unterkategorien, nach Toms Stunde „Der Drumgroove“, Klasse 7).
 
    1. Groove-Trainer (#/drumgrooves): die fünf Grooves aus der Stunde (Groove 1 = Note 5 …
       Groove 5 = Note 1) auf drei Pads oder am Drumset mitspielen. Jeder Groove wird
@@ -11,8 +11,9 @@
       Fill auf Snare und Toms, insgesamt 4×. Acht einfache Fills, vier in Vierteln, vier in
       Achteln. Aufbau: erst nur der Fill (den Groove spielt der Computer), dann beides.
       Sechs Pads (oben die Toms) oder das Drumset. Spiel „groove-fill“, Stufe 0–7 = Fill 1–8.
-   3. Spiele (SPIELE): „Wo steht welches Instrument?“ und „Welcher Groove?“ im Bereich
-      „Drumgrooves“, „Welcher Fill?“ im Bereich „Groove + Fill“.
+   3. Spiele (SPIELE, Bereich „Drums“, Feld unter = Unterkategorie): „Welcher Groove?“
+      (Drumgrooves) und „Welcher Fill?“ (Groove + Fill). Auf der Startseite stehen sie mit den
+      beiden Trainern unter der Kategorie „Drums“.
 
    Ein Takt hat acht Achtel-Positionen (0–7 = 1 + 2 + 3 + 4 +), zwei Takte 0–15. */
 const DG = {
@@ -536,52 +537,12 @@ const Drumgrooves = {
   },
 };
 
-/* ---------- Spiele in den Bereichen „Drumgrooves“ und „Groove + Fill“ ---------- */
+/* ---------- Spiele im Bereich „Drums“ (Unterkategorien „Drumgrooves“ und „Groove + Fill“) ---------- */
 SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
   {
-    id: 'drum-notation',
-    bereich: 'Drumgrooves',
-    titel: 'Wo steht welches Instrument?',
-    text: 'Schlagzeug-Noten lesen: Welches Instrument ist markiert, und auf welcher Zählzeit wird es gespielt?',
-    icon: 'drum',
-    farbe: '#fcd34d',
-    stufen: [
-      { name: 'Hi-Hat, Snare, Bassdrum', info: 'Die drei Instrumente im Groove', art: 'instrument', instr: ['hh', 's', 'b'] },
-      { name: 'Das ganze Drumset', info: 'Dazu Becken und Toms', art: 'instrument', instr: ['hh', 's', 'b', 'crash', 'ride', 't3', 't1'] },
-      { name: 'Zählzeiten', info: '1 + 2 + 3 + 4 + – wann wird gespielt?', art: 'zaehlzeit' },
-    ],
-    aufgabe(st) {
-      const g = zufall(DG.GROOVES.slice(1));
-      if (st.art === 'zaehlzeit') {
-        const noten = DG.schlaege(g);
-        // Meist Snare oder Bassdrum, manchmal die Hi-Hat
-        const ziel = zufall(Math.random() < 0.75 ? noten.filter(n => n.k !== 'hh') : noten);
-        const andere = mische([0, 1, 2, 3, 4, 5, 6, 7].filter(p => p !== ziel.p)).slice(0, 3);
-        const reihe = [ziel.p, ...andere].sort((a, b) => a - b);
-        return {
-          frage: `Auf welcher Zählzeit spielt die markierte ${DG.INSTR[ziel.k].name}?`,
-          bild: DG.svg(noten, { markiert: ziel, zaehlen: false, klasse: 'dg-quiz' }),
-          optionen: reihe.map(p => DG.zaehlName(p)),
-          richtig: reihe.indexOf(ziel.p),
-          loesung: `Das war die ${DG.INSTR[ziel.k].name} auf „${DG.zaehlName(ziel.p)}“.`,
-        };
-      }
-      const k = zufall(st.instr);
-      const p = zahl(0, 7);
-      const optionen = mische([k, ...mische(st.instr.filter(x => x !== k)).slice(0, Math.min(3, st.instr.length - 1))]);
-      return {
-        frage: 'Welches Instrument ist markiert?',
-        bild: DG.svg([{ k, p }], { markiert: { k, p }, zaehlen: false, klasse: 'dg-quiz' }),
-        optionen: optionen.map(x => DG.INSTR[x].name),
-        richtig: optionen.indexOf(k),
-        loesung: `Das war: ${DG.INSTR[k].name}${DG.INSTR[k].x ? ' – Becken stehen als Kreuz' : ''}.`,
-        nachher: () => Drums.spielen(k),
-      };
-    },
-  },
-  {
     id: 'groove-hoeren',
-    bereich: 'Drumgrooves',
+    bereich: 'Drums',
+    unter: 'Drumgrooves',
     titel: 'Welcher Groove?',
     text: 'Hör genau auf die Bassdrum: Welcher der fünf Grooves aus der Stunde läuft gerade?',
     icon: 'ear',
@@ -607,7 +568,8 @@ SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
   },
   {
     id: 'fill-hoeren',
-    bereich: 'Groove + Fill',
+    bereich: 'Drums',
+    unter: 'Groove + Fill',
     titel: 'Welcher Fill?',
     text: 'Ein Takt Groove, ein Takt Fill: Welcher Fill war es – auf Snare oder Toms, in Vierteln oder Achteln?',
     icon: 'ear',

@@ -53,17 +53,17 @@ Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM
 `BESTANDEN`, `VERSUCHE`, Endnote am Ende (gespeichert, s. o.). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
-Drumgrooves (`js/drumgrooves.js`, eigene Kategorie nach Toms Stunde „Der Drumgroove“, Klasse 7):
+Drums (`js/drumgrooves.js`, Kategorie „Drums“ mit Unterkategorien Drumgrooves und Groove + Fill, nach Toms Stunde „Der Drumgroove“, Klasse 7):
 Groove-Trainer `#/drumgrooves` mit den fünf Grooves der Stunde (Groove 1 = Note 5 … Groove 5 = Note 1;
 Hi-Hat Achtel, Snare 2 und 4, Bassdrum je Groove). Aufbau je Groove: Hi-Hat + Snare → Bassdrum + Snare → alles.
 Drei Pads (Reihenfolge umdrehbar: Hi-Hat · Bassdrum · Snare oder Snare · Bassdrum · Hi-Hat, Tasten A S D) oder das
 Drumset des Schlagzeugs (nur Hi-Hat, Snare, Bassdrum). „Mitspielen“ ohne Sterne, „Sterne sammeln“ = ganzer Groove,
-Spiel `drumgrooves`, Stufe 0–4. Dazu die Spiele `drum-notation` und `groove-hoeren` (Bereich „Drumgrooves“). Alle drei
+Spiel `drumgrooves`, Stufe 0–4. Dazu das Spiel `groove-hoeren` (Bereich „Drums“, `unter: 'Drumgrooves'`; Startseite: `App.drumsKarten`). Alle drei
 stehen im School-Tool in `MT_SPIELE`.
 Groove + Fill (`#/groovefill`, derselbe Trainer mit `modus: 'fill'`): 1 Takt Groove 2 + 1 Takt Fill (Snare, Toms),
 4×. Acht Fills (`DG.FILLS`, 1–4 Viertel, 5–8 Achtel). Aufbau: nur Fill (Computer spielt den Groove) → Groove + Fill.
 Sechs Pads (oben Toms Q W E, unten Hi-Hat · Snare · Bassdrum A S D – Snare immer in der Mitte). Spiel `groove-fill`
-(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Groove + Fill“). Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
+(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Drums“, `unter: 'Groove + Fill'`). Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
 
 Klavier-Prüfung (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal

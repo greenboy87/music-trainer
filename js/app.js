@@ -428,6 +428,41 @@ const App = {
   },
 
   /* ---------- Startseite ---------- */
+  spielKarte(s) {
+    return `
+            <a class="card spiel-karte" href="#/spiel/${s.id}" style="--farbe:${s.farbe}">
+              <span class="spiel-icon">${Icons.raw(s.icon)}</span>
+              <span class="spiel-titel">${s.titel}</span>
+              <span class="hint">${s.text}</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Fortschritt.sterneVon(s)} / ${s.stufen.length * Bewertung.MAX}</span>
+            </a>`;
+  },
+
+  /* Kategorie „Drums“: Unterkategorien mit je einem Trainer (eigene Seite) und den Spielen dazu */
+  drumsKarten() {
+    const unter = [
+      { name: 'Drumgrooves', info: 'Hi-Hat, Snare und Bassdrum – wie in der Stunde „Der Drumgroove“.', trainer: `
+            <a class="card spiel-karte" href="#/drumgrooves" style="--farbe:#fb923c">
+              <span class="spiel-icon">${Icons.raw('drum')}</span>
+              <span class="spiel-titel">Groove-Trainer</span>
+              <span class="hint">Die fünf Grooves auf den Pads oder am Drumset mitspielen – Schritt für Schritt aufgebaut.</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme()} / 30</span>
+            </a>` },
+      { name: 'Groove + Fill', info: 'Ein Takt Groove, ein Takt Fill – so endet ein Teil im Song.', trainer: `
+            <a class="card spiel-karte" href="#/groovefill" style="--farbe:#818cf8">
+              <span class="spiel-icon">${Icons.raw('drum')}</span>
+              <span class="spiel-titel">Groove + Fill</span>
+              <span class="hint">1 Takt Groove, 1 Takt Fill auf Snare und Toms – insgesamt 4×. Fills in Vierteln und Achteln.</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme('fill')} / 48</span>
+            </a>` },
+    ];
+    return unter.map(u => `
+        <h3 class="unter-titel">${u.name}<span class="bereich-info">${u.info}</span></h3>
+        <div class="spiele-raster">${u.trainer}
+          ${SPIELE.filter(s => s.bereich === 'Drums' && s.unter === u.name).map(s => this.spielKarte(s)).join('')}
+        </div>`).join('');
+  },
+
   zeigeStart() {
     // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
     const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill');
@@ -461,28 +496,8 @@ const App = {
       ${konto ? this.meineNote() : ''}
       ${bereiche.map(b => `
         <h2 class="bereich-titel">${b}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
-        <div class="spiele-raster">
-          ${b === 'Drumgrooves' ? `
-            <a class="card spiel-karte" href="#/drumgrooves" style="--farbe:#fb923c">
-              <span class="spiel-icon">${Icons.raw('drum')}</span>
-              <span class="spiel-titel">Groove-Trainer</span>
-              <span class="hint">Die fünf Grooves auf den Pads oder am Drumset mitspielen – Schritt für Schritt aufgebaut.</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme()} / 30</span>
-            </a>` : ''}
-          ${b === 'Groove + Fill' ? `
-            <a class="card spiel-karte" href="#/groovefill" style="--farbe:#818cf8">
-              <span class="spiel-icon">${Icons.raw('drum')}</span>
-              <span class="spiel-titel">Groove + Fill</span>
-              <span class="hint">1 Takt Groove, 1 Takt Fill auf Snare und Toms – insgesamt 4×. Fills in Vierteln und Achteln.</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme('fill')} / 48</span>
-            </a>` : ''}
-          ${SPIELE.filter(s => s.bereich === b).map(s => `
-            <a class="card spiel-karte" href="#/spiel/${s.id}" style="--farbe:${s.farbe}">
-              <span class="spiel-icon">${Icons.raw(s.icon)}</span>
-              <span class="spiel-titel">${s.titel}</span>
-              <span class="hint">${s.text}</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Fortschritt.sterneVon(s)} / ${s.stufen.length * Bewertung.MAX}</span>
-            </a>`).join('')}
+        ${b === 'Drums' ? this.drumsKarten() : `<div class="spiele-raster">
+          ${SPIELE.filter(s => s.bereich === b).map(s => this.spielKarte(s)).join('')}
           ${b === 'Rhythmus' ? `
             <a class="card spiel-karte" href="#/pruefung" style="--farbe:#5eead4">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
@@ -490,7 +505,7 @@ const App = {
               <span class="hint">Rhythmus-Zeilen auf den Pads (Klasse 5 und 6) und ein Intro auf dem Klavier.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme()} / 78</span>
             </a>` : ''}
-        </div>`).join('')}`;
+        </div>`}`).join('')}`;
     const feld = document.getElementById('name');
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });
     document.getElementById('btn-beamer-qr')?.addEventListener('click', () => this.beamerQr());
