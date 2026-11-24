@@ -1,18 +1,20 @@
-/* Drumgrooves (eigene Kategorie, nach Toms Stunde „Der Drumgroove“, Klasse 7).
+/* Drumgrooves und Groove + Fill (eigene Kategorien, nach Toms Stunde „Der Drumgroove“, Klasse 7).
 
    1. Groove-Trainer (#/drumgrooves): die fünf Grooves aus der Stunde (Groove 1 = Note 5 …
       Groove 5 = Note 1) auf drei Pads oder am Drumset mitspielen. Jeder Groove wird
       aufgebaut: erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles. Reihenfolge der
-      Pads umschaltbar (Hi-Hat · Bassdrum · Snare oder Snare · Bassdrum · Hi-Hat).
+      Pads umschaltbar (Hi-Hat · Snare · Bassdrum oder Bassdrum · Snare · Hi-Hat, die Snare immer in der Mitte).
       „Mitspielen“ übt (keine Sterne, Pads leuchten auf Wunsch), „Sterne sammeln“ wertet
       den ganzen Groove: Spiel „drumgrooves“, Stufe 0–4 = Groove 1–5, Sterne wie bei der
-      Rhythmus-Prüfung (ab 95 % sechs).
-   2. Zwei Spiele im Bereich „Drumgrooves“ (SPIELE):
-      – „Wo steht welches Instrument?“: Instrument zur Note, dann die Zählzeit.
-      – „Welcher Groove?“: Groove hören und das Notenbild bzw. die Bassdrum finden.
+      Rhythmus-Prüfung (ab 95 % sechs). Der Groove läuft nach dem Einzählen 4×.
+   2. Groove + Fill (#/groovefill): 1 Takt Groove (Groove 2: Bassdrum auf 1 und 3) + 1 Takt
+      Fill auf Snare und Toms, insgesamt 4×. Acht einfache Fills, vier in Vierteln, vier in
+      Achteln. Aufbau: erst nur der Fill (den Groove spielt der Computer), dann beides.
+      Sechs Pads (oben die Toms) oder das Drumset. Spiel „groove-fill“, Stufe 0–7 = Fill 1–8.
+   3. Spiele (SPIELE): „Wo steht welches Instrument?“ und „Welcher Groove?“ im Bereich
+      „Drumgrooves“, „Welcher Fill?“ im Bereich „Groove + Fill“.
 
-   Ein Groove ist ein Takt in Achteln (Position 0–7 = 1 + 2 + 3 + 4 +). Die Hi-Hat spielt
-   alle Achtel, die Snare den Backbeat (2 und 4), die Bassdrum macht die Grooves schwerer. */
+   Ein Takt hat acht Achtel-Positionen (0–7 = 1 + 2 + 3 + 4 +), zwei Takte 0–15. */
 const DG = {
   GROOVES: [
     { nr: 1, note: 5, bass: [] },
@@ -24,6 +26,17 @@ const DG = {
   SNARE: [2, 6],
   HH: [0, 1, 2, 3, 4, 5, 6, 7],
   ZAEHL: ['1', '+', '2', '+', '3', '+', '4', '+'],
+  /* Fills: je Achtel-Position ein Instrument (Viertel: nur auf 1 2 3 4) */
+  FILLS: [
+    { nr: 1, art: 'Viertel', name: 'Snare', v: true, schlaege: ['s', 's', 's', 's'] },
+    { nr: 2, art: 'Viertel', name: 'Snare – Tom 1', v: true, schlaege: ['s', 's', 't1', 't1'] },
+    { nr: 3, art: 'Viertel', name: 'Snare – Toms abwärts', v: true, schlaege: ['s', 't1', 't2', 't3'] },
+    { nr: 4, art: 'Viertel', name: 'Tom 1 – Floor-Tom', v: true, schlaege: ['t1', 't1', 't3', 't3'] },
+    { nr: 5, art: 'Achtel', name: 'Snare', schlaege: ['s', 's', 's', 's', 's', 's', 's', 's'] },
+    { nr: 6, art: 'Achtel', name: 'Snare – Tom 1 – Floor-Tom', schlaege: ['s', 's', 's', 's', 't1', 't1', 't3', 't3'] },
+    { nr: 7, art: 'Achtel', name: 'Snare – Toms abwärts', schlaege: ['s', 's', 't1', 't1', 't2', 't2', 't3', 't3'] },
+    { nr: 8, art: 'Achtel', name: 'Toms abwärts', schlaege: ['t1', 't1', 't2', 't2', 't3', 't3', 't3', 't3'] },
+  ],
   /* Instrumente: Name, Bodypercussion aus der Stunde, Farbfamilie, y im Notensystem (oberste Linie 20,
      Linienabstand 10), x = Kreuz statt Notenkopf */
   INSTR: {
@@ -32,7 +45,8 @@ const DG = {
     b: { name: 'Bassdrum', koerper: 'Stampfen · rechter Fuß', fam: 'bass', y: 55 },
     crash: { name: 'Crash-Becken', fam: 'becken', y: 10, x: true, hilfslinie: true },
     ride: { name: 'Ride-Becken', fam: 'becken', y: 20, x: true },
-    t1: { name: 'Tom', fam: 'tom', y: 25 },
+    t1: { name: 'Tom 1', fam: 'tom', y: 25 },
+    t2: { name: 'Tom 2', fam: 'tom', y: 30 },
     t3: { name: 'Floor-Tom', fam: 'tom', y: 45 },
   },
   /* Die Schläge eines Grooves: [{ k, p }] */
@@ -43,30 +57,47 @@ const DG = {
     if (stimmen.includes('b')) g.bass.forEach(p => l.push({ k: 'b', p }));
     return l;
   },
-  bassText(g) { return g.bass.map(p => this.ZAEHL[p] === '+' ? `${this.ZAEHL[p - 1]}+` : this.ZAEHL[p]).join(' · '); },
+  /* Die Schläge eines Fills, ab Position ab */
+  fillSchlaege(f, ab = 0) { return f.schlaege.map((k, i) => ({ k, p: ab + (f.v ? i * 2 : i), v: !!f.v })); },
+  zaehlName(p) { const z = this.ZAEHL[p % 8]; return z === '+' ? `${this.ZAEHL[(p % 8) - 1]}+` : z; },
+  bassText(g) { return g.bass.map(p => this.zaehlName(p)).join(' · '); },
 
-  /* Ein Takt Schlagzeug-Notation. noten: [{ k, p }]; aus: Instrumente blass; markiert: { k, p }
-     hervorgehoben; zaehlen: Zählzeiten darüber; klein: fürs Quiz */
-  svg(noten, { aus = [], markiert = null, zaehlen = true, cursor = false, klasse = '' } = {}) {
-    const B = 52, X0 = 58, RAND = 22;
-    const breite = X0 + RAND + 8 * B;
-    const x = p => X0 + RAND + p * B;
+  /* Schlagzeug-Notation, ein oder zwei Takte. noten: [{ k, p, v }] (v = Viertel, ohne Balken);
+     aus: Instrumente blass; ausAb/ausBis: Positionen blass; markiert: { k, p }; zaehlen: Zählzeiten */
+  B: 52, X0: 58, RAND: 22, LUECKE: 34,
+  x(p) { return this.X0 + this.RAND + p * this.B + Math.floor(p / 8) * (this.LUECKE + this.RAND); },
+  svg(noten, { takte = 1, aus = [], ausTakt = null, markiert = null, zaehlen = true, cursor = false, klasse = '' } = {}) {
+    const x = p => this.x(p);
+    const breite = x(takte * 8 - 1) + this.B + 4;
     let s = '';
     for (let l = 0; l < 5; l++) s += `<line x1="4" x2="${breite - 6}" y1="${20 + l * 10}" y2="${20 + l * 10}" class="nl"/>`;
     s += '<rect x="10" y="30" width="3.4" height="20" class="nb"/><rect x="17" y="30" width="3.4" height="20" class="nb"/>';
     s += '<text x="40" y="38" class="nt dg-takt">4</text><text x="40" y="58" class="nt dg-takt">4</text>';
+    for (let t = 1; t < takte; t++) { const xs = x(t * 8) - this.RAND - this.LUECKE / 2; s += `<line x1="${xs}" x2="${xs}" y1="20" y2="60" class="nh"/>`; }
     s += `<line x1="${breite - 13}" x2="${breite - 13}" y1="20" y2="60" class="nh"/><rect x="${breite - 10}" y="20" width="4" height="40" class="nb"/>`;
-    if (zaehlen) this.ZAEHL.forEach((z, p) => { s += `<text x="${x(p)}" y="-22" class="dg-zahl${z === '+' ? ' und' : ''}">${z}</text>`; });
+    if (zaehlen) for (let p = 0; p < takte * 8; p++) { const z = this.ZAEHL[p % 8]; s += `<text x="${x(p)}" y="-22" class="dg-zahl${z === '+' ? ' und' : ''}">${z}</text>`; }
     const positionen = [...new Set(noten.map(n => n.p))].sort((a, b) => a - b);
     const BALKEN = -10;
     positionen.forEach(p => {
       const hier = noten.filter(n => n.p === p);
       const tief = Math.max(...hier.map(n => this.INSTR[n.k].y));
-      const xs = x(p) + 5.6;
-      s += `<line x1="${xs}" x2="${xs}" y1="${tief - 1}" y2="${BALKEN}" class="nh"/>`;
+      const xs = x(p) + 5.4;
+      const blass = ausTakt !== null && Math.floor(p / 8) === ausTakt ? ' dg-aus' : '';
+      const oben = hier.every(n => n.v) ? Math.min(...hier.map(n => this.INSTR[n.k].y)) - 32 : BALKEN;
+      // Hals an den Kreuzen (Becken) unterbrechen: er endet an ihren Spitzen und läuft nicht hindurch
+      const kreuze = hier.filter(n => this.INSTR[n.k].x).map(n => this.INSTR[n.k].y).sort((a, b) => a - b);
+      let von = tief - 1;
+      const stueck = (y1, y2) => { if (y1 - y2 > 0.5) s += `<line x1="${xs}" x2="${xs}" y1="${y1}" y2="${y2}" class="nh${blass}"/>`; };
+      for (const ky of [...kreuze].reverse()) {
+        if (ky >= von) { von = Math.min(von, ky - 5); continue; }   // Kreuz ist selbst die tiefste Note
+        stueck(von, ky + 5);
+        von = ky - 5;
+      }
+      if (!hier.some(n => !this.INSTR[n.k].x)) von = Math.min(von, kreuze[kreuze.length - 1] - 5);
+      stueck(von, oben);
       hier.forEach(n => {
         const i = this.INSTR[n.k];
-        const kl = `dg-n${aus.includes(n.k) ? ' dg-aus' : ''}${markiert && markiert.k === n.k && markiert.p === p ? ' dg-markiert' : ''}`;
+        const kl = `dg-n${aus.includes(n.k) || blass ? ' dg-aus' : ''}${markiert && markiert.k === n.k && markiert.p === p ? ' dg-markiert' : ''}`;
         const kopf = i.x
           ? `<path d="M${x(p) - 5} ${i.y - 5} L${x(p) + 5} ${i.y + 5} M${x(p) - 5} ${i.y + 5} L${x(p) + 5} ${i.y - 5}" class="dg-kreuz"/>`
           : `<ellipse cx="${x(p)}" cy="${i.y}" rx="6.4" ry="4.6" transform="rotate(-20 ${x(p)} ${i.y})" class="nk"/>`;
@@ -74,92 +105,139 @@ const DG = {
         s += `<g class="${kl}" data-k="${n.k}" data-p="${p}">${linie}${kopf}</g>`;
       });
     });
-    // Balken je halber Takt (vier Achtel), einzelne Achtel bekommen ein Fähnchen
-    [[0, 3], [4, 7]].forEach(([a, e]) => {
-      const in_ = positionen.filter(p => p >= a && p <= e);
+    // Balken je halber Takt (vier Achtel), einzelne Achtel bekommen ein Fähnchen; Viertel nichts
+    for (let a = 0; a < takte * 8; a += 4) {
+      const in_ = positionen.filter(p => p >= a && p < a + 4 && !noten.filter(n => n.p === p).every(n => n.v));
+      const blass = ausTakt !== null && Math.floor(a / 8) === ausTakt ? ' dg-aus' : '';
       if (in_.length >= 2) {
         const x1 = x(in_[0]) + 4.4, x2 = x(in_[in_.length - 1]) + 6.8;
-        s += `<rect x="${x1}" y="${BALKEN}" width="${x2 - x1}" height="5" class="nb"/>`;
+        s += `<rect x="${x1}" y="${BALKEN}" width="${x2 - x1}" height="5" class="nb${blass}"/>`;
       } else if (in_.length === 1) {
         const xs = x(in_[0]) + 5.6;
-        s += `<path d="M${xs} ${BALKEN} q 2 9 9 13 q -6 -3 -9 -5 z" class="nb"/>`;
+        s += `<path d="M${xs} ${BALKEN} q 2 9 9 13 q -6 -3 -9 -5 z" class="nb${blass}"/>`;
       }
-    });
+    }
     if (cursor) s += `<rect class="kp-cursor" x="0" y="-36" width="3" height="104" rx="1.5" hidden/>`;
     const oben = zaehlen ? 42 : 24;
     return `<svg class="notenbild dg-system ${klasse}" viewBox="0 ${-oben} ${breite} ${70 + oben}" role="img" aria-label="Schlagzeug-Noten">${s}</svg>`;
   },
-  xVon(p) { return 58 + 22 + p * 52; },
+
+  /* Ein Groove oder Fill hören: Einzählen, dann zwei Durchgänge der Schläge (Länge takte) */
+  vorspielen(noten, takte, tempo) {
+    const s = 60 / tempo;
+    const start = Ton.audio().currentTime + 0.1;
+    for (let b = 0; b < 4; b++) Ton.klick(0.1 + b * s, b === 0);
+    for (let d = 0; d < 2; d++) noten.forEach(n => Drums.spielen(n.k, start + (4 + d * takte * 4 + n.p / 2) * s, n.k === 'hh' ? 0.6 : 1));
+    return 0.1 + (4 + 2 * takte * 4) * s + 0.3;
+  },
 };
 
 const Drumgrooves = {
-  SPIEL: 'drumgrooves',
+  /* Zwei Seiten mit demselben Trainer */
+  MODI: {
+    groove: { spiel: 'drumgrooves', titel: 'Drumgrooves', takte: 1, teile: ['hs', 'bs', 'alle'] },
+    fill: { spiel: 'groove-fill', titel: 'Groove + Fill', takte: 2, teile: ['fill', 'beide'] },
+  },
   TEILE: {
     hs: { name: 'Hi-Hat + Snare', stimmen: ['hh', 's'] },
     bs: { name: 'Bassdrum + Snare', stimmen: ['b', 's'] },
     alle: { name: 'Alles', stimmen: ['hh', 's', 'b'] },
+    fill: { name: 'Nur der Fill' },
+    beide: { name: 'Groove + Fill' },
   },
-  TAKTE: 4,                   // so oft läuft der Groove nach dem Einzählen
+  FILL_GROOVE: 1,             // Groove 2 (Bassdrum auf 1 und 3) unter den Fills
+  DURCHGAENGE: 4,             // so oft läuft alles nach dem Einzählen
   FENSTER: 0.13,              // Sekunden daneben zählen noch
   PAD_TASTEN: ['a', 's', 'd'],
-  REIHEN: { hbs: ['hh', 'b', 's'], sbh: ['s', 'b', 'hh'] },
-  g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: true, instrument: 'pads', reihe: 'hbs',
+  TOM_TASTEN: ['q', 'w', 'e'],
+  REIHEN: { hsb: ['hh', 's', 'b'], bsh: ['b', 's', 'hh'] },   // Snare immer in der Mitte
+  modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: true, instrument: 'pads', reihe: 'hsb',
 
-  lies(s) { try { return localStorage.getItem(`musiktrainer-dg-${s}`); } catch { return null; } },
-  merken(s, w) { try { localStorage.setItem(`musiktrainer-dg-${s}`, String(w)); } catch { /* privat */ } },
-
-  groove() { return DG.GROOVES[this.g]; },
+  m() { return this.MODI[this.modus]; },
+  lies(s, modus = this.modus) { try { return localStorage.getItem(`musiktrainer-dg-${modus === 'fill' ? 'fill-' : ''}${s}`); } catch { return null; } },
+  merken(s, w) { try { localStorage.setItem(`musiktrainer-dg-${this.modus === 'fill' ? 'fill-' : ''}${s}`, String(w)); } catch { /* privat */ } },
+  auswahl() { return this.modus === 'fill' ? DG.FILLS : DG.GROOVES; },
+  groove() { return this.modus === 'fill' ? DG.GROOVES[this.FILL_GROOVE] : DG.GROOVES[this.g]; },
   /* Groove 1 hat keine Bassdrum: dort gibt es nur einen Teil */
-  teile() { return this.groove().bass.length ? ['hs', 'bs', 'alle'] : ['hs']; },
-  stimmen() { return this.art === 'sterne' ? this.TEILE.alle.stimmen : this.TEILE[this.teil].stimmen; },
-  sterneSumme() { return DG.GROOVES.reduce((s, _, i) => s + Fortschritt.bester(this.SPIEL, i).sterne, 0); },
+  teile() { return this.modus === 'groove' && !this.groove().bass.length ? ['hs'] : this.m().teile; },
+  teilJetzt() { return this.art === 'sterne' ? this.teile()[this.teile().length - 1] : this.teil; },
+  sterneSumme(modus = 'groove') {
+    const m = this.MODI[modus];
+    return (modus === 'fill' ? DG.FILLS : DG.GROOVES).reduce((s, _, i) => s + Fortschritt.bester(m.spiel, i).sterne, 0);
+  },
 
-  zeigen(el) {
+  /* Was in einem Durchgang erklingt: [{ k, p, v, auto }] – auto spielt der Computer */
+  durchgang() {
+    const teil = this.teilJetzt();
+    if (this.modus === 'groove') return DG.schlaege(this.groove(), this.TEILE[teil].stimmen);
+    const groove = DG.schlaege(this.groove()).map(n => ({ ...n, auto: teil === 'fill' }));
+    return [...groove, ...DG.fillSchlaege(DG.FILLS[this.g], 8)];
+  },
+  /* Instrumente, die man selbst spielt bzw. die überhaupt vorkommen */
+  meineInstrumente() { return [...new Set(this.durchgang().filter(n => !n.auto).map(n => n.k))]; },
+  instrumente() { return this.modus === 'fill' ? ['hh', 's', 'b', 't1', 't2', 't3'] : ['hh', 's', 'b']; },
+
+  zeigen(el, modus = 'groove') {
     this.el = el;
     this.stopp();
+    this.modus = modus;
     const g = Number(this.lies('g'));
-    if (g >= 0 && g < 5) this.g = g;
-    if (this.TEILE[this.lies('teil')]) this.teil = this.lies('teil');
-    if (['mit', 'sterne'].includes(this.lies('art'))) this.art = this.lies('art');
-    if (['pads', 'set'].includes(this.lies('instrument'))) this.instrument = this.lies('instrument');
-    if (this.REIHEN[this.lies('reihe')]) this.reihe = this.lies('reihe');
-    const b = Number(this.lies('bpm'));
+    this.g = g >= 0 && g < this.auswahl().length ? g : 0;
+    this.teil = this.TEILE[this.lies('teil')] && this.m().teile.includes(this.lies('teil')) ? this.lies('teil') : this.m().teile[0];
+    this.art = ['mit', 'sterne'].includes(this.lies('art')) ? this.lies('art') : 'mit';
+    // Instrument, Reihenfolge, Tempo und Schalter gelten für beide Seiten
+    const gemein = s => this.lies(s, 'groove');
+    if (['pads', 'set'].includes(gemein('instrument'))) this.instrument = gemein('instrument');
+    if (this.REIHEN[gemein('reihe')]) this.reihe = gemein('reihe');
+    const b = Number(gemein('bpm'));
     if (b >= 50 && b <= 130) this.bpm = b;
-    this.metro = this.lies('metro') !== 'aus';
-    this.leuchten = this.lies('leuchten') === 'an';
-    this.koerper = this.lies('koerper') !== 'aus';
-    if (!this.teile().includes(this.teil)) this.teil = 'hs';
+    this.metro = gemein('metro') !== 'aus';
+    this.leuchten = gemein('leuchten') === 'an';
+    this.koerper = gemein('koerper') !== 'aus';
+    if (!this.teile().includes(this.teil)) this.teil = this.teile()[0];
     App.beimAufraeumen(() => { this.stopp(); Klavierpruefung.zoomFrei(); window.removeEventListener('keydown', this.tasteFn); });
     Klavierpruefung.zoomSperren();
     el.innerHTML = '<section class="card kp-seite dg-seite"></section>';
     this.aufbauen();
   },
+  merkenGemein(s, w) { try { localStorage.setItem(`musiktrainer-dg-${s}`, String(w)); } catch { /* privat */ } },
 
   aufbauen() {
     const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
-    this.el.querySelector('.dg-seite').innerHTML = `
-      <div class="kp-kopf">
-        <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>Drumgrooves
-          <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
-          <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
-        <div class="kp-hilfe" id="kp-hilfe" hidden>
+    const fill = this.modus === 'fill';
+    const hilfe = fill ? `
+          <p>Ein Takt <strong>Groove</strong> (Groove 2: Hi-Hat in Achteln, Snare auf 2 und 4, Bassdrum auf 1 und 3), dann ein Takt
+            <strong>Fill</strong> auf Snare und Toms – insgesamt ${this.DURCHGAENGE}×. Fill 1–4 in Vierteln, Fill 5–8 in Achteln.</p>
+          <ul>
+            <li><strong>Aufbauen:</strong> erst nur der Fill (den Groove spielt der Computer), dann Groove + Fill.</li>
+            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt. Zum Üben, gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
+            <li><strong>Sterne sammeln:</strong> Groove + Fill, gewertet. Ab 95 % gibt es sechs Sterne.</li>
+            <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ⇄ umdrehen. Oder das Drumset.</li>
+          </ul>` : `
           <p>Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel,
             die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
-            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Groove ${this.TAKTE}× durch. Zum Üben, gibt keine Sterne.
+            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Groove ${this.DURCHGAENGE}× durch. Zum Üben, gibt keine Sterne.
               Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> der ganze Groove, gewertet. Ab 95 % gibt es sechs Sterne.</li>
-            <li><strong>Anhören:</strong> So klingt der Groove.</li>
             <li><strong>Pads</strong> oder <strong>Drumset</strong> – mit ⇄ drehst du die Pads um. Tasten am Computer: A, S, D.</li>
             <li><strong>Bodypercussion:</strong> Hi-Hat = Brust (rechte Hand), Snare = Oberschenkel (linke Hand), Bassdrum = stampfen (rechter Fuß).</li>
-          </ul>
+          </ul>`;
+    const wahl = fill
+      ? DG.FILLS.map((f, i) => knopf('g', i, `Fill ${f.nr}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g)).join('')
+      : DG.GROOVES.map((gr, i) => knopf('g', i, `Groove ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('');
+    this.el.querySelector('.dg-seite').innerHTML = `
+      <div class="kp-kopf">
+        <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>${this.m().titel}
+          <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
+          <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
+        <div class="kp-hilfe" id="kp-hilfe" hidden>${hilfe}
+          <p class="hint">Anhören: So klingt es.</p>
         </div>
       </div>
       <div class="kp-leiste">
-        <div class="klavier-groesse dg-grooves" role="group" aria-label="Groove">
-          ${DG.GROOVES.map((gr, i) => knopf('g', i, `Groove ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('')}
-        </div>
+        <div class="klavier-groesse dg-grooves" role="group" aria-label="${fill ? 'Fill' : 'Groove'}">${wahl}</div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
           ${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
         </div>
@@ -178,7 +256,7 @@ const Drumgrooves = {
       <div class="kp-tasten-kopf"><span class="kp-schalter">
           <label class="schalter kp-licht" id="kp-leuchten-feld" title="Pads leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Pads leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label>
           <label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label>
-          <label class="schalter" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>
+          ${fill ? '' : `<label class="schalter" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>`}
         </span>
         <span class="dg-instrument">
           <button type="button" class="small" id="dg-drehen" title="Pads umdrehen">⇄<span>Umdrehen</span></button>
@@ -193,7 +271,7 @@ const Drumgrooves = {
     this.allesZeigen();
   },
 
-  /* Groove, Teil, Übeart oder Instrument geändert: Leiste, Noten und Spielfeld neu */
+  /* Auswahl, Teil, Übeart oder Instrument geändert: Leiste, Noten und Spielfeld neu */
   allesZeigen() {
     const el = this.el;
     this.stopp();
@@ -208,9 +286,13 @@ const Drumgrooves = {
     }));
     el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
     el.querySelector('#dg-drehen').hidden = this.instrument !== 'pads';
-    const alle = DG.schlaege(this.groove());
-    const aus = ['hh', 's', 'b'].filter(k => !this.stimmen().includes(k));
-    el.querySelector('.dg-noten').innerHTML = DG.svg(alle, { aus, cursor: true, klasse: 'dg-gross' }) +
+    const takte = this.m().takte;
+    const alle = this.modus === 'fill'
+      ? [...DG.schlaege(this.groove()), ...DG.fillSchlaege(DG.FILLS[this.g], 8)]
+      : DG.schlaege(this.groove());
+    const aus = this.modus === 'groove' ? ['hh', 's', 'b'].filter(k => !this.meineInstrumente().includes(k)) : [];
+    const ausTakt = this.modus === 'fill' && this.teilJetzt() === 'fill' ? 0 : null;
+    el.querySelector('.dg-noten').innerHTML = DG.svg(alle, { takte, aus, ausTakt, cursor: true, klasse: 'dg-gross' }) +
       '<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div><span class="dg-takt-zaehler" hidden></span>';
     this.spielfeld();
     this.besteZeigen();
@@ -219,25 +301,31 @@ const Drumgrooves = {
 
   besteZeigen() {
     this.el.querySelectorAll('button[data-g]').forEach(b => {
-      const st = Fortschritt.bester(this.SPIEL, Number(b.dataset.g)).sterne;
+      const st = Fortschritt.bester(this.m().spiel, Number(b.dataset.g)).sterne;
       b.querySelector('.kp-best').innerHTML = st ? ` ${Icons.raw('star')}${st}` : '';
     });
   },
 
   spielfeld() {
     const feld = this.el.querySelector('.dg-spielfeld');
-    const stimmen = this.stimmen();
+    const meine = this.meineInstrumente();
     if (this.instrument === 'pads') {
-      feld.innerHTML = `<div class="sz-pads dg-pads${this.koerper ? '' : ' ohne-koerper'}">${this.REIHEN[this.reihe].map((k, i) => {
+      const pad = (k, taste) => {
         const ins = DG.INSTR[k];
-        return `<button type="button" class="sz-pad dg-pad" data-k="${k}" data-fam="${ins.fam}"${stimmen.includes(k) ? '' : ' data-aus=""'} aria-label="${ins.name}">
-          <span class="sz-pad-name">${ins.name}<small class="dg-koerper">${ins.koerper}</small></span>
-          <span class="sz-taste">${this.PAD_TASTEN[i].toUpperCase()}</span></button>`;
-      }).join('')}</div>`;
+        return `<button type="button" class="sz-pad dg-pad" data-k="${k}" data-fam="${ins.fam}"${meine.includes(k) ? '' : ' data-aus=""'} aria-label="${ins.name}">
+          <span class="sz-pad-name">${ins.name}${ins.koerper ? `<small class="dg-koerper">${ins.koerper}</small>` : ''}</span>
+          <span class="sz-taste">${taste.toUpperCase()}</span></button>`;
+      };
+      const unten = this.REIHEN[this.reihe];
+      // Toms oben, von hoch nach tief – umgedreht auch die Toms
+      const toms = this.reihe === 'hsb' ? ['t1', 't2', 't3'] : ['t3', 't2', 't1'];
+      const sechs = this.modus === 'fill';
+      feld.innerHTML = `<div class="sz-pads dg-pads${sechs ? ' sechs' : ''}${this.koerper && !sechs ? '' : ' ohne-koerper'}">
+        ${sechs ? toms.map((k, i) => pad(k, this.TOM_TASTEN[i])).join('') : ''}${unten.map((k, i) => pad(k, this.PAD_TASTEN[i])).join('')}</div>`;
     } else {
-      // Das Drumset des Schlagzeugs, nur Hi-Hat, Snare und Bassdrum spielbar
+      // Das Drumset des Schlagzeugs, nur die Teile, die hier vorkommen
       const set = Object.create(Schlagzeugseite);
-      set.setAn = Object.fromEntries(Schlagzeugseite.SET.map(({ k }) => [k, stimmen.includes(k)]));
+      set.setAn = Object.fromEntries(Schlagzeugseite.SET.map(({ k }) => [k, meine.includes(k)]));
       set.hhOffen = false;
       feld.innerHTML = `<div class="sz-set-rahmen dg-set">${set.setSvg()}</div>`;
     }
@@ -245,40 +333,44 @@ const Drumgrooves = {
       const p = e.target.closest('.dg-pad, .sz-teil');
       return p && !p.hasAttribute('data-aus') && feld.contains(p) ? p : null;
     };
-    feld.addEventListener('pointerdown', e => {
+    feld.onpointerdown = e => {
       const p = ziel(e);
       if (!p) return;
       e.preventDefault();
       this.schlag(p.dataset.k);
-    });
-    feld.addEventListener('pointerup', () => Ton.audio());
-    feld.addEventListener('contextmenu', e => e.preventDefault());
+    };
+    feld.onpointerup = () => Ton.audio();
+    feld.oncontextmenu = e => e.preventDefault();
   },
   padEl(k) { return this.el.querySelector(`.dg-spielfeld [data-k="${k}"]`); },
+  blitz(k) {
+    const p = this.padEl(k);
+    if (p) { p.classList.remove('schlag'); void p.getBoundingClientRect(); p.classList.add('schlag'); }
+  },
 
   bedienen() {
     const el = this.el;
     el.querySelectorAll('button[data-g]').forEach(b => b.addEventListener('click', () => {
       this.g = Number(b.dataset.g); this.merken('g', this.g);
-      if (!this.teile().includes(this.teil)) this.teil = 'hs';
+      if (!this.teile().includes(this.teil)) this.teil = this.teile()[0];
       this.allesZeigen();
     }));
     el.querySelectorAll('button[data-art]').forEach(b => b.addEventListener('click', () => {
       this.art = b.dataset.art; this.merken('art', this.art); this.allesZeigen();
     }));
     el.querySelectorAll('button[data-instrument]').forEach(b => b.addEventListener('click', () => {
-      this.instrument = b.dataset.instrument; this.merken('instrument', this.instrument); this.allesZeigen();
+      this.instrument = b.dataset.instrument; this.merkenGemein('instrument', this.instrument); this.allesZeigen();
     }));
     el.querySelector('#dg-drehen').addEventListener('click', () => {
-      this.reihe = this.reihe === 'hbs' ? 'sbh' : 'hbs'; this.merken('reihe', this.reihe); this.stopp(); this.spielfeld();
+      this.reihe = this.reihe === 'hsb' ? 'bsh' : 'hsb'; this.merkenGemein('reihe', this.reihe); this.stopp(); this.spielfeld();
     });
     el.querySelectorAll('[data-bpm]').forEach(b => b.addEventListener('click', () => {
       this.bpm = Math.min(130, Math.max(50, this.bpm + Number(b.dataset.bpm)));
       el.querySelector('#kp-bpm-text').textContent = this.bpm;
-      this.merken('bpm', this.bpm);
+      this.merkenGemein('bpm', this.bpm);
     }));
-    const schalter = (id, feld) => el.querySelector(id).addEventListener('change', e => {
-      this[feld] = e.target.checked; this.merken(feld, this[feld] ? 'an' : 'aus');
+    const schalter = (id, feld) => el.querySelector(id)?.addEventListener('change', e => {
+      this[feld] = e.target.checked; this.merkenGemein(feld, this[feld] ? 'an' : 'aus');
       if (feld === 'koerper') el.querySelector('.dg-pads')?.classList.toggle('ohne-koerper', !this.koerper);
     });
     schalter('#kp-leuchten', 'leuchten'); schalter('#kp-metro', 'metro'); schalter('#dg-koerper', 'koerper');
@@ -290,14 +382,15 @@ const Drumgrooves = {
     el.querySelector('.dg-seite').addEventListener('pointerdown', e => {
       if (!hilfe.hidden && !hilfe.contains(e.target) && e.target !== i) hilfeZeigen(false);
     });
-    // Computer: A S D wie die Pads von links nach rechts
+    // Computer: A S D wie die unteren Pads, Q W E die Toms – jeweils von links nach rechts
     window.removeEventListener('keydown', this.tasteFn);
     this.tasteFn = e => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.target.closest?.('input, textarea, select')) return;
-      const i = this.PAD_TASTEN.indexOf(e.key.toLowerCase());
-      if (i < 0) return;
-      const k = this.REIHEN[this.reihe][i];
-      if (!this.stimmen().includes(k)) return;
+      const t = e.key.toLowerCase();
+      const toms = this.reihe === 'hsb' ? ['t1', 't2', 't3'] : ['t3', 't2', 't1'];
+      const k = this.PAD_TASTEN.includes(t) ? this.REIHEN[this.reihe][this.PAD_TASTEN.indexOf(t)]
+        : this.modus === 'fill' && this.TOM_TASTEN.includes(t) ? toms[this.TOM_TASTEN.indexOf(t)] : null;
+      if (!k || !this.meineInstrumente().includes(k)) return;
       e.preventDefault();
       this.schlag(k);
     };
@@ -307,18 +400,21 @@ const Drumgrooves = {
   /* ---------- Spielen ---------- */
   uhr() { return performance.now() / 1000; },
   spb() { return 60 / this.bpm; },
-  ende() { return this.TAKTE * 4; },
 
   schlag(k) {
     Drums.spielen(k);
-    const p = this.padEl(k);
-    if (p) { p.classList.remove('schlag'); void p.getBoundingClientRect(); p.classList.add('schlag'); }
+    this.blitz(k);
     const l = this.lauf;
     if (!l || l.hoeren) return;
     const t = l.t + (this.uhr() - l.zuletzt) / this.spb();
     if (t < -0.5) return;
     const kand = l.erwartet.filter(e => e.k === k && !e.ok && !e.verpasst && Math.abs(e.t - t) * this.spb() <= this.FENSTER);
-    if (!kand.length) { l.falsch++; this.markieren({ k, p: Math.round((((t % 4) + 4) % 4) * 2) % 8 }, 'dg-falsch'); return; }
+    if (!kand.length) {
+      l.falsch++;
+      const p = Math.round((((t % l.laenge) + l.laenge) % l.laenge) * 2) % (l.laenge * 2);
+      this.markieren({ k, p }, 'dg-falsch');
+      return;
+    }
     const e = kand.sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0];
     e.ok = true;
     this.markieren(e, 'dg-ok');
@@ -329,18 +425,18 @@ const Drumgrooves = {
     g.classList.remove('dg-ok', 'dg-falsch'); g.classList.add(klasse);
   },
 
-  /* hoeren: der Groove spielt sich selbst vor (eingezählt, zwei Takte), sonst spielt man mit */
+  /* hoeren: alles spielt sich selbst vor (eingezählt, zwei Durchgänge), sonst spielt man mit.
+     Ein Durchgang ist ein Takt (Groove) bzw. zwei Takte (Groove + Fill), die Zeit t in Schlägen. */
   starten(hoeren) {
     this.stopp();
     this.el.querySelector('#kp-ergebnis').textContent = '';
-    const stimmen = hoeren ? this.TEILE.alle.stimmen.filter(k => this.stimmen().includes(k)) : this.stimmen();
-    const takte = hoeren ? 2 : this.TAKTE;
-    const noten = DG.schlaege(this.groove(), stimmen);
-    const erwartet = [];
-    for (let t = 0; t < takte; t++) noten.forEach(n => erwartet.push({ ...n, t: t * 4 + n.p / 2, ok: false }));
-    this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, takte, hoeren, erwartet, falsch: 0, takt: -1 };
-    const knopf = this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los');
-    knopf.innerHTML = '■ Stopp';
+    const laenge = this.m().takte * 4;
+    const durchgaenge = hoeren ? 2 : this.DURCHGAENGE;
+    const noten = this.durchgang();
+    const erwartet = [], auto = [];
+    for (let d = 0; d < durchgaenge; d++) noten.forEach(n => (hoeren || n.auto ? auto : erwartet).push({ ...n, t: d * laenge + n.p / 2, ok: false }));
+    this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, laenge, durchgaenge, hoeren, erwartet, auto, falsch: 0, d: -1 };
+    this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los').innerHTML = '■ Stopp';
     const schritt = () => {
       if (!this.lauf) return;
       this.weiter();
@@ -354,7 +450,7 @@ const Drumgrooves = {
     const jetzt = this.uhr();
     const t = l.t + (jetzt - l.zuletzt) / this.spb();
     l.zuletzt = jetzt;
-    const ende = l.takte * 4;
+    const ende = l.durchgaenge * l.laenge;
     // Schläge: Metronom, großer Einzähler
     const schlag = Math.floor(t + 1e-6);
     if (schlag > l.schlag) {
@@ -368,28 +464,30 @@ const Drumgrooves = {
         zahl.classList.remove('schlag'); void zahl.offsetWidth; zahl.classList.add('schlag');
       }
     }
-    // Neuer Takt: Markierungen weg, Zähler „Takt 2 von 4“
-    const takt = Math.floor(t / 4);
-    if (t >= 0 && takt !== l.takt && takt < l.takte) {
-      l.takt = takt;
+    // Neuer Durchgang: Markierungen weg, Zähler „2 von 4“
+    const d = Math.floor(t / l.laenge);
+    if (t >= 0 && d !== l.d && d < l.durchgaenge) {
+      l.d = d;
       this.el.querySelectorAll('.dg-noten .dg-ok, .dg-noten .dg-falsch').forEach(g => g.classList.remove('dg-ok', 'dg-falsch'));
       const z = this.el.querySelector('.dg-takt-zaehler');
-      z.hidden = false; z.textContent = `Takt ${takt + 1} von ${l.takte}`;
+      z.hidden = false; z.textContent = `${d + 1} von ${l.durchgaenge}`;
     }
-    // Vorspielen bzw. verpasste Schläge
-    for (const e of l.erwartet) {
-      if (l.hoeren) {
-        if (!e.ok && t >= e.t) { e.ok = true; Drums.spielen(e.k); const p = this.padEl(e.k); if (p) { p.classList.remove('schlag'); void p.getBoundingClientRect(); p.classList.add('schlag'); } }
-      } else if (!e.ok && !e.verpasst && (t - e.t) * this.spb() > this.FENSTER) {
-        e.verpasst = true;
-        this.markieren(e, 'dg-falsch');
-      }
+    // Der Computer spielt (Anhören, Groove unter dem Fill); verpasste eigene Schläge
+    for (const e of l.auto) if (!e.ok && t >= e.t) { e.ok = true; Drums.spielen(e.k, undefined, e.k === 'hh' ? 0.7 : 1); this.blitz(e.k); }
+    for (const e of l.erwartet) if (!e.ok && !e.verpasst && (t - e.t) * this.spb() > this.FENSTER) {
+      e.verpasst = true;
+      this.markieren(e, 'dg-falsch');
     }
     l.t = t;
-    // Cursor über dem einen gezeichneten Takt
+    // Cursor über dem gezeichneten Durchgang
     const c = this.el.querySelector('.dg-noten .kp-cursor');
     if (t < 0 || t >= ende) c.setAttribute('hidden', '');
-    else { c.removeAttribute('hidden'); c.setAttribute('x', DG.xVon(0) - 8 + (t % 4) * 2 * 52); }
+    else {
+      const p = (t % l.laenge) * 2;
+      const ganz = Math.min(Math.floor(p), l.laenge * 2 - 1);
+      c.removeAttribute('hidden');
+      c.setAttribute('x', DG.x(ganz) + (p - ganz) * DG.B - 8);
+    }
     // Pads leuchten (nur Mitspielen mit Schalter): was gerade fällig ist
     if (!l.hoeren && this.art === 'mit' && this.leuchten) {
       const faellig = new Set(l.erwartet.filter(e => t >= e.t - 0.2 && t < e.t + 0.25).map(e => e.k));
@@ -412,11 +510,14 @@ const Drumgrooves = {
       return;
     }
     const sterne = Math.max(1, Pruefungsseite.sterne(p));
-    const alt = Fortschritt.bester(this.SPIEL, this.g).punkte || 0;
-    Fortschritt.eintragen(this.SPIEL, this.g, sterne, p, ok, l.erwartet.length, Math.round(this.ende() * this.spb()));
+    const spiel = this.m().spiel;
+    const alt = Fortschritt.bester(spiel, this.g).punkte || 0;
+    Fortschritt.eintragen(spiel, this.g, sterne, p, ok, l.erwartet.length, Math.round(l.durchgaenge * l.laenge * this.spb()));
+    const letzte = this.g >= this.auswahl().length - 1;
+    const wort = this.modus === 'fill' ? 'Fill' : 'Groove';
     erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
       <span>${p} %${l.falsch ? ` · ${l.falsch}× daneben` : ''}${p > alt && alt ? ' · <strong>Neuer Bestwert!</strong>' : ''}.
-      ${p >= 95 ? (this.g < 4 ? 'Perfekt – weiter zum nächsten Groove!' : 'Perfekt – alle Grooves!') : p >= 80 ? 'Super – noch ein paar Mal!' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
+      ${p >= 95 ? (letzte ? `Perfekt – alle ${wort}s!` : `Perfekt – weiter zum nächsten ${wort}!`) : p >= 80 ? 'Super – noch ein paar Mal!' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
     const felder = [...erg.querySelectorAll('.stern.an')];
     felder.forEach(f => f.classList.remove('an'));
     const leiter = [72, 74, 76, 79, 81, 84];
@@ -441,7 +542,7 @@ const Drumgrooves = {
   },
 };
 
-/* ---------- Spiele im Bereich „Drumgrooves“ ---------- */
+/* ---------- Spiele in den Bereichen „Drumgrooves“ und „Groove + Fill“ ---------- */
 SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
   {
     id: 'drum-notation',
@@ -461,15 +562,14 @@ SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
         const noten = DG.schlaege(g);
         // Meist Snare oder Bassdrum, manchmal die Hi-Hat
         const ziel = zufall(Math.random() < 0.75 ? noten.filter(n => n.k !== 'hh') : noten);
-        const name = p => (DG.ZAEHL[p] === '+' ? `${DG.ZAEHL[p - 1]}+` : DG.ZAEHL[p]);
         const andere = mische([0, 1, 2, 3, 4, 5, 6, 7].filter(p => p !== ziel.p)).slice(0, 3);
         const reihe = [ziel.p, ...andere].sort((a, b) => a - b);
         return {
           frage: `Auf welcher Zählzeit spielt die markierte ${DG.INSTR[ziel.k].name}?`,
           bild: DG.svg(noten, { markiert: ziel, zaehlen: false, klasse: 'dg-quiz' }),
-          optionen: reihe.map(name),
+          optionen: reihe.map(p => DG.zaehlName(p)),
           richtig: reihe.indexOf(ziel.p),
-          loesung: `Das war die ${DG.INSTR[ziel.k].name} auf „${name(ziel.p)}“.`,
+          loesung: `Das war die ${DG.INSTR[ziel.k].name} auf „${DG.zaehlName(ziel.p)}“.`,
         };
       }
       const k = zufall(st.instr);
@@ -501,20 +601,40 @@ SPIELE.splice(SPIELE.map(s => s.bereich).lastIndexOf('Rhythmus') + 1, 0,
       const i = zufall(st.grooves);
       const g = DG.GROOVES[i];
       const reihe = mische([i, ...mische(st.grooves.filter(x => x !== i)).slice(0, st.text ? 3 : 2)]);
-      const s = 60 / st.tempo;
       return {
         frage: st.text ? 'Auf welchen Zählzeiten spielt die Bassdrum?' : 'Welcher Groove läuft?',
-        hoeren() {
-          const c = Ton.audio();
-          const start = c.currentTime + 0.1;
-          for (let b = 0; b < 4; b++) Ton.klick(0.1 + b * s, b === 0);
-          for (let t = 0; t < 2; t++) DG.schlaege(g).forEach(n => Drums.spielen(n.k, start + (4 + t * 4 + n.p / 2) * s, n.k === 'hh' ? 0.6 : 1));
-          return 0.1 + 12 * s + 0.3;
-        },
+        hoeren: () => DG.vorspielen(DG.schlaege(g), 1, st.tempo),
         optionen: reihe.map(x => (st.text ? (DG.bassText(DG.GROOVES[x]) || 'keine Bassdrum') : DG.svg(DG.schlaege(DG.GROOVES[x]), { zaehlen: false, klasse: 'dg-quiz' }))),
         breit: !st.text,
         richtig: reihe.indexOf(i),
         loesung: `Das war Groove ${g.nr}: ${g.bass.length ? `Bassdrum auf ${DG.bassText(g)}` : 'ohne Bassdrum'}, die Snare auf 2 und 4.`,
+      };
+    },
+  },
+  {
+    id: 'fill-hoeren',
+    bereich: 'Groove + Fill',
+    titel: 'Welcher Fill?',
+    text: 'Ein Takt Groove, ein Takt Fill: Welcher Fill war es – auf Snare oder Toms, in Vierteln oder Achteln?',
+    icon: 'ear',
+    farbe: '#a5b4fc',
+    stufen: [
+      { name: 'Viertel-Fills', info: 'Fill 1 bis 4', fills: [0, 1, 2, 3], tempo: 80 },
+      { name: 'Achtel-Fills', info: 'Fill 5 bis 8', fills: [4, 5, 6, 7], tempo: 80 },
+      { name: 'Alle Fills', info: 'Viertel und Achtel gemischt', fills: [0, 1, 2, 3, 4, 5, 6, 7], tempo: 88 },
+    ],
+    aufgabe(st) {
+      const i = zufall(st.fills);
+      const f = DG.FILLS[i];
+      const reihe = mische([i, ...mische(st.fills.filter(x => x !== i)).slice(0, 2)]);
+      const groove = DG.schlaege(DG.GROOVES[Drumgrooves.FILL_GROOVE]);
+      return {
+        frage: 'Welcher Fill kommt nach dem Groove?',
+        hoeren: () => DG.vorspielen([...groove, ...DG.fillSchlaege(f, 8)], 2, st.tempo),
+        optionen: reihe.map(x => DG.svg(DG.fillSchlaege(DG.FILLS[x]), { zaehlen: false, klasse: 'dg-quiz' })),
+        breit: true,
+        richtig: reihe.indexOf(i),
+        loesung: `Das war Fill ${f.nr}: ${f.name} in ${f.art}n.`,
       };
     },
   });

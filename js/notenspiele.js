@@ -730,4 +730,5 @@ const BEREICH_INFO = {
   'Bassschlüssel Vorzeichen': 'Erst spielen, wenn der Bassschlüssel sitzt.',
   'Oktavlagen': 'Jede Oktave beginnt mit c: C – c – c¹ – c² – c³.',
   'Drumgrooves': 'Hi-Hat, Snare und Bassdrum – wie in der Stunde „Der Drumgroove“.',
+  'Groove + Fill': 'Ein Takt Groove, ein Takt Fill – so endet ein Teil im Song.',
 };

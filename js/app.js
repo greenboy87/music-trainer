@@ -308,6 +308,7 @@ const App = {
     else if (art === 'pruefung') Pruefungsseite.zeigen(this.el, id);
     else if (art === 'klavierpruefung') Klavierpruefung.zeigen(this.el);
     else if (art === 'drumgrooves') Drumgrooves.zeigen(this.el);
+    else if (art === 'groovefill') Drumgrooves.zeigen(this.el, 'fill');
     else if (art === 'anmelden' && Konto.verfuegbar() && !Konto.angemeldet()) this.zeigeAnmeldung();
     else this.zeigeStart();
     this.werkzeugKnoepfe(art, pfad);
@@ -429,8 +430,8 @@ const App = {
   /* ---------- Startseite ---------- */
   zeigeStart() {
     // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
-    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme();
-    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18 + 30;
+    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill');
+    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18 + 30 + 48;
     const bereiche = [...new Set(SPIELE.map(s => s.bereich))];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();
@@ -467,6 +468,13 @@ const App = {
               <span class="spiel-titel">Groove-Trainer</span>
               <span class="hint">Die fünf Grooves auf den Pads oder am Drumset mitspielen – Schritt für Schritt aufgebaut.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme()} / 30</span>
+            </a>` : ''}
+          ${b === 'Groove + Fill' ? `
+            <a class="card spiel-karte" href="#/groovefill" style="--farbe:#818cf8">
+              <span class="spiel-icon">${Icons.raw('drum')}</span>
+              <span class="spiel-titel">Groove + Fill</span>
+              <span class="hint">1 Takt Groove, 1 Takt Fill auf Snare und Toms – insgesamt 4×. Fills in Vierteln und Achteln.</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme('fill')} / 48</span>
             </a>` : ''}
           ${SPIELE.filter(s => s.bereich === b).map(s => `
             <a class="card spiel-karte" href="#/spiel/${s.id}" style="--farbe:${s.farbe}">

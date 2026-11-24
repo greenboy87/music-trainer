@@ -1386,3 +1386,8 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-seite.vollbild .dg-set { height: 100%; display: flex; justify-content: center; }
 .kp-seite.vollbild .dg-set .sz-set { width: auto; height: 100%; max-width: 100%; }
 .optionen.breit .notenbild.dg-quiz { max-width: 540px; }
+
+.dg-pads.sechs { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; row-gap: clamp(.5rem, 1.6vw, 1rem); }
+.dg-pads.sechs .sz-pad { aspect-ratio: 2 / 1; }
+.kp-seite.vollbild .dg-pads.sechs { grid-template-rows: 1fr 1fr; }
+.kp-seite.vollbild .dg-pads.sechs .sz-pad { aspect-ratio: auto; height: 100%; }
