@@ -1394,3 +1394,23 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 /* Unterkategorien (Drums: Drumgrooves, Groove + Fill) */
 .unter-titel { margin: 1rem 0 .6rem; font-size: 1rem; font-weight: 800; }
 .unter-titel .bereich-info { margin-left: .2rem; }
+
+/* Sticks über dem Drumset: Farben wie der Handsatz der Rhythmus-Prüfung (R orange, L türkis) */
+.dg-stick.R { --stick: #f0874a; }
+.dg-stick.L { --stick: #3fbfae; }
+.dg-stick-holz { stroke: var(--stick); stroke-width: 11; stroke-linecap: round; }
+.dg-stick-kopf { fill: color-mix(in srgb, var(--stick) 70%, white); stroke: var(--stick); stroke-width: 2; }
+.dg-stick-schatten { fill: #000; }
+.dg-stick-griff circle { fill: var(--stick); stroke: #fff; stroke-width: 3; }
+.dg-stick-griff text { fill: #fff; font-size: 19px; font-weight: 900; text-anchor: middle; }
+.dg-hand { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; border-radius: 50%; color: #fff; font-size: .75rem; font-weight: 900; margin-left: .15rem; }
+.dg-hand.R { background: #f0874a; }
+.dg-hand.L { background: #3fbfae; }
+
+/* Bassdrum-Pedal (Fuß) */
+.dg-pedal { --stick: #a78bfa; }
+.dg-pedal-brett { fill: #2b2b38; stroke: var(--stick); stroke-width: 3; }
+.dg-pedal-stange { stroke: #cfd3dc; stroke-width: 6; stroke-linecap: round; }
+.dg-pedal-ball { fill: #fff7e6; stroke: var(--stick); stroke-width: 4; }
+.dg-pedal-f { fill: var(--stick); font-size: 15px; font-weight: 900; text-anchor: middle; }
+.dg-hand.F { background: #a78bfa; }

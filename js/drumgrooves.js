@@ -53,13 +53,22 @@ const DG = {
   /* Die Schläge eines Grooves: [{ k, p }] */
   schlaege(g, stimmen = ['hh', 's', 'b']) {
     const l = [];
-    if (stimmen.includes('hh')) this.HH.forEach(p => l.push({ k: 'hh', p }));
-    if (stimmen.includes('s')) this.SNARE.forEach(p => l.push({ k: 's', p }));
-    if (stimmen.includes('b')) g.bass.forEach(p => l.push({ k: 'b', p }));
+    // Handsatz wie in der Stunde: Hi-Hat rechts (übergekreuzt), Snare links, Bassdrum Fuß
+    if (stimmen.includes('hh')) this.HH.forEach(p => l.push({ k: 'hh', p, h: 'R' }));
+    if (stimmen.includes('s')) this.SNARE.forEach(p => l.push({ k: 's', p, h: 'L' }));
+    if (stimmen.includes('b')) g.bass.forEach(p => l.push({ k: 'b', p, h: 'F' }));
     return l;
   },
   /* Die Schläge eines Fills, ab Position ab */
-  fillSchlaege(f, ab = 0) { return f.schlaege.map((k, i) => ({ k, p: ab + (f.v ? i * 2 : i), v: !!f.v })); },
+  /* Fills: Snare immer links (wie im Groove), Toms im Wechsel – immer die andere Hand als zuvor, zuerst rechts */
+  fillSchlaege(f, ab = 0) {
+    let zuvor = 'L';
+    return f.schlaege.map((k, i) => {
+      const h = k === 's' ? 'L' : zuvor === 'L' ? 'R' : 'L';
+      zuvor = h;
+      return { k, p: ab + (f.v ? i * 2 : i), v: !!f.v, h };
+    });
+  },
   zaehlName(p) { const z = this.ZAEHL[p % 8]; return z === '+' ? `${this.ZAEHL[(p % 8) - 1]}+` : z; },
   bassText(g) { return g.bass.map(p => this.zaehlName(p)).join(' · '); },
 
@@ -146,7 +155,7 @@ const Drumgrooves = {
   PAD_TASTEN: ['a', 's', 'd'],
   TOM_TASTEN: ['q', 'w', 'e'],
   REIHEN: { hsb: ['hh', 's', 'b'], bsh: ['b', 's', 'hh'] },   // Snare immer in der Mitte
-  modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: false, instrument: 'pads', reihe: 'hsb',
+  modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: false, sticks: true, instrument: 'pads', reihe: 'hsb',
 
   m() { return this.MODI[this.modus]; },
   lies(s, modus = this.modus) { try { return localStorage.getItem(`musiktrainer-dg-${modus === 'fill' ? 'fill-' : ''}${s}`); } catch { return null; } },
@@ -189,6 +198,7 @@ const Drumgrooves = {
     this.metro = gemein('metro') !== 'aus';
     this.leuchten = gemein('leuchten') === 'an';
     this.koerper = gemein('koerper') === 'an';   // Bodypercussion standardmäßig aus
+    this.sticks = gemein('sticks') !== 'aus';
     if (!this.teile().includes(this.teil)) this.teil = this.teile()[0];
     App.beimAufraeumen(() => { this.stopp(); Klavierpruefung.zoomFrei(); window.removeEventListener('keydown', this.tasteFn); });
     Klavierpruefung.zoomSperren();
@@ -251,6 +261,7 @@ const Drumgrooves = {
       <div class="kp-tasten-kopf"><span class="kp-schalter">
           <label class="schalter kp-licht" id="kp-leuchten-feld" title="Pads leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Pads leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label>
           <label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label>
+          <label class="schalter" id="dg-sticks-feld" title="Beim Vorspielen schlagen Sticks (R, L) und das Bassdrum-Pedal (F) aufs Drumset"><input type="checkbox" role="switch" id="dg-sticks" ${this.sticks ? 'checked' : ''}><span class="schalter-bahn"></span>Sticks <span class="dg-hand R">R</span><span class="dg-hand L">L</span><span class="dg-hand F">F</span></label>
           ${fill ? '' : `<label class="schalter" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>`}
         </span>
         <span class="dg-instrument">
@@ -281,6 +292,7 @@ const Drumgrooves = {
     }));
     el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
     el.querySelector('#dg-drehen').hidden = this.instrument !== 'pads';
+    el.querySelector('#dg-sticks-feld').hidden = this.instrument !== 'set';
     const takte = this.m().takte;
     const alle = this.modus === 'fill'
       ? [...DG.schlaege(this.groove()), ...DG.fillSchlaege(DG.FILLS[this.g], 8)]
@@ -323,6 +335,8 @@ const Drumgrooves = {
       set.setAn = Object.fromEntries(Schlagzeugseite.SET.map(({ k }) => [k, meine.includes(k)]));
       set.hhOffen = false;
       feld.innerHTML = `<div class="sz-set-rahmen dg-set">${set.setSvg()}</div>`;
+      feld.querySelector('.sz-set').insertAdjacentHTML('beforeend', this.STICK_SVG);
+      this.sticksZeigen(null);
     }
     const ziel = e => {
       const p = e.target.closest('.dg-pad, .sz-teil');
@@ -367,8 +381,9 @@ const Drumgrooves = {
     const schalter = (id, feld) => el.querySelector(id)?.addEventListener('change', e => {
       this[feld] = e.target.checked; this.merkenGemein(feld, this[feld] ? 'an' : 'aus');
       if (feld === 'koerper') el.querySelector('.dg-pads')?.classList.toggle('ohne-koerper', !this.koerper);
+      if (feld === 'sticks') this.sticksZeigen(this.lauf?.t ?? null);
     });
-    schalter('#kp-leuchten', 'leuchten'); schalter('#kp-metro', 'metro'); schalter('#dg-koerper', 'koerper');
+    schalter('#kp-leuchten', 'leuchten'); schalter('#kp-metro', 'metro'); schalter('#dg-koerper', 'koerper'); schalter('#dg-sticks', 'sticks');
     el.querySelector('#kp-los').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(false); });
     el.querySelector('#dg-hoeren').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(true); });
     const i = el.querySelector('#kp-i'), hilfe = el.querySelector('#kp-hilfe');
@@ -430,7 +445,11 @@ const Drumgrooves = {
     const noten = this.durchgang();
     const erwartet = [], auto = [];
     for (let d = 0; d < durchgaenge; d++) noten.forEach(n => (hoeren || n.auto ? auto : erwartet).push({ ...n, t: d * laenge + n.p / 2, ok: false }));
-    this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, laenge, durchgaenge, hoeren, erwartet, auto, falsch: 0, d: -1 };
+    // Was die Sticks spielen: alles, was der Computer vorspielt, je Hand nach der Zeit
+    const plan = { R: [], L: [], F: [] };
+    auto.filter(e => plan[e.h]).forEach(e => plan[e.h].push(e));
+    Object.values(plan).forEach(l => l.sort((a, b) => a.t - b.t));
+    this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, laenge, durchgaenge, hoeren, erwartet, auto, falsch: 0, d: -1, plan };
     this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los').innerHTML = '■ Stopp';
     const schritt = () => {
       if (!this.lauf) return;
@@ -474,6 +493,7 @@ const Drumgrooves = {
       this.markieren(e, 'dg-falsch');
     }
     l.t = t;
+    this.sticksZeigen(t);
     // Cursor über dem gezeichneten Durchgang
     const c = this.el.querySelector('.dg-noten .kp-cursor');
     if (t < 0 || t >= ende) c.setAttribute('hidden', '');
@@ -534,6 +554,82 @@ const Drumgrooves = {
     const z = this.el.querySelector('.dg-takt-zaehler');
     if (z) z.hidden = true;
     this.el.querySelectorAll('.dg-spielfeld .ziel').forEach(p => p.classList.remove('ziel'));
+    this.sticksZeigen(null);
+  },
+
+  /* ---------- Sticks über dem Drumset (nur beim Vorspielen) ----------
+     Von oben gesehen: die Spitze trifft das Fell, der Griff liegt beim Spieler (unten). Farben wie der Handsatz
+     der Rhythmus-Prüfung Klasse 6: rechts orange, links türkis; das Bassdrum-Pedal lila. Zwischen zwei Schlägen hebt sich der Stick (Spitze rückt nach oben, Schatten bleibt
+     auf dem Fell) und wandert zum nächsten Ziel; im Moment des Schlags liegt die Spitze auf dem Ziel. */
+  STICK_ZIEL: { hh: [178, 330], s: [262, 452], t1: [424, 252], t2: [612, 252], t3: [786, 448] },
+  STICK_GRIFF: { R: [175, 205], L: [-125, 215] },        // vom Ziel zum Griff
+  STICK_RUHE: { R: 'hh', L: 's' },
+  STICK_SVG: `<g class="dg-sticks" pointer-events="none">
+      <g class="dg-pedal"><rect class="dg-pedal-brett" x="484" y="622" width="52" height="74" rx="10"/>
+        <line class="dg-pedal-stange" x1="510" y1="676" x2="510" y2="640"/><circle class="dg-pedal-ball" cx="510" cy="640" r="15"/>
+        <text class="dg-pedal-f" x="510" y="690">F</text></g>
+      ${['L', 'R'].map(h => `<g class="dg-stick ${h}" data-h="${h}">
+        <ellipse class="dg-stick-schatten" rx="13" ry="7"/>
+        <line class="dg-stick-holz"/>
+        <circle class="dg-stick-kopf" r="9"/>
+        <g class="dg-stick-griff"><circle r="17"/><text dy="6">${h}</text></g>
+      </g>`).join('')}</g>`,
+  /* Wie hoch ein Stick bzw. der Schlägel gerade ist: 0 im Moment des Schlags, 1 ausgeholt */
+  hebung(plan, t, D = 0.22) {
+    let vor = null, nach = null;
+    for (const e of plan) { if (e.t <= t) vor = e; else { nach = e; break; } }
+    if (!vor && !nach) return { vor, nach, heb: 1 };
+    if (!vor) return { vor, nach, heb: Math.max(0, Math.min(1, (nach.t - t) / D)) };
+    if (!nach) return { vor, nach, heb: Math.max(0, Math.min(1, (t - vor.t) / D)) };
+    const d = Math.min(D, (nach.t - vor.t) / 2);
+    return { vor, nach, heb: Math.max(0, Math.min(1, (t - vor.t) / d, (nach.t - t) / d)) };
+  },
+  sticksZeigen(t) {
+    const g = this.el?.querySelector('.dg-set .dg-sticks');
+    if (!g) return;
+    g.style.display = this.sticks ? '' : 'none';
+    if (!this.sticks) return;
+    const l = this.lauf;
+    // Bassdrum-Pedal: der Schlägel kickt aus der Ruhe (unten) hoch aufs Fell, das Brett wird getreten
+    const fuss = this.hebung(t === null || !l ? [] : l.plan.F, t ?? 0, 0.3).heb;
+    const ballY = 588 + 58 * fuss;
+    g.querySelector('.dg-pedal-stange').setAttribute('y2', ballY);
+    g.querySelector('.dg-pedal-ball').setAttribute('cy', ballY);
+    g.querySelector('.dg-pedal-brett').style.opacity = 0.55 + 0.45 * (1 - fuss);
+    g.querySelector('.dg-pedal').style.display = this.instrumente().includes('b') ? '' : 'none';
+    for (const h of ['R', 'L']) {
+      const plan = t === null || !l ? [] : l.plan[h];
+      let vor = null, nach = null;
+      for (const e of plan) { if (e.t <= t) vor = e; else { nach = e; break; } }
+      const ziel = k => this.STICK_ZIEL[k] || this.STICK_ZIEL[this.STICK_RUHE[h]];
+      // Wohin der Stick gerade zeigt und wie hoch er ist (0 = auf dem Fell, 1 = oben)
+      let pos, heb;
+      const D = 0.22;                       // Schläge, die er zum Ausholen und Zurückfedern braucht
+      if (!vor && !nach) { pos = ziel(this.STICK_RUHE[h]); heb = 1; }
+      else if (!vor) { pos = ziel(nach.k); heb = Math.min(1, (nach.t - t) / D); }
+      else if (!nach) { pos = ziel(vor.k); heb = Math.min(1, (t - vor.t) / D); }
+      else {
+        const a = ziel(vor.k), b = ziel(nach.k);
+        const f = Math.min(1, Math.max(0, (t - vor.t) / (nach.t - vor.t)));
+        const w = f * f * (3 - 2 * f);
+        pos = [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w];
+        const d = Math.min(D, (nach.t - vor.t) / 2);
+        heb = Math.min(1, (t - vor.t) / d, (nach.t - t) / d);
+      }
+      heb = Math.max(0, heb);
+      const [gx, gy] = this.STICK_GRIFF[h];
+      const sx = pos[0], sy = pos[1] - 48 * heb;           // Spitze (gehoben)
+      const fx = pos[0] + gx, fy = pos[1] + gy - 18 * heb; // Griff
+      const el = g.querySelector(`.dg-stick.${h}`);
+      el.querySelector('.dg-stick-schatten').setAttribute('cx', pos[0]);
+      el.querySelector('.dg-stick-schatten').setAttribute('cy', pos[1]);
+      el.querySelector('.dg-stick-schatten').style.opacity = 0.15 + 0.35 * (1 - heb);
+      const holz = el.querySelector('.dg-stick-holz');
+      holz.setAttribute('x1', fx); holz.setAttribute('y1', fy); holz.setAttribute('x2', sx); holz.setAttribute('y2', sy);
+      el.querySelector('.dg-stick-kopf').setAttribute('cx', sx);
+      el.querySelector('.dg-stick-kopf').setAttribute('cy', sy);
+      el.querySelector('.dg-stick-griff').setAttribute('transform', `translate(${fx} ${fy})`);
+    }
   },
 };
 
