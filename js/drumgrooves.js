@@ -578,7 +578,7 @@ const Drumgrooves = {
      dem nächsten Schlag holt er aus (hoch) und schlägt im Moment des Schlags aufs Fell (heb = 0), dann liegt
      er wieder ruhig darüber. Muss er zu einem anderen Teil, wandert er während des Ausholens dorthin.
      Gibt die Höhe (0–1) und wie weit er auf dem Weg vom letzten zum nächsten Ziel ist (0–1). */
-  RUHE: 0.06,
+  RUHE: 0.32,
   hebung(plan, t, AUSHOLEN = 0.4) {
     let vor = null, nach = null;
     for (const e of plan) { if (e.t <= t) vor = e; else { nach = e; break; } }
@@ -614,12 +614,13 @@ const Drumgrooves = {
       const pos = [von[0] + (bis[0] - von[0]) * w, von[1] + (bis[1] - von[1]) * w];
       heb = Math.max(0, heb);
       const [gx, gy] = this.STICK_GRIFF[h];
-      const sx = pos[0], sy = pos[1] - 48 * heb;           // Spitze (gehoben)
-      const fx = pos[0] + gx, fy = pos[1] + gy - 18 * heb; // Griff
+      const sx = pos[0], sy = pos[1] - 62 * heb;           // Spitze (gehoben)
+      const fx = pos[0] + gx, fy = pos[1] + gy - 22 * heb; // Griff
       const el = g.querySelector(`.dg-stick.${h}`);
       el.querySelector('.dg-stick-schatten').setAttribute('cx', pos[0]);
       el.querySelector('.dg-stick-schatten').setAttribute('cy', pos[1]);
-      el.querySelector('.dg-stick-schatten').style.opacity = 0.15 + 0.35 * (1 - heb);
+      el.querySelector('.dg-stick-schatten').style.opacity = 0.1 + 0.4 * Math.max(0, 1 - heb / this.RUHE);
+      el.querySelector('.dg-stick-kopf').setAttribute('r', 8 + 3 * heb);   // weiter oben = größer
       const holz = el.querySelector('.dg-stick-holz');
       holz.setAttribute('x1', fx); holz.setAttribute('y1', fy); holz.setAttribute('x2', sx); holz.setAttribute('y2', sy);
       el.querySelector('.dg-stick-kopf').setAttribute('cx', sx);
