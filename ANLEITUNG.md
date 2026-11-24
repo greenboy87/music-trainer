@@ -42,6 +42,10 @@ den Zweig `main` freigeben. Die Seite liegt dann unter
    - `TOKEN_SCHLUESSEL` – eine lange Zufallszeichenkette, mindestens 32
      Zeichen (z. B. aus einem Passwort-Generator). Nie weitergeben; wer sie
      ändert, meldet alle Kinder ab.
+   - `STUECKE` – die Noten urheberrechtlich geschützter Stücke (Klavier-Prüfung
+     Klasse 8). Den Inhalt von `cloudflare/stuecke.local.json` einfügen – die Datei
+     liegt nur auf deinem Rechner, nicht auf GitHub. Fehlt der Eintrag, sehen die
+     Kinder „Die Noten sind noch nicht eingerichtet“.
 5. **Settings → Observability**: **Workers Logs ausschalten**. Sonst speichert
    Cloudflare zu jeder Anfrage Protokolle mit IP-Adresse, und die
    Datenschutzhinweise („Protokolle werden nicht aufgezeichnet“) stimmen nicht.

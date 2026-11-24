@@ -3,3 +3,6 @@
 *.csv
 *.doc
 *.docx
+
+# Noten geschützter Stücke: liegen nur im Cloudflare-Dashboard (Variable STUECKE)
+cloudflare/stuecke.local.json

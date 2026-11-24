@@ -53,6 +53,17 @@ Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM
 `BESTANDEN`, `VERSUCHE`, Endnote am Ende (gespeichert, s. o.). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
+Klavier-Prüfung Klasse 8 (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
+Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (A bis a¹), Zeile einmal
+gezeichnet mit Wiederholung, gespielt 2×, beim 2. Mal Ende auf Takt 4, Schlag 1 (liegen
+lassen). Rechte/linke Hand/beide; „Schritt für Schritt“ (Cursor wartet auf die richtigen
+Tasten, Akkorde zusammen) und „Mitspielen“ (Einzähltakt, Treffer ±0,18 s). Andere Hand
+spielt wahlweise mit. Meldet nichts an den Server. **Urheberrecht:** Die Noten stehen nie
+im Repository (öffentlich), sondern in der Cloudflare-Variable `STUECKE`; der Worker gibt
+sie nur angemeldeten Kindern (`GET /api/stueck/<id>`, § 60a UrhG). Lokal liegen sie in
+`cloudflare/stuecke.local.json` (gitignored, die Attrappe liest sie). Format im Dateikopf
+von `js/klavierpruefung.js`.
+
 ## Notenspiele (`js/notenspiele.js`)
 
 Bereiche Stammtöne, Vorzeichen, Bassschlüssel, Bassschlüssel Vorzeichen (je fünf Spiele,

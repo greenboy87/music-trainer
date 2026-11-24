@@ -82,6 +82,8 @@ export async function starten() {
     localStorage.setItem('musiktrainer-test-db', btoa(s));
   };
   const env = { DB: d1(db, sichern), LEHRER_PASSWORT: 'test-passwort', TOKEN_SCHLUESSEL: 'attrappe-'.repeat(5) };
+  // Noten geschützter Stücke: lokal aus der Datei, die nicht im Repository liegt
+  try { env.STUECKE = await (await fetch(new URL('../cloudflare/stuecke.local.json', import.meta.url))).text(); } catch { /* fehlt */ }
 
   const echtesFetch = window.fetch.bind(window);
   window.fetch = async (url, opt = {}) => {

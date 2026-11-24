@@ -1273,3 +1273,35 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
   .runde .notenbild.klaviersystem { max-height: 32vh; }
   .runde .setzer-system.klaviersystem { max-height: calc(100vh - 430px); }
 }
+
+/* Klavier-Prüfung Klasse 8 */
+.kp-seite h2 { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.kp-seite h2 .hint { font-size: .9rem; font-weight: 600; }
+.kp-leiste { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin: .6rem 0; }
+.kp-tempo { display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .9rem; }
+.kp-tempo span { min-width: 2.2em; font-variant-numeric: tabular-nums; }
+.kp-info { margin: 0; flex: 1 1 300px; }
+.kp-noten { display: flex; flex-direction: column; align-items: center; }
+.kp-system { max-width: 900px; width: 100%; max-height: 30vh; }
+.kp-seite .kp-tasten { height: clamp(140px, 27vh, 260px); }
+.kp-seite h2 { margin-bottom: .2rem; }
+.kp-kopf .hint { margin: 0; }
+.kp-endtext { text-anchor: middle; font-size: 12px; font-weight: 700; fill: currentColor; opacity: .7; }
+.kp-endpfeil.jetzt .kp-endtext, .kp-endpfeil.jetzt .kp-fermate { fill: var(--accent); opacity: 1; }
+.kp-takt { font-size: 21px; }
+.kp-finger { font-size: 13px; font-weight: 800; text-anchor: middle; fill: var(--hand, currentColor); }
+.kp-fermate { font-size: 30px; text-anchor: middle; }
+.kp-n { transition: opacity .2s; }
+.kp-n.kp-aus { opacity: .3; }
+.kp-n.kp-ok { color: var(--green); }
+.kp-n.kp-falsch { color: var(--danger); }
+.kp-n.kp-spielt { color: var(--hand); }
+.kp-balken.kp-ok { fill: var(--green); }
+.kp-cursor { fill: var(--accent, #a78bfa); opacity: .8; }
+.kp-start { display: flex; align-items: center; gap: .4rem 1rem; flex-wrap: wrap; margin: .4rem 0; }
+.kp-seite .klaviatur.kp-tasten { margin-top: .6rem; }
+.kp-ergebnis { font-weight: 600; display: inline-flex; align-items: center; gap: .4rem; }
+.kp-tasten .kt.ziel { box-shadow: inset 0 -38% 0 0 var(--hand); box-shadow: inset 0 calc(var(--taste, 60px) * -1.1) 0 0 color-mix(in srgb, var(--hand) 55%, transparent); }
+.kp-tasten .kt.s.ziel { box-shadow: inset 0 -40px 0 0 var(--hand); }
+.kp-tasten .kt.falsch { animation: kp-falsch .35s; }
+@keyframes kp-falsch { 0%, 60% { background: #f87171; } }

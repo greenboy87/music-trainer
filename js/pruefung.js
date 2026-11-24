@@ -170,7 +170,7 @@ const Pruefungsseite = {
       <a class="zurueck" href="#/">${Icons.raw('back')}Alle Spiele</a>
       <section class="card spiel-intro pz-seite" style="--farbe:#5eead4">
         <span class="spiel-icon gross">${Icons.raw('drum')}</span>
-        <h2>Rhythmus Prüfung</h2>
+        <h2>Prüfungen</h2>
         <p class="hint">Wähle deine Zeile – und spiel sie vor! Zeile 5 sicher spielen = Note 5, die nächste Zeile = Note 4 …
           je schwieriger, desto besser die Note. Du spielst auf den Pads mit, das Metronom zählt einen Takt ein.</p>
         <div class="stufen">
@@ -181,6 +181,12 @@ const Pruefungsseite = {
               <span class="stufe-sterne">${Icons.raw('star')} ${summe(zeilen)} / 30</span>
               <span class="hint">5 Zeilen · ${info}</span>
             </a>`).join('')}
+          <a class="knopf stufe" href="#/klavierpruefung">
+            <span class="stufe-nr">Klasse 8</span>
+            <span class="stufe-name">Klavier: In the End</span>
+            <span class="stufe-sterne">${Icons.raw('piano')} Intro</span>
+            <span class="hint">rechte und linke Hand · Schritt für Schritt oder im Tempo</span>
+          </a>
         </div>
       </section>`;
   },

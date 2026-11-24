@@ -19,6 +19,10 @@
 //   D1-Bindung   DB                  (Tabellen aus schema.sql)
 //   Geheimnis    LEHRER_PASSWORT     (Anmeldung der Lehrkraft im School-Tool)
 //   Geheimnis    TOKEN_SCHLUESSEL    (lange Zufallszeichenkette, signiert die Anmeldungen)
+//   Variable     STUECKE             (Noten urheberrechtlich geschützter Stücke als JSON,
+//                                    z. B. das Intro für die Klavier-Prüfung Klasse 8; nur
+//                                    angemeldete Kinder bekommen sie, deshalb nicht im Code.
+//                                    Tom hat den Text lokal in cloudflare/stuecke.local.json)
 //
 // Anmeldungen sind signierte Marken (HMAC), keine Sitzungen in der Datenbank.
 // Gesperrt wird je Pseudonym, nicht je Schule: Alle iPads einer Schule teilen
@@ -548,6 +552,14 @@ async function verteilen(request, env) {
   }
   if (m === 'GET' && pfad === '/api/meinverlauf')
     return eigenerVerlauf(env, await markePruefen(env, request, 'schueler'), url.searchParams.get('praefix'));
+  /* Noten geschützter Stücke nur für angemeldete Kinder (§ 60a UrhG: abgegrenzter Kreis) */
+  if (m === 'GET' && (teile = pfad.match(/^\/api\/stueck\/([a-z0-9-]{1,40})$/))) {
+    await markePruefen(env, request, 'schueler');
+    let alle;
+    try { alle = JSON.parse(env.STUECKE || '{}'); } catch { throw new Fehler(500, 'STUECKE ist kein gültiges JSON'); }
+    if (!Object.prototype.hasOwnProperty.call(alle, teile[1])) throw new Fehler(404, 'Stück nicht eingerichtet');
+    return { stueck: alle[teile[1]] };
+  }
   if (m === 'POST' && pfad === '/api/ergebnisse')
     return ergebnisseSpeichern(env, await markePruefen(env, request, 'schueler'), body);
 

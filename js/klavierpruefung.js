@@ -1,0 +1,486 @@
+/* Klavier-Prüfung Klasse 8 (#/klavierpruefung): das Intro von „In the End“ auf dem
+   Keyboard. Die Zeile wird zweimal gespielt, beim zweiten Mal endet sie auf dem
+   ersten Ton von Takt 4 und bleibt liegen.
+
+   Urheberrecht: Die Noten stehen nicht hier im (öffentlichen) Code, sondern kommen
+   vom Worker (GET /api/stueck/in-the-end, Variable STUECKE im Cloudflare-Dashboard)
+   und nur für angemeldete Kinder. Format je Hand: Einträge „Schlag:Dauer:Stufe[+Stufe]:Finger[+Finger]“,
+   Schlag und Dauer in Vierteln ab Beginn, Stufe wie in Notenbild (c' = 0, H = -8),
+   vz = Vorzeichen der Tonart (-1 = ein ♭: jedes H ist ein B).
+
+   Üben: rechte Hand, linke Hand oder beide. Zwei Arten:
+   – Mitspielen: Cursor läuft im Tempo, ein Takt wird eingezählt, am Ende wie viele
+     Töne getroffen wurden.
+   – Schritt für Schritt: Der Cursor läuft mit, bleibt aber an der nächsten Note
+     stehen, bis die richtige(n) Taste(n) gedrückt sind.
+   Wahlweise spielt die andere Hand mit. Nichts geht an den Server. */
+const Klavierpruefung = {
+  ID: 'in-the-end',
+  VON: 45, BIS: 69,             // Tasten A bis a¹
+  SCHWARZ: [1, 3, 6, 8, 10],
+  FARBE: { rh: '#e07b2e', lh: '#2f6fb0' },
+  /* Zeichnung: je Zeile vier Takte im Klaviersystem */
+  OBEN: 80, UNTEN_Y: 170,       // y der untersten Linie (Violin, Bass)
+  X0: 92, TAKT: 174, RAND: 18, SCHLAG: 36,
+  FENSTER: 0.18,                // Mitspielen: so viele Sekunden daneben zählt noch
+
+  stueck: null,
+  hand: 'rh', art: 'schritt', bpm: 60, andere: true, metro: true, namen: true,
+
+  lies(s) { try { return localStorage.getItem(`musiktrainer-kp-${s}`); } catch { return null; } },
+  merken(s, w) { try { localStorage.setItem(`musiktrainer-kp-${s}`, String(w)); } catch { /* privat */ } },
+
+  async zeigen(el) {
+    this.el = el;
+    this.stopp();
+    if (['rh', 'lh', 'beide'].includes(this.lies('hand'))) this.hand = this.lies('hand');
+    if (['schritt', 'mit'].includes(this.lies('art'))) this.art = this.lies('art');
+    const b = Number(this.lies('bpm'));
+    if (b >= 40 && b <= 120) this.bpm = b;
+    this.andere = this.lies('andere') !== 'aus';
+    this.metro = this.lies('metro') !== 'aus';
+    this.namen = this.lies('namen') !== 'aus';
+    const rahmen = inhalt => {
+      el.innerHTML = `
+        <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungen</a>
+        <section class="card kp-seite">${inhalt}</section>`;
+    };
+    App.beimAufraeumen(() => this.stopp());
+    if (!Konto.angemeldet()) {
+      return rahmen(`<h2>Klavier-Prüfung Klasse 8</h2>
+        <p class="hint">Die Noten gibt es nur für angemeldete Schülerinnen und Schüler – das Stück ist
+          urheberrechtlich geschützt und darf nur im Unterricht genutzt werden.</p>
+        <a class="knopf primary" href="#/anmelden">Anmelden</a>`);
+    }
+    if (!this.stueck) {
+      rahmen('<h2>Klavier-Prüfung Klasse 8</h2><p class="hint">Noten werden geladen …</p>');
+      try { this.stueck = this.lesen((await Konto.api(`/api/stueck/${this.ID}`)).stueck); }
+      catch (e) {
+        if (App.art !== 'klavierpruefung') return;
+        return rahmen(`<h2>Klavier-Prüfung Klasse 8</h2><p class="hint">${e.status === 404
+          ? 'Die Noten sind noch nicht eingerichtet. Sag deiner Lehrkraft Bescheid.'
+          : e.status === 401 ? 'Deine Anmeldung ist abgelaufen – bitte neu anmelden.'
+          : 'Die Noten ließen sich nicht laden. Bist du online?'}</p>`);
+      }
+      if (App.art !== 'klavierpruefung') return;
+    }
+    rahmen('');
+    this.aufbauen();
+  },
+
+  /* „0:1:1:1 …“ → [{ start, dauer, stufen, finger, midis, hand, i }] */
+  lesen(roh) {
+    const hand = (text, h) => text.trim().split(/\s+/).map(e => {
+      const [start, dauer, st, fi = ''] = e.split(':');
+      const stufen = st.split('+').map(Number);
+      return { start: Number(start), dauer: Number(dauer), stufen, finger: fi ? fi.split('+') : [],
+        midis: stufen.map(s => this.midi(s, roh.vz)), hand: h };
+    });
+    const noten = [...hand(roh.rh, 'rh'), ...hand(roh.lh, 'lh')].map((n, i) => ({ ...n, i }));
+    /* Gezeichnet ist die Zeile nur einmal (mit Wiederholung): Noten des zweiten Durchgangs
+       leuchten an der Note, die an derselben Stelle der Zeile steht */
+    const zeile = 16;
+    noten.forEach(n => {
+      const an = n.start % zeile;
+      const vorbild = noten.find(v => v.hand === n.hand && v.start === an);
+      n.bild = vorbild ? vorbild.i : n.i;
+    });
+    return { titel: roh.titel, von: roh.von, vz: roh.vz, takte: roh.takte, noten };
+  },
+  midi(stufe, vz) {
+    const m = Stufe.midi(stufe);
+    if (vz < 0 && ((stufe % 7) + 7) % 7 === 6) return m - 1;   // H → B
+    return m;
+  },
+  ende() { return Math.max(...this.stueck.noten.map(n => n.start + n.dauer)); },
+  meine() { return this.stueck.noten.filter(n => this.hand === 'beide' || n.hand === this.hand); },
+  fremde() { return this.stueck.noten.filter(n => this.hand !== 'beide' && n.hand !== this.hand); },
+
+  aufbauen() {
+    const s = this.stueck;
+    const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
+    this.el.querySelector('.kp-seite').innerHTML = `
+      <div class="kp-kopf">
+        <h2>${Icons.raw('piano')}Klavier-Prüfung Klasse 8 · ${s.titel} <span class="hint">${s.von} · Intro</span></h2>
+        <p class="hint">Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
+          und lässt ihn liegen. Zahlen = Finger.</p>
+      </div>
+      <div class="kp-leiste">
+        <div class="klavier-groesse" role="group" aria-label="Hand">
+          ${knopf('hand', 'rh', 'Rechte Hand', this.hand === 'rh')}${knopf('hand', 'lh', 'Linke Hand', this.hand === 'lh')}${knopf('hand', 'beide', 'Beide', this.hand === 'beide')}
+        </div>
+        <div class="klavier-groesse" role="group" aria-label="Übeart">
+          ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}
+        </div>
+        <label class="kp-tempo">Tempo <input type="range" id="kp-bpm" min="40" max="120" step="5" value="${this.bpm}"><span id="kp-bpm-text">${this.bpm}</span></label>
+        <label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>Andere Hand spielt mit</label>
+        <label class="schalter"><input type="checkbox" role="switch" id="kp-metro" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>Metronom</label>
+        <label class="schalter"><input type="checkbox" role="switch" id="kp-namen" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>Notennamen</label>
+      </div>
+      <div class="kp-start">
+        <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
+        <p class="kp-info hint" id="kp-info"></p>
+        <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
+      </div>
+      <div class="kp-noten">${this.svg()}</div>
+      <div class="klaviatur kp-tasten${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>`;
+    this.tastenZeichnen();
+    this.bedienen();
+    this.leisteZeigen();
+  },
+
+  leisteZeigen() {
+    const el = this.el;
+    el.querySelectorAll('[data-hand]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hand === this.hand)));
+    el.querySelectorAll('[data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === this.art)));
+    el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide';
+    el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
+    el.querySelector('#kp-info').innerHTML = this.art === 'schritt'
+      ? `<strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.`
+      : `<strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Am Ende siehst du, wie viele Töne du getroffen hast.`;
+    this.zuruecksetzen();
+  },
+
+  /* ---------- Noten ---------- */
+  taktX(t) { return this.X0 + t * this.TAKT; },
+  /* x zur Zeit in Schlägen – beide Durchgänge laufen über dieselbe Zeile */
+  x(zeit) {
+    const z = zeit >= 16 ? zeit - 16 : zeit;
+    const t = Math.min(3, Math.max(0, Math.floor(z / 4)));
+    return this.taktX(t) + this.RAND + (z - t * 4) * this.SCHLAG;
+  },
+  y(stufe, hand) {
+    return hand === 'rh' ? this.OBEN - (stufe - 2) * 5 : this.UNTEN_Y - (stufe + 10) * 5;
+  },
+
+  svg() {
+    const breite = this.taktX(4) + 6;
+    let s = Notenbild.klavierLinien(breite);
+    // Vorzeichen der Tonart (ein ♭ auf h¹ bzw. H) und 4/4
+    if (this.stueck.vz < 0) {
+      s += `<text x="56" y="${this.y(6, 'rh') + 3}" class="ns ns-vz">♭</text>`;
+      s += `<text x="56" y="${this.y(-8, 'lh') + 3}" class="ns ns-vz">♭</text>`;
+    }
+    [this.OBEN, this.UNTEN_Y].forEach(u => {
+      s += `<text x="78" y="${u - 21}" class="nt kp-takt">4</text><text x="78" y="${u - 1}" class="nt kp-takt">4</text>`;
+    });
+    const oben = this.OBEN - 40;
+    for (let t = 1; t <= 4; t++) {
+      const x = this.taktX(t) - 1;
+      if (t < 4) s += `<line x1="${x}" x2="${x}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/>`;
+      else {
+        // Wiederholungszeichen: Punkte, dünner und dicker Strich
+        s += `<line x1="${x - 7}" x2="${x - 7}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/><rect x="${x - 4}" y="${oben}" width="4" height="${this.UNTEN_Y - oben}" class="nb"/>`;
+        [this.OBEN, this.UNTEN_Y].forEach(u => { s += `<circle cx="${x - 13}" cy="${u - 25}" r="2.4" class="nb"/><circle cx="${x - 13}" cy="${u - 15}" r="2.4" class="nb"/>`; });
+      }
+    }
+    const noten = this.stueck.noten.filter(n => n.start < 16);
+    const achtel = noten.filter(n => n.dauer === 0.5 && n.hand === 'rh');
+    for (const n of noten) {
+      const x = this.x(n.start);
+      let g = '';
+      const hohl = n.dauer >= 2;
+      n.stufen.forEach((st, k) => {
+        const y = this.y(st, n.hand);
+        g += this.hilfslinien(x, y, n.hand) + Notenbild.kopf(x, y, hohl);
+        if (n.dauer < 4) {
+          const hoch = n.hand === 'rh' ? st < 6 : st < -6;
+          if (k === 0) g += hoch
+            ? `<line x1="${x + 5.8}" x2="${x + 5.8}" y1="${y - 1}" y2="${y - 31}" class="nh"/>`
+            : `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 31}" class="nh"/>`;
+        }
+      });
+      // Finger: rechte Hand über dem oberen System, linke unter dem unteren
+      if (n.finger.length) {
+        g += n.hand === 'rh'
+          ? `<text x="${x}" y="${this.OBEN - 50}" class="kp-finger">${n.finger.join('')}</text>`
+          : n.finger.map((f, k) => `<text x="${x}" y="${this.UNTEN_Y + 17 + k * 14}" class="kp-finger">${f}</text>`).join('');
+      }
+      s += `<g class="kp-n" data-i="${n.i}" data-hand="${n.hand}" style="--hand:${this.FARBE[n.hand]}">${g}</g>`;
+    }
+    // Achtelpaare mit Balken
+    for (let k = 0; k + 1 < achtel.length; k += 2) {
+      const [a, b] = [achtel[k], achtel[k + 1]];
+      const xa = this.x(a.start) + 5.8, xb = this.x(b.start) + 5.8;
+      const ya = this.y(a.stufen[0], 'rh') - 31, yb = this.y(b.stufen[0], 'rh') - 31;
+      s += `<path d="M${xa - .8} ${ya} L${xb + .8} ${yb} L${xb + .8} ${yb + 5} L${xa - .8} ${ya + 5} Z" class="nb kp-balken" data-i="${a.i}"/>`;
+    }
+ // Ende beim 2. Mal: Pfeil über dem ersten Ton von Takt 4, liegen lassen
+    const xe = this.x(12);
+    s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 92}" class="kp-endtext">2. Mal: hier Ende, liegen lassen</text>` +
+      `<text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
+    s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
+    return `<svg class="notenbild kp-system" viewBox="0 ${oben - 66} ${breite} ${this.UNTEN_Y - oben + 100}" role="img" aria-label="Noten">${s}</svg>`;
+  },
+  hilfslinien(x, y, hand) {
+    const unten = hand === 'rh' ? this.OBEN : this.UNTEN_Y;
+    let s = '';
+    for (let ly = unten + 10; ly <= y + 0.1; ly += 10) s += `<line x1="${x - 11}" x2="${x + 11}" y1="${ly}" y2="${ly}" class="nl"/>`;
+    for (let ly = unten - 50; ly >= y - 0.1; ly -= 10) s += `<line x1="${x - 11}" x2="${x + 11}" y1="${ly}" y2="${ly}" class="nl"/>`;
+    return s;
+  },
+
+  /* ---------- Tasten ---------- */
+  weiss(m) { return !this.SCHWARZ.includes(m % 12); },
+  tastenZeichnen() {
+    const weisse = [];
+    for (let m = this.VON; m <= this.BIS; m++) if (this.weiss(m)) weisse.push(m);
+    const b = 100 / weisse.length;
+    let html = weisse.map((m, i) => `<button type="button" class="kt w" data-m="${m}" style="left:${i * b}%;width:${b}%" aria-label="${Klavierseite.name(m)}">
+      <span class="kt-name">${Klavierseite.name(m)}</span></button>`).join('');
+    weisse.forEach((m, i) => {
+      if (i === weisse.length - 1 || this.weiss(m + 1)) return;
+      const [kreuz, be] = Klavierseite.namenSchwarz(m + 1);
+      html += `<button type="button" class="kt s" data-m="${m + 1}" style="left:${(i + 0.7) * b}%;width:${b * 0.6}%" aria-label="${kreuz} oder ${be}">
+        <span class="kt-name">${kreuz}<br>${be}</span></button>`;
+    });
+    this.tastenEl = this.el.querySelector('.kp-tasten');
+    this.tastenEl.innerHTML = html;
+    this.tastenEl.style.setProperty('--taste', `${this.tastenEl.clientWidth / weisse.length}px`);
+  },
+  taste(m) { return this.tastenEl.querySelector(`[data-m="${m}"]`); },
+
+  bedienen() {
+    const el = this.el;
+    el.querySelectorAll('[data-hand]').forEach(b => b.addEventListener('click', () => {
+      this.hand = b.dataset.hand; this.merken('hand', this.hand); this.stopp(); this.leisteZeigen();
+    }));
+    el.querySelectorAll('[data-art]').forEach(b => b.addEventListener('click', () => {
+      this.art = b.dataset.art; this.merken('art', this.art); this.stopp(); this.leisteZeigen();
+    }));
+    const bpm = el.querySelector('#kp-bpm');
+    bpm.addEventListener('input', () => {
+      this.bpm = Number(bpm.value);
+      el.querySelector('#kp-bpm-text').textContent = this.bpm;
+      this.merken('bpm', this.bpm);
+      if (this.lauf) this.lauf.tempoNeu = true;
+    });
+    const schalter = (id, feld) => el.querySelector(id).addEventListener('change', e => {
+      this[feld] = e.target.checked; this.merken(feld, this[feld] ? 'an' : 'aus');
+      if (feld === 'namen') this.tastenEl.classList.toggle('ohne-namen', !this.namen);
+    });
+    schalter('#kp-andere', 'andere'); schalter('#kp-metro', 'metro'); schalter('#kp-namen', 'namen');
+    el.querySelector('#kp-los').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(); });
+
+    // Finger: drücken, gleiten, loslassen – wie am Klavier
+    const t = this.tastenEl;
+    this.finger = new Map();
+    this.gedrueckt = new Map();
+    const unter = e => {
+      const k = document.elementFromPoint(e.clientX, e.clientY)?.closest('.kt');
+      return k && t.contains(k) ? Number(k.dataset.m) : null;
+    };
+    t.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      try { t.setPointerCapture(e.pointerId); } catch { /* egal */ }
+      this.drueck(e.pointerId, unter(e));
+    });
+    t.addEventListener('pointermove', e => {
+      if (!this.finger.has(e.pointerId)) return;
+      const m = unter(e);
+      if (m === (this.finger.get(e.pointerId)?.m ?? null)) return;
+      this.los(e.pointerId);
+      this.drueck(e.pointerId, m);
+    });
+    const ende = e => { Ton.audio(); this.los(e.pointerId); this.finger.delete(e.pointerId); };
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => t.addEventListener(n, ende));
+    t.addEventListener('contextmenu', e => e.preventDefault());
+    const groesse = () => this.tastenEl?.style.setProperty('--taste', `${this.tastenEl.clientWidth / 15}px`);
+    window.addEventListener('resize', groesse);
+    App.beimAufraeumen(() => window.removeEventListener('resize', groesse));
+  },
+
+  drueck(id, m) {
+    if (m === null) { this.finger.set(id, null); return; }
+    this.finger.set(id, { m, aus: Ton.anschlag(m, 'klavier') });
+    this.gedrueckt.set(m, (this.gedrueckt.get(m) || 0) + 1);
+    this.taste(m)?.classList.add('an');
+    this.angeschlagen(m);
+  },
+  los(id) {
+    const f = this.finger.get(id);
+    if (!f) return;
+    f.aus();
+    const n = (this.gedrueckt.get(f.m) || 1) - 1;
+    if (n > 0) this.gedrueckt.set(f.m, n); else { this.gedrueckt.delete(f.m); this.taste(f.m)?.classList.remove('an'); }
+    this.finger.set(id, null);
+  },
+
+  /* ---------- Üben ---------- */
+  uhr() { return performance.now() / 1000; },
+  spb() { return 60 / this.bpm; },
+
+  /* Schritte für „Schritt für Schritt“: alle eigenen Noten, die gleichzeitig beginnen */
+  schritte() {
+    const zeiten = [...new Set(this.meine().map(n => n.start))].sort((a, b) => a - b);
+    return zeiten.map(z => {
+      const noten = this.meine().filter(n => n.start === z);
+      return { zeit: z, noten, midis: [...new Set(noten.flatMap(n => n.midis))] };
+    });
+  },
+
+  starten() {
+    this.zuruecksetzen();
+    const vorlauf = this.art === 'mit' ? 4 : 0;
+    this.lauf = {
+      t: -vorlauf,                     // Schläge ab Beginn, beim Mitspielen erst der Einzähltakt
+      zuletzt: this.uhr(),
+      schritte: this.art === 'schritt' ? this.schritte() : null, s: 0,
+      erwartet: this.art === 'mit' ? this.meine().flatMap(n => n.midis.map(m => ({ m, start: n.start, n, ok: false }))) : null,
+      falsch: 0,
+      auto: this.andere && this.hand !== 'beide' ? this.fremde().map(n => ({ n, an: null, fertig: false })) : [],
+      schlag: Math.floor(-vorlauf) - 1,
+    };
+    this.el.querySelector('#kp-los').innerHTML = '■ Stopp';
+    this.el.querySelectorAll('.kp-cursor').forEach(c => c.removeAttribute('hidden'));
+    this.zielZeigen();
+    const schritt = () => {
+      if (!this.lauf) return;
+      this.weiter();
+      this.raf = requestAnimationFrame(schritt);
+    };
+    this.raf = requestAnimationFrame(schritt);
+  },
+
+  weiter() {
+    const l = this.lauf;
+    const jetzt = this.uhr();
+    let t = l.t + (jetzt - l.zuletzt) / this.spb();
+    l.zuletzt = jetzt;
+    if (l.schritte) {
+      const s = l.schritte[l.s];
+      if (s && t > s.zeit) t = s.zeit;          // wartet auf die richtige Taste
+    }
+    // Metronom auf jedem Schlag
+    const schlag = Math.floor(t + 1e-6);
+    if (schlag > l.schlag) {
+      l.schlag = schlag;
+      if ((this.metro || schlag < 0) && schlag < this.ende()) Ton.klick(0, ((schlag % 4) + 4) % 4 === 0);
+    }
+    if (l.t < 16 && t >= 16) this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
+    l.t = t;
+    // Die andere Hand
+    for (const a of l.auto) {
+      if (!a.an && !a.fertig && t >= a.n.start) {
+        a.an = a.n.midis.map(m => Ton.anschlag(m, 'klavier'));
+        this.markieren(a.n.bild, 'kp-spielt', true);
+      }
+      if (a.an && t >= a.n.start + a.n.dauer - 0.04) {
+        a.an.forEach(aus => aus()); a.an = null; a.fertig = true;
+        this.markieren(a.n.bild, 'kp-spielt', false);
+      }
+    }
+    this.cursor(t);
+    if (l.erwartet) {
+      // Mitspielen: was vorbei ist und nicht getroffen wurde, ist verpasst
+      for (const e of l.erwartet) if (!e.ok && !e.verpasst && (t - e.start) * this.spb() > this.FENSTER) {
+        e.verpasst = true;
+        if (l.erwartet.filter(x => x.n === e.n).every(x => x.ok || x.verpasst)) this.markieren(e.n.bild, 'kp-falsch', true);
+      }
+      this.zielZeigen();
+    }
+    if (t >= this.ende() + (l.schritte ? 0 : 1)) this.fertig();
+  },
+
+  angeschlagen(m) {
+    const l = this.lauf;
+    if (!l || l.t + (this.uhr() - l.zuletzt) / this.spb() < -0.5) return;
+    if (l.schritte) {
+      const s = l.schritte[l.s];
+      if (!s) return;
+      if (!s.midis.includes(m)) { this.falschBlitz(m); l.falsch++; return; }
+      if (!s.midis.every(x => this.gedrueckt.has(x))) return;   // Akkord: alle Tasten zusammen
+      s.noten.forEach(n => this.markieren(n.bild, 'kp-ok', true));
+      l.t = Math.max(l.t, s.zeit);
+      l.s++;
+      this.zielZeigen();
+      if (l.s >= l.schritte.length) l.endeBei = this.ende();
+      return;
+    }
+    // Mitspielen: der nächste passende, noch offene Ton im Zeitfenster – gemessen am
+    // Moment des Drückens, nicht am letzten gezeichneten Bild
+    const sek = this.spb();
+    const t = l.t + (this.uhr() - l.zuletzt) / sek;
+    const kand = l.erwartet.filter(e => e.m === m && !e.ok && !e.verpasst && Math.abs(e.start - t) * sek <= this.FENSTER);
+    if (!kand.length) { l.falsch++; this.falschBlitz(m); return; }
+    const e = kand.sort((a, b) => Math.abs(a.start - t) - Math.abs(b.start - t))[0];
+    e.ok = true;
+    if (l.erwartet.filter(x => x.n === e.n).every(x => x.ok)) this.markieren(e.n.bild, 'kp-ok', true);
+  },
+
+  /* Leuchtende Tasten: im Schrittmodus die nächste, beim Mitspielen die gerade fälligen */
+  zielZeigen() {
+    const l = this.lauf;
+    let ziele = [];
+    if (l?.schritte) {
+      const s = l.schritte[l.s];
+      if (s) ziele = s.noten.flatMap(n => n.midis.map(m => [m, n.hand]));
+    } else if (l) {
+      ziele = this.meine().filter(n => l.t >= n.start - 0.15 && l.t < n.start + Math.min(n.dauer, 1) - 0.1)
+        .flatMap(n => n.midis.map(m => [m, n.hand]));
+    }
+    const schluessel = ziele.map(z => z.join()).join('|');
+    if (schluessel === this.zielSchluessel) return;
+    this.zielSchluessel = schluessel;
+    this.tastenEl.querySelectorAll('.ziel').forEach(k => { k.classList.remove('ziel'); k.style.removeProperty('--hand'); });
+    for (const [m, h] of ziele) {
+      const k = this.taste(m);
+      if (k) { k.classList.add('ziel'); k.style.setProperty('--hand', this.FARBE[h]); }
+    }
+  },
+  falschBlitz(m) {
+    const k = this.taste(m);
+    if (!k) return;
+    k.classList.remove('falsch'); void k.offsetWidth; k.classList.add('falsch');
+  },
+  markieren(i, klasse, an) {
+    this.el.querySelectorAll(`.kp-n[data-i="${i}"], .kp-balken[data-i="${i}"]`).forEach(g => g.classList.toggle(klasse, an));
+  },
+
+  cursor(t) {
+    const c = this.el.querySelector('.kp-cursor');
+    if (t < 0) { c.setAttribute('hidden', ''); return; }
+    c.removeAttribute('hidden');
+    // Am Ende (liegen lassen) bleibt der Cursor auf dem letzten Ton stehen
+    c.setAttribute('x', this.x(Math.min(t, 28)) - 1.5);
+    this.el.querySelector('.kp-endpfeil')?.classList.toggle('jetzt', t >= 16);
+  },
+
+  fertig() {
+    const l = this.lauf;
+    this.stopp(false);
+    const erg = this.el.querySelector('#kp-ergebnis');
+    if (l.schritte) {
+      erg.innerHTML = `${Icons.raw('check')} Geschafft!${l.falsch ? ` ${l.falsch}× daneben gedrückt.` : ' Kein einziger falscher Ton.'}
+        ${l.falsch <= 2 ? 'Probier es jetzt mit „Mitspielen“.' : ''}`;
+    } else {
+      const ok = l.erwartet.filter(e => e.ok).length;
+      const p = Math.round(ok / l.erwartet.length * 100);
+      erg.innerHTML = `${ok} von ${l.erwartet.length} Tönen getroffen (${p} %)${l.falsch ? ` · ${l.falsch}× daneben` : ''}.
+        ${p >= 90 ? 'Super – versuch es etwas schneller!' : p >= 60 ? 'Schon gut – noch ein paar Mal.' : 'Übe es erst „Schritt für Schritt“ oder langsamer.'}`;
+    }
+  },
+
+  stopp(aufraeumen = true) {
+    if (this.raf) cancelAnimationFrame(this.raf);
+    this.raf = null;
+    const l = this.lauf;
+    this.lauf = null;
+    l?.auto.forEach(a => { a.an?.forEach(aus => aus()); a.an = null; });
+    if (!this.el?.querySelector('.kp-seite')) return;
+    const los = this.el.querySelector('#kp-los');
+    if (los) los.innerHTML = `${Icons.raw('play')}${l ? 'Nochmal' : 'Start'}`;
+    this.el.querySelectorAll('.kp-spielt').forEach(g => g.classList.remove('kp-spielt'));
+    this.zielSchluessel = null;
+    this.tastenEl?.querySelectorAll('.ziel').forEach(k => { k.classList.remove('ziel'); k.style.removeProperty('--hand'); });
+    if (aufraeumen) this.el.querySelectorAll('.kp-cursor').forEach(c => c.setAttribute('hidden', ''));
+  },
+
+  zuruecksetzen() {
+    if (!this.el?.querySelector('.kp-seite')) return;
+    this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
+    const erg = this.el.querySelector('#kp-ergebnis');
+    if (erg) erg.textContent = '';
+    this.el.querySelectorAll('.kp-cursor').forEach(c => c.setAttribute('hidden', ''));
+  },
+};
