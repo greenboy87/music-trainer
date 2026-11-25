@@ -478,7 +478,7 @@ const App = {
       { name: 'Drumgrooves', info: 'Grooves und Fills mit Hi-Hat, Snare, Bassdrum und Toms.', trainer: `
             <a class="card spiel-karte" href="#/drumgrooves" style="--farbe:#fb923c">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
-              <span class="spiel-titel">Groove-Trainer</span>
+              <span class="spiel-titel">Drumgrooves</span>
               <span class="hint">Die fünf Grooves auf den Pads oder am Drumset mitspielen – Schritt für Schritt aufgebaut.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme()} / 30</span>
             </a>
