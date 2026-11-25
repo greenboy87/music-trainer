@@ -10,12 +10,12 @@
    vz = Vorzeichen der Tonart (-1 = ein ♭: jedes H ist ein B).
 
    Üben: rechte Hand, linke Hand oder beide. Drei Arten:
-   – Mitspielen: Cursor läuft im Tempo, ein Takt wird eingezählt, am Ende wie viele
+   – Üben (intern „mit“): Cursor läuft im Tempo, ein Takt wird eingezählt, am Ende wie viele
      Töne getroffen wurden.
    – Schritt für Schritt: Der Cursor läuft mit, bleibt aber an der nächsten Note
      stehen, bis die richtige(n) Taste(n) gedrückt sind.
-   – Sterne sammeln: wie Mitspielen, aber gewertet und nie mit leuchtenden Tasten
-     (beim Mitspielen per Schalter „Tasten leuchten“, anfangs aus).
+   – Sterne sammeln: wie Üben, aber gewertet und nie mit leuchtenden Tasten
+     (beim Üben per Schalter „Tasten leuchten“, anfangs aus).
    Wahlweise spielt die andere Hand mit. Gewertet wird nur „Sterne sammeln“: Sterne wie bei der
    Rhythmus-Prüfung (ab 95 % sechs), gespeichert als Spiel „klavier-pruefung“, Stufe 0 = rechte
    Hand, 1 = linke Hand, 2 = beide – damit im Konto und im School-Tool. */
@@ -57,23 +57,23 @@ const Klavierpruefung = {
     this.leuchten = this.lies('leuchten') === 'an';   // Notennamen auf den Tasten: standardmäßig aus
     const rahmen = inhalt => {
       el.innerHTML = `
-        <a class="zurueck" href="#/pruefung">${Icons.raw('back')}Prüfungen</a>
+        <a class="zurueck" href="#/">${Icons.raw('back')}Übersicht</a>
         <section class="card kp-seite">${inhalt}</section>`;
     };
     App.beimAufraeumen(() => { this.stopp(); this.zoomFrei(); });
     this.zoomSperren();
     if (!Konto.angemeldet()) {
-      return rahmen(`<h2>Klavier-Prüfung</h2>
+      return rahmen(`<h2>In the End</h2>
         <p class="hint">Die Noten gibt es nur für angemeldete Schülerinnen und Schüler – das Stück ist
           urheberrechtlich geschützt und darf nur im Unterricht genutzt werden.</p>
         <a class="knopf primary" href="#/anmelden">Anmelden</a>`);
     }
     if (!this.stueck) {
-      rahmen('<h2>Klavier-Prüfung</h2><p class="hint">Noten werden geladen …</p>');
+      rahmen('<h2>In the End</h2><p class="hint">Noten werden geladen …</p>');
       try { this.stueck = this.lesen((await Konto.api(`/api/stueck/${this.ID}`)).stueck); }
       catch (e) {
         if (App.art !== 'klavierpruefung') return;
-        return rahmen(`<h2>Klavier-Prüfung</h2><p class="hint">${e.status === 404
+        return rahmen(`<h2>In the End</h2><p class="hint">${e.status === 404
           ? 'Die Noten sind noch nicht eingerichtet. Sag deiner Lehrkraft Bescheid.'
           : e.status === 401 ? 'Deine Anmeldung ist abgelaufen – bitte neu anmelden.'
           : 'Die Noten ließen sich nicht laden. Bist du online?'}</p>`);
@@ -117,7 +117,7 @@ const Klavierpruefung = {
     const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
     this.el.querySelector('.kp-seite').innerHTML = `
       <div class="kp-kopf">
-        <h2><a class="karte-zurueck" href="#/pruefung" title="Zurück zu den Prüfungen" aria-label="Zurück zu den Prüfungen">${Icons.raw('back')}</a>Klavier-Prüfung · ${s.titel} <span class="hint">${s.von} · Intro</span>
+        <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>${s.titel} <span class="hint">${s.von} · Intro</span>
           <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
           <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
         <div class="kp-hilfe" id="kp-hilfe" hidden>
@@ -126,9 +126,9 @@ const Klavierpruefung = {
           <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>
           <ul>
             <li><strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.</li>
-            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Zum Üben, gibt keine Sterne.
+            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Gibt keine Sterne.
               Mit dem Schalter ${Icons.raw('tastenLicht')} leuchten die Tasten mit.</li>
-            <li><strong>Sterne sammeln:</strong> Wie Mitspielen, aber es zählt. Ab 95 % gibt es sechs Sterne.</li>
+            <li><strong>Sterne sammeln:</strong> Wie Üben, aber es zählt. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Größer:</strong> Nur die Tasten von A bis a¹, dafür breiter.</li>
           </ul>
         </div>
@@ -138,7 +138,7 @@ const Klavierpruefung = {
           ${knopf('hand', 'rh', 'Rechte Hand', this.hand === 'rh')}${knopf('hand', 'lh', 'Linke Hand', this.hand === 'lh')}${knopf('hand', 'beide', 'Beide', this.hand === 'beide')}
         </div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
-          ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
+          ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Üben', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
         </div>
         <span class="kp-tempo" role="group" aria-label="Tempo">Tempo
           <button type="button" class="kp-pm" data-bpm="-5" aria-label="Langsamer">−</button>
@@ -553,7 +553,7 @@ const Klavierpruefung = {
     const erg = this.el.querySelector('#kp-ergebnis');
     if (l.schritte) {
       erg.innerHTML = `${Icons.raw('check')} Geschafft!${l.falsch ? ` ${l.falsch}× daneben gedrückt.` : ' Kein einziger falscher Ton.'}
-        ${l.falsch <= 2 ? 'Probier es jetzt mit „Mitspielen“.' : ''}`;
+        ${l.falsch <= 2 ? 'Probier es jetzt mit „Üben“.' : ''}`;
     } else if (this.art === 'mit') {
       const ok = l.erwartet.filter(e => e.ok).length;
       const p = Math.max(0, Math.round((ok - l.falsch * 0.5) / l.erwartet.length * 100));
@@ -569,7 +569,7 @@ const Klavierpruefung = {
       Fortschritt.eintragen(this.SPIEL, stufe, sterne, p, ok, l.erwartet.length, Math.round(this.ende() * this.spb()));
       erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
         <span>${p} % · ${ok} von ${l.erwartet.length} Tönen${l.falsch ? ` · ${l.falsch}× daneben` : ''}${p > alt && alt ? ' · <strong>Neuer Bestwert!</strong>' : ''}.
-        ${p >= 95 ? 'Perfekt – versuch es schneller!' : p >= 80 ? 'Super – noch ein paar Mal!' : p >= 55 ? 'Schon gut – weiter üben.' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
+        ${p >= 95 ? 'Perfekt – versuch es schneller!' : p >= 80 ? 'Super – noch ein paar Mal!' : p >= 55 ? 'Schon gut – weiter üben.' : 'Übe erst bei „Üben“ oder langsamer.'}</span>`;
       const felder = [...erg.querySelectorAll('.stern.an')];
       felder.forEach(f => f.classList.remove('an'));
       const leiter = [72, 74, 76, 79, 81, 84];

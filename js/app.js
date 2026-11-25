@@ -454,7 +454,8 @@ const App = {
     const spiele = SPIELE.filter(s => s.bereich === b);
     let hat = spiele.reduce((n, sp) => n + Fortschritt.sterneVon(sp), 0);
     let von = spiele.reduce((n, sp) => n + sp.stufen.length * Bewertung.MAX, 0);
-    if (b === 'Rhythmus') { hat += Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme(); von += 60 + 18; }
+    if (b === 'Rhythmus') { hat += Pruefungsseite.sterneSumme(); von += 60; }
+    if (b === 'Piano') { hat += Klavierpruefung.sterneSumme(); von += 18; }
     if (b === 'Drums') {
       hat += Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('part2') + Drumgrooves.sterneSumme('fill');
       von += 30 + 30 + 48;
@@ -506,7 +507,8 @@ const App = {
     // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
     const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill') + Drumgrooves.sterneSumme('part2');
     const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18 + 30 + 48 + 30;
-    const bereiche = [...new Set(SPIELE.map(s => s.bereich))];
+    // Piano hat (noch) keine Spiele in SPIELE, nur eigene Seiten – steht hinter Drums
+    const bereiche = [...new Set([...SPIELE.map(s => s.bereich), 'Piano'])];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();
     const willkommen = this.willkommen;
@@ -539,14 +541,20 @@ const App = {
       <div class="spiele-alle${this.beschreibungen() ? '' : ' ohne-texte'}">
       ${bereiche.map(b => `
         <h2 class="bereich-titel">${b}${this.bereichSterne(b)}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
-        ${b === 'Drums' ? this.drumsKarten() : `<div class="spiele-raster">
+        ${b === 'Drums' ? this.drumsKarten() : b === 'Piano' ? `<div class="spiele-raster">
+            <a class="card spiel-karte" href="#/klavierpruefung" style="--farbe:#e07b2e">
+              <span class="spiel-icon">${Icons.raw('piano')}</span>
+              <span class="spiel-titel">In the End</span>
+              <span class="hint">Das Intro auf dem Klavier – rechte und linke Hand, Schritt für Schritt oder im Tempo.</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Klavierpruefung.sterneSumme()} / 18</span>
+            </a></div>` : `<div class="spiele-raster">
           ${SPIELE.filter(s => s.bereich === b).map(s => this.spielKarte(s)).join('')}
           ${b === 'Rhythmus' ? `
             <a class="card spiel-karte" href="#/pruefung" style="--farbe:#5eead4">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
               <span class="spiel-titel">Prüfungen</span>
-              <span class="hint">Rhythmus-Zeilen auf den Pads (Klasse 5 und 6) und ein Intro auf dem Klavier.</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme()} / 78</span>
+              <span class="hint">Rhythmus-Zeilen auf den Pads – Klasse 5 und 6.</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme()} / 60</span>
             </a>` : ''}
         </div>`}`).join('')}
       </div>`;

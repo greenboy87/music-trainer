@@ -181,12 +181,6 @@ const Pruefungsseite = {
               <span class="stufe-sterne">${Icons.raw('star')} ${summe(zeilen)} / 30</span>
               <span class="hint">5 Zeilen · ${info}</span>
             </a>`).join('')}
-          <a class="knopf stufe" href="#/klavierpruefung">
-            <span class="stufe-nr">Klavier</span>
-            <span class="stufe-name">In the End</span>
-            <span class="stufe-sterne">${Icons.raw('star')} ${Klavierpruefung.sterneSumme()} / 18</span>
-            <span class="hint">rechte und linke Hand · Schritt für Schritt oder im Tempo</span>
-          </a>
         </div>
       </section>`;
   },

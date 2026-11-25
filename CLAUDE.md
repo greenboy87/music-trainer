@@ -66,7 +66,7 @@ Groove + Fill (`#/groovefill`, derselbe Trainer mit `modus: 'fill'`): 1 Takt Gro
 Sechs Pads (oben Toms Q W E, unten Hi-Hat · Snare · Bassdrum A S D – Snare immer in der Mitte). Spiel `groove-fill`
 (Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Drums“, `unter: 'Drumgrooves'` – seit 25.11.2026 steht alles in der einen Unterkategorie Drumgrooves). Drumset-Ansicht: beim Vorspielen (Anhören, Computer-Groove unter dem Fill) schlagen Sticks R (orange) und L (türkis, Farben wie der Handsatz der Rhythmus-Prüfung) und das Bassdrum-Pedal F (lila); Schalter „Sticks“. Handsatz: im Groove Hi-Hat R, Snare L; im Fill wie die Rhythmus-Werkstatt (`DG.handsatz`, nach `handsatzBerechnen` in rhythmus-werkstatt/js/noten.js: Zählzeit R, zwei Achtel R L, Viertel hintereinander R L). Gleiche Trommel: Sticks nebeneinander. Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
 
-Klavier-Prüfung (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
+Klavier-Prüfung „In the End“ (`js/klavierpruefung.js`, `#/klavierpruefung`; seit 25.11.2026 eigene Kategorie „Piano“ auf der Startseite, nicht mehr unter Prüfungen; Übeart „Mitspielen“ heißt in der Oberfläche „Üben“):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal
 gezeichnet mit Wiederholung, gespielt 2×, beim 2. Mal Ende auf Takt 4, Schlag 1 (liegen
 lassen). Tastennummern wie Toms Aufkleber am Keyboard (`NUMMER`, keine Fingersätze) unter den Noten und auf den Tasten. Rechte/linke Hand/beide; „Schritt für Schritt“ (Cursor wartet auf die richtigen

@@ -730,4 +730,5 @@ const BEREICH_INFO = {
   'Bassschlüssel Vorzeichen': 'Erst spielen, wenn der Bassschlüssel sitzt.',
   'Oktavlagen': 'Jede Oktave beginnt mit c: C – c – c¹ – c² – c³.',
   'Drums': 'Grooves und Fills auf den Pads oder am Drumset.',
+  'Piano': 'Songs auf dem Klavier spielen.',
 };
