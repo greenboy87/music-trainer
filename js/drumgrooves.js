@@ -4,7 +4,7 @@
       Groove 5 = Note 1) auf drei Pads oder am Drumset mitspielen. Jeder Groove wird
       aufgebaut: erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles. Reihenfolge der
       Pads umschaltbar (Hi-Hat · Snare · Bassdrum oder Bassdrum · Snare · Hi-Hat, die Snare immer in der Mitte).
-      „Mitspielen“ übt (keine Sterne, Pads leuchten auf Wunsch), „Sterne sammeln“ wertet
+      „Üben“ (keine Sterne, Pads leuchten auf Wunsch), „Sterne sammeln“ wertet
       den ganzen Groove: Spiel „drumgrooves“, Stufe 0–4 = Groove 1–5, Sterne wie bei der
       Rhythmus-Prüfung (ab 95 % sechs). Der Groove läuft nach dem Einzählen 4×.
    2. Groove + Fill (#/groovefill): 1 Takt Groove (Groove 2: Bassdrum auf 1 und 3) + 1 Takt
@@ -246,7 +246,7 @@ const Drumgrooves = {
             <strong>Fill</strong> auf Snare und Toms – insgesamt ${this.DURCHGAENGE}×. Vier Rhythmen aus Vierteln und Achteln, jeder nur auf der Snare und auf Snare + Toms.</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst nur der Fill (den Groove spielt der Computer), dann Groove + Fill.</li>
-            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt. Zum Üben, gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
+            <li><strong>Üben:</strong> Ein Takt wird eingezählt. Gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> Groove + Fill, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ⇄ umdrehen. Oder das Drumset.</li>
           </ul>` : `
@@ -255,7 +255,7 @@ const Drumgrooves = {
             : 'Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.'}</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
-            <li><strong>Mitspielen:</strong> Ein Takt wird eingezählt, dann läuft der Groove ${this.DURCHGAENGE}× durch. Zum Üben, gibt keine Sterne.
+            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove ${this.DURCHGAENGE}× durch. Gibt keine Sterne.
               Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> der ganze Groove, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Pads</strong> oder <strong>Drumset</strong> – mit ⇄ drehst du die Pads um. Tasten am Computer: A, S, D.</li>
@@ -277,7 +277,7 @@ const Drumgrooves = {
       <div class="kp-leiste">
         <div class="klavier-groesse dg-grooves${fill ? ' fills' : ''}" role="group" aria-label="${fill ? 'Fill' : 'Groove'}">${wahl}</div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
-          ${knopf('art', 'mit', 'Mitspielen', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
+          ${knopf('art', 'mit', 'Üben', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
         </div>
         <span class="kp-tempo" role="group" aria-label="Tempo">Tempo
           <button type="button" class="kp-pm" data-bpm="-5" aria-label="Langsamer">−</button>
@@ -536,7 +536,7 @@ const Drumgrooves = {
       c.removeAttribute('hidden');
       c.setAttribute('x', DG.x(ganz) + (p - ganz) * DG.B - 8);
     }
-    // Pads leuchten (nur Mitspielen mit Schalter): was gerade fällig ist
+    // Pads leuchten (nur Üben mit Schalter): was gerade fällig ist
     if (!l.hoeren && this.art === 'mit' && this.leuchten) {
       const faellig = new Set(l.erwartet.filter(e => t >= e.t - 0.2 && t < e.t + 0.25).map(e => e.k));
       this.el.querySelectorAll('.dg-spielfeld [data-k]').forEach(p => p.classList.toggle('ziel', faellig.has(p.dataset.k)));
@@ -565,7 +565,7 @@ const Drumgrooves = {
     const wort = this.modus === 'fill' ? 'Fill' : this.modus === 'part2' ? 'Level' : 'Groove';
     erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
       <span>${p} %${l.falsch ? ` · ${l.falsch}× daneben` : ''}${p > alt && alt ? ' · <strong>Neuer Bestwert!</strong>' : ''}.
-      ${p >= 95 ? (letzte ? `Perfekt – alle ${wort}s!` : `Perfekt – weiter zum nächsten ${wort === 'Level' ? 'Level' : wort}!`) : p >= 80 ? 'Super – noch ein paar Mal!' : 'Übe erst bei „Mitspielen“ oder langsamer.'}</span>`;
+      ${p >= 95 ? (letzte ? `Perfekt – alle ${wort}s!` : `Perfekt – weiter zum nächsten ${wort === 'Level' ? 'Level' : wort}!`) : p >= 80 ? 'Super – noch ein paar Mal!' : 'Übe erst bei „Üben“ oder langsamer.'}</span>`;
     const felder = [...erg.querySelectorAll('.stern.an')];
     felder.forEach(f => f.classList.remove('an'));
     const leiter = [72, 74, 76, 79, 81, 84];
