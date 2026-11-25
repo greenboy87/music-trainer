@@ -375,6 +375,7 @@ const Drumgrooves = {
       const p = e.target.closest('.dg-pad, .sz-teil');
       return p && !p.hasAttribute('data-aus') && feld.contains(p) ? p : null;
     };
+    if (!feld.dataset.geschuetzt) { feld.dataset.geschuetzt = '1'; Vollbild.beruehrung(feld); }
     feld.onpointerdown = e => {
       const p = ziel(e);
       if (!p) return;

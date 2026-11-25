@@ -356,6 +356,8 @@ const Klavierpruefung = {
     const t = this.tastenEl;
     this.finger = new Map();
     this.gedrueckt = new Map();
+    // iPad: keine Textauswahl/Menü; liegt kein Finger mehr auf, ist auch keine Taste mehr gedrückt
+    Vollbild.beruehrung(t, () => this.allesLos());
     const unter = e => {
       const k = document.elementFromPoint(e.clientX, e.clientY)?.closest('.kt');
       return k && t.contains(k) ? Number(k.dataset.m) : null;
@@ -386,6 +388,13 @@ const Klavierpruefung = {
     this.gedrueckt.set(m, (this.gedrueckt.get(m) || 0) + 1);
     this.taste(m)?.classList.add('an');
     this.angeschlagen(m);
+  },
+  allesLos() {
+    if (!this.finger) return;
+    [...this.finger.keys()].forEach(id => this.los(id));
+    this.finger.clear();
+    this.gedrueckt?.clear();
+    this.tastenEl?.querySelectorAll('.kt.an').forEach(k => k.classList.remove('an'));
   },
   los(id) {
     const f = this.finger.get(id);

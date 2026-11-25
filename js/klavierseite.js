@@ -300,6 +300,8 @@ const Klavierseite = {
     const ende = e => { Ton.audio(); this.loslassen(e.pointerId); this.finger.delete(e.pointerId); };
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => t.addEventListener(n, ende));
     t.addEventListener('contextmenu', e => e.preventDefault());
+    // iPad: keine Textauswahl/Menü; liegt kein Finger mehr auf, ist auch keine Taste mehr gedrückt
+    Vollbild.beruehrung(t, () => this.allesLoslassen());
     // Mit der Tastatur angewählte Taste (Eingabe oder Leertaste) klingt kurz an
     t.addEventListener('click', e => {
       const k = e.detail === 0 && e.target.closest('.kt');

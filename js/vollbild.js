@@ -57,6 +57,25 @@ const Vollbild = {
       : `<a class="wechsel-knopf" href="#/${w.art}" title="Zum ${w.name}" aria-label="Zum ${w.name}">${Icons.raw(w.icon)}</a>`)).join('')}</span>`;
   },
 
+  /* Spielflächen fürs iPad (Klaviatur, Pads, Drumset): Safari soll eine Berührung nie als Textauswahl,
+     Lupe oder Menü („Kopieren, Auswahl suchen …“) deuten – das unterbrach auch das Loslassen, und eine
+     Taste blieb gedrückt. Darum: touchstart abfangen (Pointer-Events kommen trotzdem), eine Auswahl sofort
+     aufheben und alles loslassen, sobald kein Finger mehr auf dem Bildschirm liegt oder die Seite in den
+     Hintergrund geht. alleLos: lässt alle gedrückten Tasten los. */
+  beruehrung(el, alleLos = () => {}) {
+    el.addEventListener('touchstart', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+    const fertig = e => { if (!e.touches || e.touches.length === 0) alleLos(); };
+    el.addEventListener('touchend', fertig);
+    el.addEventListener('touchcancel', fertig);
+    el.addEventListener('selectstart', e => e.preventDefault());
+    const weg = () => { const s = document.getSelection?.(); if (s && s.rangeCount && !s.isCollapsed) s.removeAllRanges(); };
+    el.addEventListener('pointerdown', weg);
+    const verdeckt = () => { if (document.hidden) alleLos(); };
+    window.addEventListener('blur', alleLos);
+    document.addEventListener('visibilitychange', verdeckt);
+    App.beimAufraeumen(() => { window.removeEventListener('blur', alleLos); document.removeEventListener('visibilitychange', verdeckt); });
+  },
+
   knopf() {
     return `<button type="button" class="small vollbild-knopf" aria-pressed="false" title="Vollbild an oder aus">${Icons.raw('expand')}<span>Vollbild</span></button>`;
   },

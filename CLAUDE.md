@@ -158,3 +158,5 @@ Keine punktierten Noten, höchstens zwei Hilfslinien, Notennamen klein (c, cis,
 es, b) wie im Unterricht.
 
 Startseite: Die Beschreibungen der Spielkarten sind versteckt; ein einziges i über allen Spielen (`#btn-beschreibungen`, `App.beschreibungenBinden`, `localStorage` `musiktrainer-beschreibungen`) blendet alle ein. Kein i je Karte (Toms Wunsch).
+
+iPad-Spielflächen (Klaviatur In the End, freies Klavier, Drum-Pads/Drumset): `Vollbild.beruehrung(el, alleLos)` fängt `touchstart` ab (keine Textauswahl, kein „Kopieren“-Menü), hebt Auswahlen auf und lässt alle Tasten los, sobald kein Finger mehr aufliegt bzw. bei blur/Hintergrund – vorher blieben Tasten auf dem iPad manchmal gedrückt (25.11.2026). Auf `.card.vollbild` gilt überall `user-select: none`.
