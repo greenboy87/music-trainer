@@ -1443,3 +1443,4 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .card.vollbild input, .card.vollbild textarea { -webkit-user-select: text; user-select: text; }
 .kp-taktnr { font-size: 13px; font-style: italic; fill: currentColor; opacity: .6; }
 .kp-akkord { font-size: 14px; font-weight: 800; text-anchor: middle; fill: var(--hand, currentColor); }
+.kp-laufend .kp-taktnr { font-size: 12px; }

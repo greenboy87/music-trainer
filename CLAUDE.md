@@ -171,5 +171,5 @@ künftigen Weihnachtssachen.
 `js/klavierpruefung.js` kann mehrere Lieder (`Klavierpruefung.LIEDER`, Route `#/klavierpruefung/<id>`):
 `in-the-end` (geschützt vom Worker, mit Wiederholung) und `jingle-bells` (gemeinfrei, Noten offen im Code; Toms
 Fassung aus „Mein erster Song“, Klasse 6: Melodie rechts mit Tasten 1–5 = c¹–g¹, Begleitakkorde links, die der
-Computer spielt; 16 Takte, Zeile blättert mit `zeileZeigen`; Pausen werden aus Lücken gezeichnet, `#` an der Stufe
-= Kreuz). Zwei Stufen (`HAENDE: ['rh','beide']`, `HAND_TEXT`): Anfänger = 1 Hand (Begleitung spielt Computer als voller Akkord, `AKKORDE`/`n.klang`), Profi = 2 Hände (links die Grundtöne, Klaviatur nach links erweitert über `BEIDE`). lh-Format `Schlag:Dauer:Stufe=Akkord`, Akkordnamen zwischen den Systemen. Spiel `klavier-jingle-bells`, Stufe 0 = Anfänger, 1 = Profi. Saison Weihnachten.
+Computer spielt; 16 Takte; Pausen werden aus Lücken gezeichnet, `#` an der Stufe
+= Kreuz). Nur rechte Hand (Profi mit 2 Händen hat Tom wieder verworfen). Begleitakkorde links mit Namen (`Stufe…=Akkord`), spielt der Computer. Laufende Notenzeile (`laufend: true`, `svgLaufend`/`laufen`): ganzes Lied als Streifen, der Cursor bleibt im ersten Takt des Fensters, rechts drei Takte Vorschau. Spiel `klavier-jingle-bells`, Stufe 0. Saison Weihnachten.

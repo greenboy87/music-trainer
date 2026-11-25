@@ -36,10 +36,7 @@ const Klavierpruefung = {
       untertitel: 'Mein erster Song', wiederholung: false, bpm: 90, bpmMax: 160,
       VON: 55, BIS: 76, GROSS: [57, 74], groesseText: 'a bis d²', andereText: 'Begleitung spielt mit',
       NUMMER: { lh: {}, rh: { 60: '1', 62: '2', 64: '3', 65: '4', 67: '5' } },
-      SPIEL: 'klavier-jingle-bells', HAENDE: ['rh', 'beide'],
-      HAND_TEXT: { rh: 'Anfänger · 1 Hand', beide: 'Profi · 2 Hände' },
-      // Profi: die Klaviatur reicht nach links bis zum G für die Grundtöne
-      BEIDE: { VON: 41, BIS: 69, GROSS: [43, 67], groesseText: 'G bis g¹' },
+      SPIEL: 'klavier-jingle-bells', HAENDE: ['rh'], laufend: true,
       AKKORDE: { C: '-7+-5+-3', A7: '-9+-7#+-5+-3', Dm: '-6+-4+-2', G7: '-10+-8+-6+-4', D7: '-6+-4#+-2+0' },
       roh: {
         titel: 'Jingle Bells', von: 'James Lord Pierpont', vz: 0, takte: 16,
@@ -47,10 +44,12 @@ const Klavierpruefung = {
             '16:1:3 17:1:3 18:1:3 19:1:3 20:1:3 21:1:2 22:1:2 23:1:2 24:1:2 25:1:1 26:1:1 27:1:2 28:2:1 30:2:4 ' +
             '32:1:2 33:1:2 34:2:2 36:1:2 37:1:2 38:2:2 40:1:2 41:1:4 42:1:0 43:1:1 44:2:2 ' +
             '48:1:3 49:1:3 50:1:3 51:1:3 52:1:3 53:1:2 54:1:2 55:1:2 56:1:4 57:1:4 58:1:3 59:1:1 60:2:0',
-        // Linke Hand: Grundton (so spielen ihn die Profis) und Akkordname; die Begleitung des Computers
-        // spielt den ganzen Akkord (AKKORDE): C = c e g · A7 = A cis e g · Dm = d f a · G7 = G h d f · D7 = d fis a c¹
-        lh: '0:4:-7=C 4:4:-7=C 8:4:-7=C 12:2:-7=C 14:2:-9=A7 16:2:-6=Dm 18:2:-10=G7 20:4:-7=C 24:4:-6=D7 28:4:-10=G7 ' +
-            '32:4:-7=C 36:4:-7=C 40:4:-7=C 44:2:-7=C 46:2:-9=A7 48:2:-6=Dm 50:2:-10=G7 52:4:-7=C 56:4:-10=G7 60:4:-7=C',
+        // Linke Hand: die Begleitakkorde vom Arbeitsblatt (spielt der Computer), mit Namen
+        // C = c e g · A7 = A cis e g · Dm = d f a · G7 = G h d f · D7 = d fis a c¹
+        lh: '0:4:-7+-5+-3=C 4:4:-7+-5+-3=C 8:4:-7+-5+-3=C 12:2:-7+-5+-3=C 14:2:-9+-7#+-5+-3=A7 16:2:-6+-4+-2=Dm ' +
+            '18:2:-10+-8+-6+-4=G7 20:4:-7+-5+-3=C 24:4:-6+-4#+-2+0=D7 28:4:-10+-8+-6+-4=G7 32:4:-7+-5+-3=C ' +
+            '36:4:-7+-5+-3=C 40:4:-7+-5+-3=C 44:2:-7+-5+-3=C 46:2:-9+-7#+-5+-3=A7 48:2:-6+-4+-2=Dm ' +
+            '50:2:-10+-8+-6+-4=G7 52:4:-7+-5+-3=C 56:4:-10+-8+-6+-4=G7 60:4:-7+-5+-3=C',
       },
     },
   },
@@ -178,10 +177,9 @@ const Klavierpruefung = {
             (Fermate <span class="ns">\u{1D110}</span>) und lässt ihn liegen.</p>
           <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>`
           : `<p>Die Melodie spielst du mit der <strong>rechten Hand</strong>. Die Zahlen über den Noten stehen auf den Tasten:
-            c = 1, d = 2, e = 3, f = 4, g = 5 – wie auf dem Arbeitsblatt. 16 Takte, die Noten blättern mit.</p>
-          <p><strong>Anfänger:</strong> nur die Melodie, die <strong>Begleitung</strong> (Akkorde C, A7, Dm, G7, D7) spielt auf Wunsch mit.
-            <strong>Profi:</strong> dazu mit der linken Hand die Grundtöne der Akkorde (C, A, D, G) – sie stehen im Bassschlüssel.
-            Gut klingt es ab Tempo 140.</p>`}
+            c = 1, d = 2, e = 3, f = 4, g = 5 – wie auf dem Arbeitsblatt. 16 Takte.</p>
+          <p>Die <strong>Begleitung</strong> (Akkorde C, A7, Dm, G7, D7) spielt auf Wunsch mit. Die Noten laufen mit –
+            rechts siehst du schon, was als Nächstes kommt. Gut klingt es ab Tempo 140.</p>`}
           <ul>
             <li><strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Gibt keine Sterne.
@@ -270,8 +268,9 @@ const Klavierpruefung = {
   taktX(t) { return this.X0 + t * this.TAKT; },
   /* x zur Zeit in Schlägen – beide Durchgänge laufen über dieselbe Zeile */
   x(zeit) {
-    const z = this.L?.wiederholung === false ? zeit - this.zeile * 16 : zeit >= 16 ? zeit - 16 : zeit;
-    const t = Math.min(3, Math.max(0, Math.floor(z / 4)));
+    const laufend = !!this.L?.laufend;
+    const z = laufend ? zeit : this.L?.wiederholung === false ? zeit - this.zeile * 16 : zeit >= 16 ? zeit - 16 : zeit;
+    const t = Math.min(laufend ? (this.stueck?.takte || 16) - 1 : 3, Math.max(0, Math.floor(z / 4)));
     return this.taktX(t) + this.RAND + (z - t * 4) * this.SCHLAG;
   },
   y(stufe, hand) {
@@ -279,6 +278,7 @@ const Klavierpruefung = {
   },
 
   svg() {
+    if (this.L.laufend) return this.svgLaufend();
     const breite = this.taktX(4) + 6;
     let s = Notenbild.klavierLinien(breite);
     // Vorzeichen der Tonart (ein ♭ auf h¹ bzw. H) und 4/4
@@ -304,9 +304,19 @@ const Klavierpruefung = {
     }
     const noten = this.L.wiederholung ? this.stueck.noten.filter(n => n.start < 16)
       : this.stueck.noten.filter(n => Math.floor(n.start / 16) === this.zeile);
+    s += this.notenInhalt(noten, this.L.wiederholung ? null : this.zeile * 4, 4);
+ // Ende beim 2. Mal: Pfeil über dem ersten Ton von Takt 4, liegen lassen
+    const xe = this.x(this.L.fermate ?? 12);
+    if (this.L.fermate !== undefined) s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
+    s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
+    return `<svg class="notenbild kp-system" viewBox="0 ${oben - 50} ${breite} ${this.UNTEN_Y - oben + 82}" role="img" aria-label="Noten">${s}</svg>`;
+  },
+  /* Noten, Pausen (nur ab != null: Takte ab … ab+anzahl-1) und Balken als SVG-Text */
+  notenInhalt(noten, ab, anzahl) {
+    let s = '';
     // Pausen der rechten Hand (Halbe, Ganze, Viertel) – Lücken in jedem Takt
-    if (!this.L.wiederholung) for (let t = 0; t < 4; t++) {
-      const a = this.zeile * 16 + t * 4;
+    if (ab !== null) for (let t = 0; t < anzahl; t++) {
+      const a = (ab + t) * 4;
       const frei = [0, 1, 2, 3].filter(b => !noten.some(n => n.hand === 'rh' && n.start <= a + b && n.start + n.dauer > a + b));
       for (let i = 0; i < frei.length;) {
         let j = i; while (j + 1 < frei.length && frei[j + 1] === frei[j] + 1) j++;
@@ -354,12 +364,36 @@ const Klavierpruefung = {
       const ya = this.y(a.stufen[0], 'rh') - 31, yb = this.y(b.stufen[0], 'rh') - 31;
       s += `<path d="M${xa - .8} ${ya} L${xb + .8} ${yb} L${xb + .8} ${yb + 5} L${xa - .8} ${ya + 5} Z" class="nb kp-balken" data-i="${a.i}"/>`;
     }
- // Ende beim 2. Mal: Pfeil über dem ersten Ton von Takt 4, liegen lassen
-    const xe = this.x(this.L.fermate ?? 12);
-    if (this.L.fermate !== undefined) s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
-    s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
-    return `<svg class="notenbild kp-system" viewBox="0 ${oben - 50} ${breite} ${this.UNTEN_Y - oben + 82}" role="img" aria-label="Noten">${s}</svg>`;
+    return s;
   },
+
+  /* Laufende Notenzeile: das ganze Lied als Streifen in einer Gruppe, die beim Spielen nach links gleitet
+     (cursor → laufen). Schlüssel, Vorzeichen und Taktart bleiben fest; der Streifen ist links davon abgeschnitten. */
+  svgLaufend() {
+    const takte = this.stueck.takte || 16;
+    const fenster = this.taktX(4) + 6;
+    const ende = this.taktX(takte);
+    const oben = this.OBEN - 40;
+    let fest = Notenbild.klavierLinien(fenster);
+    [this.OBEN, this.UNTEN_Y].forEach(u => {
+      fest += `<text x="78" y="${u - 21}" class="nt kp-takt">4</text><text x="78" y="${u - 1}" class="nt kp-takt">4</text>`;
+    });
+    let s = '';
+    for (let t = 0; t < takte; t++) {
+      s += `<text x="${this.taktX(t) + 2}" y="${this.OBEN - 68}" class="kp-taktnr">${t + 1}</text>`;
+      if (t > 0) s += `<line x1="${this.taktX(t) - 1}" x2="${this.taktX(t) - 1}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/>`;
+    }
+    // Schlussstrich und die Linien bis dorthin (der feste Teil zeichnet sie nur über das Fenster)
+    s += Notenbild.linien(fenster - 10, ende - 1, this.OBEN) + Notenbild.linien(fenster - 10, ende - 1, this.UNTEN_Y);
+    s += `<line x1="${ende - 8}" x2="${ende - 8}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/><rect x="${ende - 5}" y="${oben}" width="4" height="${this.UNTEN_Y - oben}" class="nb"/>`;
+    s += this.notenInhalt(this.stueck.noten, 0, takte);
+    s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
+    const id = 'kp-clip';
+    return `<svg class="notenbild kp-system kp-laufend" viewBox="0 ${oben - 50} ${fenster} ${this.UNTEN_Y - oben + 82}" role="img" aria-label="Noten">
+      <defs><clipPath id="${id}"><rect x="${this.X0 - 2}" y="${oben - 80}" width="${fenster}" height="${this.UNTEN_Y - oben + 140}"/></clipPath></defs>
+      ${fest}<g clip-path="url(#${id})"><g class="kp-lauf">${s}</g></g></svg>`;
+  },
+
   hilfslinien(x, y, hand) {
     const unten = hand === 'rh' ? this.OBEN : this.UNTEN_Y;
     let s = '';
@@ -637,6 +671,16 @@ const Klavierpruefung = {
     const b = this.hand === 'beide' && this.L.BEIDE ? this.L.BEIDE : this.L;
     Object.assign(this, { VON: b.VON, BIS: b.BIS, GROSS: b.GROSS, groesseText: b.groesseText || this.L.groesseText });
   },
+  /* Laufende Zeile: den Streifen so verschieben, dass der Cursor etwa im ersten Takt des Fensters steht –
+     rechts sieht man gut drei Takte voraus. Am Ende bleibt der letzte Takt am rechten Rand stehen. */
+  laufen(t) {
+    const g = this.el.querySelector('.kp-lauf');
+    if (!g) return;
+    const fenster = this.taktX(4) + 6;
+    const max = Math.max(0, this.taktX(this.stueck.takte || 16) + 6 - fenster);
+    const dx = t < 0 ? 0 : Math.min(max, Math.max(0, this.x(Math.min(t, this.ende() - 0.01)) - (this.X0 + this.TAKT * 0.6)));
+    g.setAttribute('transform', `translate(${-dx.toFixed(1)} 0)`);
+  },
   zeileZeigen(z) {
     const max = Math.max(0, Math.ceil(this.ende() / 16) - 1);
     z = Math.min(max, Math.max(0, z));
@@ -648,7 +692,8 @@ const Klavierpruefung = {
     this.el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
   },
   cursor(t) {
-    if (this.L.wiederholung === false && t >= 0) this.zeileZeigen(Math.floor(Math.min(t, this.ende() - 0.01) / 16));
+    if (this.L.laufend) this.laufen(t);
+    else if (this.L.wiederholung === false && t >= 0) this.zeileZeigen(Math.floor(Math.min(t, this.ende() - 0.01) / 16));
     const c = this.el.querySelector('.kp-cursor');
     if (t < 0) { c.setAttribute('hidden', ''); return; }
     c.removeAttribute('hidden');
@@ -707,7 +752,8 @@ const Klavierpruefung = {
 
   zuruecksetzen() {
     if (!this.el?.querySelector('.kp-seite')) return;
-    if (this.L && !this.L.wiederholung) this.zeileZeigen(0);
+    if (this.L?.laufend) this.laufen(-1);
+    else if (this.L && !this.L.wiederholung) this.zeileZeigen(0);
     this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
     const erg = this.el.querySelector('#kp-ergebnis');
     if (erg) erg.textContent = '';
