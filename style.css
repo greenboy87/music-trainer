@@ -1421,3 +1421,8 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .theme-knopf { min-height: 2.6rem; min-width: 2.6rem; padding: 0 .6rem; margin-right: .4rem; }
 .theme-knopf .icon { margin: 0; }
 .sb-rund.theme-knopf { min-height: 0; min-width: 0; padding: 0; margin-right: 0; }
+
+/* Startseite: Beschreibungen der Spiele nur über das eine i (Startseite oben rechts über den Spielen) */
+.spiele-kopf { display: flex; justify-content: flex-end; margin: 1.2rem 0 -1.4rem; position: relative; z-index: 1; }
+.kp-i[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.spiele-alle.ohne-texte .spiel-karte .hint { display: none; }

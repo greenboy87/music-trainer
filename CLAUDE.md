@@ -53,7 +53,7 @@ Klasse 5 fest 80 BPM (`PRUEF_BPM`), Klasse 6 ab 72 BPM und schneller (`PRUEF_BPM
 `BESTANDEN`, `VERSUCHE`, Endnote am Ende (gespeichert, s. o.). Einrichtung des
 Cloudflare-Workers: ANLEITUNG.md.
 
-Drums (`js/drumgrooves.js`, Kategorie „Drums“ mit Unterkategorien Drumgrooves und Groove + Fill, nach Toms Stunde „Der Drumgroove“, Klasse 7):
+Drums (`js/drumgrooves.js`, Kategorie „Drums“ mit der Unterkategorie Drumgrooves (Groove-Trainer, Part II, Groove + Fill und die Hör-Quiz), nach Toms Stunde „Der Drumgroove“, Klasse 7):
 Groove-Trainer `#/drumgrooves` mit den fünf Grooves der Stunde (Groove 1 = Note 5 … Groove 5 = Note 1;
 Hi-Hat Achtel, Snare 2 und 4, Bassdrum je Groove). Aufbau je Groove: Hi-Hat + Snare → Bassdrum + Snare → alles.
 Drei Pads (Reihenfolge umdrehbar: Hi-Hat · Bassdrum · Snare oder Snare · Bassdrum · Hi-Hat, Tasten A S D) oder das
@@ -64,7 +64,7 @@ Drumgrooves Part II (`#/drumgrooves2`, `modus: 'part2'`, Klasse 9): fünf Level 
 Groove + Fill (`#/groovefill`, derselbe Trainer mit `modus: 'fill'`): 1 Takt Groove 2 + 1 Takt Fill (Snare, Toms),
 4×. Acht Fills (`DG.FILLS` aus `DG.FILL_RHYTHMEN`: 1 2+ 3 4+, 1+ 2 3+ 4+, 1 2+ 3+ 4+, 1+ 2+ 3 4, je nur Snare und Snare → Toms abwärts; Stufe = Rhythmus × 2 + Toms). Aufbau: nur Fill (Computer spielt den Groove) → Groove + Fill.
 Sechs Pads (oben Toms Q W E, unten Hi-Hat · Snare · Bassdrum A S D – Snare immer in der Mitte). Spiel `groove-fill`
-(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Drums“, `unter: 'Groove + Fill'`). Drumset-Ansicht: beim Vorspielen (Anhören, Computer-Groove unter dem Fill) schlagen Sticks R (orange) und L (türkis, Farben wie der Handsatz der Rhythmus-Prüfung) und das Bassdrum-Pedal F (lila); Schalter „Sticks“. Handsatz: im Groove Hi-Hat R, Snare L; im Fill wie die Rhythmus-Werkstatt (`DG.handsatz`, nach `handsatzBerechnen` in rhythmus-werkstatt/js/noten.js: Zählzeit R, zwei Achtel R L, Viertel hintereinander R L). Gleiche Trommel: Sticks nebeneinander. Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
+(Stufe 0–7) und das Hör-Quiz `fill-hoeren` (Bereich „Drums“, `unter: 'Drumgrooves'` – seit 25.11.2026 steht alles in der einen Unterkategorie Drumgrooves). Drumset-Ansicht: beim Vorspielen (Anhören, Computer-Groove unter dem Fill) schlagen Sticks R (orange) und L (türkis, Farben wie der Handsatz der Rhythmus-Prüfung) und das Bassdrum-Pedal F (lila); Schalter „Sticks“. Handsatz: im Groove Hi-Hat R, Snare L; im Fill wie die Rhythmus-Werkstatt (`DG.handsatz`, nach `handsatzBerechnen` in rhythmus-werkstatt/js/noten.js: Zählzeit R, zwei Achtel R L, Viertel hintereinander R L). Gleiche Trommel: Sticks nebeneinander. Notenhälse: nur Becken = Hals ab der oberen Kreuzspitze, mit Snare/Bassdrum darunter durchgehend.
 
 Klavier-Prüfung (`js/klavierpruefung.js`, `#/klavierpruefung`, Karte in `#/pruefung`):
 Intro von „In the End“ (Linkin Park) auf einer eigenen Klaviatur (G bis h¹, Knopf „Größer“: A bis a¹), festes Bild wie das Klavier (`Vollbild.binden`, Tasten von Rand zu Rand, füllen die Höhe unter den Noten), Zeile einmal
@@ -156,3 +156,5 @@ als D1-Ersatz aus.
 
 Keine punktierten Noten, höchstens zwei Hilfslinien, Notennamen klein (c, cis,
 es, b) wie im Unterricht.
+
+Startseite: Die Beschreibungen der Spielkarten sind versteckt; ein einziges i über allen Spielen (`#btn-beschreibungen`, `App.beschreibungenBinden`, `localStorage` `musiktrainer-beschreibungen`) blendet alle ein. Kein i je Karte (Toms Wunsch).

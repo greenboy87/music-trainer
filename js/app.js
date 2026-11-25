@@ -429,6 +429,26 @@ const App = {
   },
 
   /* ---------- Startseite ---------- */
+  /* Beschreibungen auf den Spielkarten: standardmäßig versteckt, ein i über allen Spielen blendet sie ein */
+  beschreibungen() { try { return localStorage.getItem('musiktrainer-beschreibungen') === 'an'; } catch { return false; } },
+  beschreibungenBinden() {
+    const k = document.getElementById('btn-beschreibungen');
+    const alle = this.el.querySelector('.spiele-alle');
+    if (!k || !alle) return;
+    const zeigen = an => {
+      alle.classList.toggle('ohne-texte', !an);
+      k.setAttribute('aria-pressed', String(an));
+      k.title = an ? 'Beschreibungen ausblenden' : 'Beschreibungen der Spiele zeigen';
+      k.setAttribute('aria-label', k.title);
+    };
+    zeigen(this.beschreibungen());
+    k.addEventListener('click', () => {
+      const an = !this.beschreibungen();
+      try { localStorage.setItem('musiktrainer-beschreibungen', an ? 'an' : 'aus'); } catch { /* privat */ }
+      zeigen(an);
+    });
+  },
+
   spielKarte(s) {
     return `
             <a class="card spiel-karte" href="#/spiel/${s.id}" style="--farbe:${s.farbe}">
@@ -442,7 +462,7 @@ const App = {
   /* Kategorie „Drums“: Unterkategorien mit je einem Trainer (eigene Seite) und den Spielen dazu */
   drumsKarten() {
     const unter = [
-      { name: 'Drumgrooves', info: 'Hi-Hat, Snare und Bassdrum – wie in der Stunde „Der Drumgroove“.', trainer: `
+      { name: 'Drumgrooves', info: 'Grooves und Fills mit Hi-Hat, Snare, Bassdrum und Toms.', trainer: `
             <a class="card spiel-karte" href="#/drumgrooves" style="--farbe:#fb923c">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
               <span class="spiel-titel">Groove-Trainer</span>
@@ -454,8 +474,7 @@ const App = {
               <span class="spiel-titel">Drumgrooves Part II</span>
               <span class="hint">Fünf Level mit mehr Bassdrum – Level 5 mit zwei Takten.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Drumgrooves.sterneSumme('part2')} / 30</span>
-            </a>` },
-      { name: 'Groove + Fill', info: 'Ein Takt Groove, ein Takt Fill – so endet ein Teil im Song.', trainer: `
+            </a>
             <a class="card spiel-karte" href="#/groovefill" style="--farbe:#818cf8">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
               <span class="spiel-titel">Groove + Fill</span>
@@ -501,6 +520,10 @@ const App = {
         </div>
       </section>
       ${konto ? this.meineNote() : ''}
+      <div class="spiele-kopf">
+        <button type="button" class="kp-i" id="btn-beschreibungen" aria-pressed="false" title="Beschreibungen der Spiele zeigen" aria-label="Beschreibungen der Spiele zeigen">i</button>
+      </div>
+      <div class="spiele-alle${this.beschreibungen() ? '' : ' ohne-texte'}">
       ${bereiche.map(b => `
         <h2 class="bereich-titel">${b}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
         ${b === 'Drums' ? this.drumsKarten() : `<div class="spiele-raster">
@@ -512,7 +535,9 @@ const App = {
               <span class="hint">Rhythmus-Zeilen auf den Pads (Klasse 5 und 6) und ein Intro auf dem Klavier.</span>
               <span class="spiel-sterne">${Icons.raw('star')} ${Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme()} / 78</span>
             </a>` : ''}
-        </div>`}`).join('')}`;
+        </div>`}`).join('')}
+      </div>`;
+    this.beschreibungenBinden();
     const feld = document.getElementById('name');
     feld?.addEventListener('change', () => { Fortschritt.setzeName(feld.value.trim()); this.zeigeStart(); });
     document.getElementById('btn-beamer-qr')?.addEventListener('click', () => this.beamerQr());
