@@ -172,4 +172,4 @@ künftigen Weihnachtssachen.
 `in-the-end` (geschützt vom Worker, mit Wiederholung) und `jingle-bells` (gemeinfrei, Noten offen im Code; Toms
 Fassung aus „Mein erster Song“, Klasse 6: Melodie rechts mit Tasten 1–5 = c¹–g¹, Begleitakkorde links, die der
 Computer spielt; 16 Takte, Zeile blättert mit `zeileZeigen`; Pausen werden aus Lücken gezeichnet, `#` an der Stufe
-= Kreuz). Spiel `klavier-jingle-bells`, Stufe 0. Saison Weihnachten.
+= Kreuz). Zwei Stufen (`HAENDE: ['rh','beide']`, `HAND_TEXT`): Anfänger = 1 Hand (Begleitung spielt Computer als voller Akkord, `AKKORDE`/`n.klang`), Profi = 2 Hände (links die Grundtöne, Klaviatur nach links erweitert über `BEIDE`). lh-Format `Schlag:Dauer:Stufe=Akkord`, Akkordnamen zwischen den Systemen. Spiel `klavier-jingle-bells`, Stufe 0 = Anfänger, 1 = Profi. Saison Weihnachten.

@@ -36,17 +36,21 @@ const Klavierpruefung = {
       untertitel: 'Mein erster Song', wiederholung: false, bpm: 90, bpmMax: 160,
       VON: 55, BIS: 76, GROSS: [57, 74], groesseText: 'a bis d²', andereText: 'Begleitung spielt mit',
       NUMMER: { lh: {}, rh: { 60: '1', 62: '2', 64: '3', 65: '4', 67: '5' } },
-      SPIEL: 'klavier-jingle-bells', HAENDE: ['rh'],
+      SPIEL: 'klavier-jingle-bells', HAENDE: ['rh', 'beide'],
+      HAND_TEXT: { rh: 'Anfänger · 1 Hand', beide: 'Profi · 2 Hände' },
+      // Profi: die Klaviatur reicht nach links bis zum G für die Grundtöne
+      BEIDE: { VON: 41, BIS: 69, GROSS: [43, 67], groesseText: 'G bis g¹' },
+      AKKORDE: { C: '-7+-5+-3', A7: '-9+-7#+-5+-3', Dm: '-6+-4+-2', G7: '-10+-8+-6+-4', D7: '-6+-4#+-2+0' },
       roh: {
         titel: 'Jingle Bells', von: 'James Lord Pierpont', vz: 0, takte: 16,
         rh: '0:1:2 1:1:2 2:2:2 4:1:2 5:1:2 6:2:2 8:1:2 9:1:4 10:1:0 11:1:1 12:2:2 ' +
             '16:1:3 17:1:3 18:1:3 19:1:3 20:1:3 21:1:2 22:1:2 23:1:2 24:1:2 25:1:1 26:1:1 27:1:2 28:2:1 30:2:4 ' +
             '32:1:2 33:1:2 34:2:2 36:1:2 37:1:2 38:2:2 40:1:2 41:1:4 42:1:0 43:1:1 44:2:2 ' +
             '48:1:3 49:1:3 50:1:3 51:1:3 52:1:3 53:1:2 54:1:2 55:1:2 56:1:4 57:1:4 58:1:3 59:1:1 60:2:0',
-        // C = c e g · A7 = A cis e g · Dm = d f a · G7 = G h d f · D7 = d fis a c¹
-        lh: '0:4:-7+-5+-3 4:4:-7+-5+-3 8:4:-7+-5+-3 12:2:-7+-5+-3 14:2:-9+-7#+-5+-3 16:2:-6+-4+-2 18:2:-10+-8+-6+-4 ' +
-            '20:4:-7+-5+-3 24:4:-6+-4#+-2+0 28:4:-10+-8+-6+-4 32:4:-7+-5+-3 36:4:-7+-5+-3 40:4:-7+-5+-3 ' +
-            '44:2:-7+-5+-3 46:2:-9+-7#+-5+-3 48:2:-6+-4+-2 50:2:-10+-8+-6+-4 52:4:-7+-5+-3 56:4:-10+-8+-6+-4 60:4:-7+-5+-3',
+        // Linke Hand: Grundton (so spielen ihn die Profis) und Akkordname; die Begleitung des Computers
+        // spielt den ganzen Akkord (AKKORDE): C = c e g · A7 = A cis e g · Dm = d f a · G7 = G h d f · D7 = d fis a c¹
+        lh: '0:4:-7=C 4:4:-7=C 8:4:-7=C 12:2:-7=C 14:2:-9=A7 16:2:-6=Dm 18:2:-10=G7 20:4:-7=C 24:4:-6=D7 28:4:-10=G7 ' +
+            '32:4:-7=C 36:4:-7=C 40:4:-7=C 44:2:-7=C 46:2:-9=A7 48:2:-6=Dm 50:2:-10=G7 52:4:-7=C 56:4:-10=G7 60:4:-7=C',
       },
     },
   },
@@ -82,12 +86,13 @@ const Klavierpruefung = {
     if (!this.LIEDER[id]) id = 'in-the-end';
     this.ID = id;
     this.L = this.LIEDER[id];
-    Object.assign(this, { VON: this.L.VON, BIS: this.L.BIS, GROSS: this.L.GROSS, NUMMER: this.L.NUMMER, SPIEL: this.L.SPIEL, HAENDE: this.L.HAENDE });
+    Object.assign(this, { NUMMER: this.L.NUMMER, SPIEL: this.L.SPIEL, HAENDE: this.L.HAENDE });
     this.stueck = this.stuecke[id] || null;
     this.zeile = 0;
     this.hand = this.HAENDE[0];
     this.bpm = this.L.bpm;
     if (this.HAENDE.includes(this.lies('hand'))) this.hand = this.lies('hand');
+    this.bereichSetzen();
     if (['schritt', 'mit', 'sterne'].includes(this.lies('art'))) this.art = this.lies('art');
     const b = Number(this.lies('bpm'));
     if (b >= 40 && b <= this.L.bpmMax) this.bpm = b;
@@ -129,12 +134,15 @@ const Klavierpruefung = {
   /* „0:1:1:1 …“ → [{ start, dauer, stufen, finger, midis, hand, i }] */
   lesen(roh) {
     const hand = (text, h) => text.trim().split(/\s+/).map(e => {
-      const [start, dauer, st, fi = ''] = e.split(':');
+      const [start, dauer, stRoh, fi = ''] = e.split(':');
+      const [st, akkord] = stRoh.split('=');
       const teile = st.split('+');
       const stufen = teile.map(t => parseInt(t, 10));
       const kreuz = teile.map(t => t.endsWith('#'));          // „-7#“ = cis: Kreuz nur an diesem Ton
       return { start: Number(start), dauer: Number(dauer), stufen, kreuz, finger: fi ? fi.split('+') : [],
-        midis: stufen.map((s, k) => this.midi(s, roh.vz) + (kreuz[k] ? 1 : 0)), hand: h };
+        midis: stufen.map((s, k) => this.midi(s, roh.vz) + (kreuz[k] ? 1 : 0)), hand: h, akkord,
+        // Klang der Begleitung: ganzer Akkord, wenn das Lied ihn kennt
+        klang: akkord && this.L?.AKKORDE?.[akkord] ? this.L.AKKORDE[akkord].split('+').map(t => this.midi(parseInt(t, 10), roh.vz) + (t.endsWith('#') ? 1 : 0)) : null };
     });
     const noten = [...hand(roh.rh, 'rh'), ...hand(roh.lh, 'lh')].map((n, i) => ({ ...n, i }));
     /* Gezeichnet ist die Zeile nur einmal (mit Wiederholung): Noten des zweiten Durchgangs
@@ -171,19 +179,21 @@ const Klavierpruefung = {
           <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>`
           : `<p>Die Melodie spielst du mit der <strong>rechten Hand</strong>. Die Zahlen über den Noten stehen auf den Tasten:
             c = 1, d = 2, e = 3, f = 4, g = 5 – wie auf dem Arbeitsblatt. 16 Takte, die Noten blättern mit.</p>
-          <p>Die <strong>Begleitung</strong> (Akkorde C, A7, Dm, G7, D7) spielt auf Wunsch mit. Gut klingt es ab Tempo 140.</p>`}
+          <p><strong>Anfänger:</strong> nur die Melodie, die <strong>Begleitung</strong> (Akkorde C, A7, Dm, G7, D7) spielt auf Wunsch mit.
+            <strong>Profi:</strong> dazu mit der linken Hand die Grundtöne der Akkorde (C, A, D, G) – sie stehen im Bassschlüssel.
+            Gut klingt es ab Tempo 140.</p>`}
           <ul>
             <li><strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Gibt keine Sterne.
               Mit dem Schalter ${Icons.raw('tastenLicht')} leuchten die Tasten mit.</li>
             <li><strong>Sterne sammeln:</strong> Wie Üben, aber es zählt. Ab 95 % gibt es sechs Sterne.</li>
-            <li><strong>Größer:</strong> Nur die Tasten von ${this.L.groesseText}, dafür breiter.</li>
+            <li><strong>Größer:</strong> Nur die mittleren Tasten, dafür breiter.</li>
           </ul>
         </div>
       </div>
       <div class="kp-leiste">
         <div class="klavier-groesse" role="group" aria-label="Hand"${this.HAENDE.length < 2 ? ' hidden' : ''}>
-          ${knopf('hand', 'rh', 'Rechte Hand', this.hand === 'rh')}${knopf('hand', 'lh', 'Linke Hand', this.hand === 'lh')}${knopf('hand', 'beide', 'Beide', this.hand === 'beide')}
+          ${this.HAENDE.map(h => knopf('hand', h, (this.L.HAND_TEXT || { rh: 'Rechte Hand', lh: 'Linke Hand', beide: 'Beide' })[h], this.hand === h)).join('')}
         </div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
           ${knopf('art', 'schritt', 'Schritt für Schritt', this.art === 'schritt')}${knopf('art', 'mit', 'Üben', this.art === 'mit')}${knopf('art', 'sterne', `${Icons.raw('star')}Sterne sammeln`, this.art === 'sterne')}
@@ -198,7 +208,7 @@ const Klavierpruefung = {
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
       </div>
       <div class="kp-noten">${this.svg()}<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div></div>
-      <div class="kp-tasten-kopf"><span class="kp-schalter"><label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>${this.L.andereText}</label><label class="schalter kp-licht" id="kp-leuchten-feld" title="Tasten leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Tasten leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label><label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label><label class="schalter kp-licht" title="Notennamen auf den Tasten"><input type="checkbox" role="switch" id="kp-namen" aria-label="Notennamen auf den Tasten" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenName')}</label></span><button type="button" class="small kp-gross" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: nur ${this.L.groesseText}">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button></div>
+      <div class="kp-tasten-kopf"><span class="kp-schalter"><label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>${this.L.andereText}</label><label class="schalter kp-licht" id="kp-leuchten-feld" title="Tasten leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Tasten leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label><label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label><label class="schalter kp-licht" title="Notennamen auf den Tasten"><input type="checkbox" role="switch" id="kp-namen" aria-label="Notennamen auf den Tasten" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenName')}</label></span><button type="button" class="small kp-gross" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: nur die mittleren Tasten">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button></div>
       <div class="klaviatur kp-tasten${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>`;
     // Wie das Klavier: festes Bild über dem ganzen Fenster, Tasten von Rand zu Rand
     Vollbild.binden(this.el.querySelector('.kp-seite'));
@@ -334,6 +344,8 @@ const Klavierpruefung = {
         ? nr.map(z => `<text x="${x}" y="${this.OBEN - 50}" class="kp-finger">${z}</text>`).join('')
         : nr.map((z, k) => `<text x="${x}" y="${this.UNTEN_Y + 17 + k * 14}" class="kp-finger">${z}</text>`).join('');
       s += `<g class="kp-n" data-i="${n.i}" data-hand="${n.hand}" style="--hand:${this.FARBE[n.hand]}">${g}</g>`;
+      // Akkordname zwischen den Systemen – immer gut sichtbar, auch wenn die linke Hand blass ist
+      if (n.akkord) s += `<text x="${x}" y="${this.OBEN + 34}" class="kp-akkord" style="--hand:${this.FARBE.lh}">${n.akkord}</text>`;
     }
     // Achtelpaare mit Balken
     for (let k = 0; k + 1 < achtel.length; k += 2) {
@@ -389,7 +401,7 @@ const Klavierpruefung = {
   bedienen() {
     const el = this.el;
     el.querySelectorAll('button[data-hand]').forEach(b => b.addEventListener('click', () => {
-      this.hand = b.dataset.hand; this.merken('hand', this.hand); this.stopp(); this.leisteZeigen();
+      this.hand = b.dataset.hand; this.merken('hand', this.hand); this.stopp(); this.bereichSetzen(); this.tastenZeichnen(); this.leisteZeigen();
     }));
     el.querySelectorAll('[data-art]').forEach(b => b.addEventListener('click', () => {
       this.art = b.dataset.art; this.merken('art', this.art); this.stopp(); this.leisteZeigen();
@@ -544,7 +556,7 @@ const Klavierpruefung = {
     // Die andere Hand
     for (const a of l.auto) {
       if (!a.an && !a.fertig && t >= a.n.start) {
-        a.an = a.n.midis.map(m => Ton.anschlag(m, 'klavier'));
+        a.an = (a.n.klang || a.n.midis).map(m => Ton.anschlag(m, 'klavier'));
         this.markieren(a.n.bild, 'kp-spielt', true);
       }
       if (a.an && t >= a.n.start + a.n.dauer - 0.04) {
@@ -620,6 +632,11 @@ const Klavierpruefung = {
   },
 
   /* Ohne Wiederholung: die Zeile mit der Zeit t zeigen (neu gezeichnet, Markierungen fallen weg) */
+  /* Tastenbereich: je Lied, bei zwei Händen ggf. weiter nach links (BEIDE) */
+  bereichSetzen() {
+    const b = this.hand === 'beide' && this.L.BEIDE ? this.L.BEIDE : this.L;
+    Object.assign(this, { VON: b.VON, BIS: b.BIS, GROSS: b.GROSS, groesseText: b.groesseText || this.L.groesseText });
+  },
   zeileZeigen(z) {
     const max = Math.max(0, Math.ceil(this.ende() / 16) - 1);
     z = Math.min(max, Math.max(0, z));
