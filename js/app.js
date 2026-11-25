@@ -449,6 +449,19 @@ const App = {
     });
   },
 
+  /* Sterne einer Kategorie: ihre Spiele, dazu die Seiten mit eigenen Sternen (Prüfungen bei Rhythmus, Trainer bei Drums) */
+  bereichSterne(b) {
+    const spiele = SPIELE.filter(s => s.bereich === b);
+    let hat = spiele.reduce((n, sp) => n + Fortschritt.sterneVon(sp), 0);
+    let von = spiele.reduce((n, sp) => n + sp.stufen.length * Bewertung.MAX, 0);
+    if (b === 'Rhythmus') { hat += Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme(); von += 60 + 18; }
+    if (b === 'Drums') {
+      hat += Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('part2') + Drumgrooves.sterneSumme('fill');
+      von += 30 + 30 + 48;
+    }
+    return `<span class="bereich-sterne" title="${hat} von ${von} Sternen in ${esc(b)}">${Icons.raw('star')}${hat} / ${von}</span>`;
+  },
+
   spielKarte(s) {
     return `
             <a class="card spiel-karte" href="#/spiel/${s.id}" style="--farbe:${s.farbe}">
@@ -525,7 +538,7 @@ const App = {
       </div>
       <div class="spiele-alle${this.beschreibungen() ? '' : ' ohne-texte'}">
       ${bereiche.map(b => `
-        <h2 class="bereich-titel">${b}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
+        <h2 class="bereich-titel">${b}${this.bereichSterne(b)}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
         ${b === 'Drums' ? this.drumsKarten() : `<div class="spiele-raster">
           ${SPIELE.filter(s => s.bereich === b).map(s => this.spielKarte(s)).join('')}
           ${b === 'Rhythmus' ? `
