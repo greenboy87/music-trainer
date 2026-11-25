@@ -1441,3 +1441,4 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 /* Seiten mit festem Bild (Klavier, Schlagzeug, Drums, In the End): nirgends Text markieren oder das Kopieren-Menü öffnen */
 .card.vollbild, .card.vollbild * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .card.vollbild input, .card.vollbild textarea { -webkit-user-select: text; user-select: text; }
+.kp-taktnr { font-size: 13px; font-style: italic; fill: currentColor; opacity: .6; }

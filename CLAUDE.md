@@ -160,3 +160,16 @@ es, b) wie im Unterricht.
 Startseite: Die Beschreibungen der Spielkarten sind versteckt; ein einziges i über allen Spielen (`#btn-beschreibungen`, `App.beschreibungenBinden`, `localStorage` `musiktrainer-beschreibungen`) blendet alle ein. Kein i je Karte (Toms Wunsch).
 
 iPad-Spielflächen (Klaviatur In the End, freies Klavier, Drum-Pads/Drumset): `Vollbild.beruehrung(el, alleLos)` fängt `touchstart` ab (keine Textauswahl, kein „Kopieren“-Menü), hebt Auswahlen auf und lässt alle Tasten los, sobald kein Finger mehr aufliegt bzw. bei blur/Hintergrund – vorher blieben Tasten auf dem iPad manchmal gedrückt (25.11.2026). Auf `.card.vollbild` gilt überall `user-select: none`.
+
+## Saison: Weihnachten nur November bis Januar
+Weihnachtsspiele und -songs bekommen `saison: 'weihnachten'` (SPIELE-Eintrag oder Lied in `App.klavierLieder`).
+`App.saisonAktiv` (`SAISON_MONATE`: Nov, Dez, Jan) blendet sie sonst auf der Startseite aus, auch bei den Sternen
+(`App.spiele()` statt `SPIELE` auf der Startseite). Direkte Links funktionieren weiter. Tom will das für ALLE
+künftigen Weihnachtssachen.
+
+## Piano: Lieder
+`js/klavierpruefung.js` kann mehrere Lieder (`Klavierpruefung.LIEDER`, Route `#/klavierpruefung/<id>`):
+`in-the-end` (geschützt vom Worker, mit Wiederholung) und `jingle-bells` (gemeinfrei, Noten offen im Code; Toms
+Fassung aus „Mein erster Song“, Klasse 6: Melodie rechts mit Tasten 1–5 = c¹–g¹, Begleitakkorde links, die der
+Computer spielt; 16 Takte, Zeile blättert mit `zeileZeigen`; Pausen werden aus Lücken gezeichnet, `#` an der Stufe
+= Kreuz). Spiel `klavier-jingle-bells`, Stufe 0. Saison Weihnachten.

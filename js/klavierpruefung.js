@@ -20,7 +20,39 @@
    Rhythmus-Prüfung (ab 95 % sechs), gespeichert als Spiel „klavier-pruefung“, Stufe 0 = rechte
    Hand, 1 = linke Hand, 2 = beide – damit im Konto und im School-Tool. */
 const Klavierpruefung = {
+  /* Lieder: In the End kommt geschützt vom Worker; Jingle Bells (James Lord Pierpont, 1857, gemeinfrei)
+     steht offen hier im Code – Toms Fassung aus der Stunde „Mein erster Song“ (Klasse 6): Melodie mit
+     den Tasten 1–5 (c¹–g¹), Begleitakkorde wie auf dem Arbeitsblatt (C, A7, Dm, G7, D7) in der linken Hand,
+     die auf Wunsch der Computer spielt. Ohne Wiederholung: 16 Takte, je Zeile 4, die Zeile blättert mit. */
+  LIEDER: {
+    'in-the-end': {
+      server: true, untertitel: 'Intro', wiederholung: true, fermate: 12, bpm: 60, bpmMax: 120,
+      VON: 43, BIS: 71, GROSS: [45, 69], groesseText: 'A bis a¹', andereText: 'Andere Hand spielt mit',
+      NUMMER: { lh: { 45: '1', 46: '2', 47: '–', 48: '3', 50: '4', 52: '5', 53: '6' },
+                rh: { 62: '1', 64: '2', 65: '3', 67: '4', 69: '5' } },
+      SPIEL: 'klavier-pruefung', HAENDE: ['rh', 'lh', 'beide'],
+    },
+    'jingle-bells': {
+      untertitel: 'Mein erster Song', wiederholung: false, bpm: 90, bpmMax: 160,
+      VON: 55, BIS: 76, GROSS: [57, 74], groesseText: 'a bis d²', andereText: 'Begleitung spielt mit',
+      NUMMER: { lh: {}, rh: { 60: '1', 62: '2', 64: '3', 65: '4', 67: '5' } },
+      SPIEL: 'klavier-jingle-bells', HAENDE: ['rh'],
+      roh: {
+        titel: 'Jingle Bells', von: 'James Lord Pierpont', vz: 0, takte: 16,
+        rh: '0:1:2 1:1:2 2:2:2 4:1:2 5:1:2 6:2:2 8:1:2 9:1:4 10:1:0 11:1:1 12:2:2 ' +
+            '16:1:3 17:1:3 18:1:3 19:1:3 20:1:3 21:1:2 22:1:2 23:1:2 24:1:2 25:1:1 26:1:1 27:1:2 28:2:1 30:2:4 ' +
+            '32:1:2 33:1:2 34:2:2 36:1:2 37:1:2 38:2:2 40:1:2 41:1:4 42:1:0 43:1:1 44:2:2 ' +
+            '48:1:3 49:1:3 50:1:3 51:1:3 52:1:3 53:1:2 54:1:2 55:1:2 56:1:4 57:1:4 58:1:3 59:1:1 60:2:0',
+        // C = c e g · A7 = A cis e g · Dm = d f a · G7 = G h d f · D7 = d fis a c¹
+        lh: '0:4:-7+-5+-3 4:4:-7+-5+-3 8:4:-7+-5+-3 12:2:-7+-5+-3 14:2:-9+-7#+-5+-3 16:2:-6+-4+-2 18:2:-10+-8+-6+-4 ' +
+            '20:4:-7+-5+-3 24:4:-6+-4#+-2+0 28:4:-10+-8+-6+-4 32:4:-7+-5+-3 36:4:-7+-5+-3 40:4:-7+-5+-3 ' +
+            '44:2:-7+-5+-3 46:2:-9+-7#+-5+-3 48:2:-6+-4+-2 50:2:-10+-8+-6+-4 52:4:-7+-5+-3 56:4:-10+-8+-6+-4 60:4:-7+-5+-3',
+      },
+    },
+  },
   ID: 'in-the-end',
+  stuecke: {},
+  zeile: 0,
   VON: 43, BIS: 71,             // Tasten G bis h¹ (gespielt wird A bis a¹, je eine weiße Taste Rand)
   GROSS: [45, 69],              // „Größer“: nur A bis a¹, die Tasten werden breiter
   gross: false,
@@ -40,16 +72,25 @@ const Klavierpruefung = {
   HAENDE: ['rh', 'lh', 'beide'],
   SPIEL: 'klavier-pruefung',
 
-  lies(s) { try { return localStorage.getItem(`musiktrainer-kp-${s}`); } catch { return null; } },
-  merken(s, w) { try { localStorage.setItem(`musiktrainer-kp-${s}`, String(w)); } catch { /* privat */ } },
+  schluessel(s) { return `musiktrainer-kp-${this.ID === 'in-the-end' ? '' : `${this.ID}-`}${s}`; },
+  lies(s) { try { return localStorage.getItem(this.schluessel(s)); } catch { return null; } },
+  merken(s, w) { try { localStorage.setItem(this.schluessel(s), String(w)); } catch { /* privat */ } },
 
-  async zeigen(el) {
+  async zeigen(el, id = 'in-the-end') {
     this.el = el;
     this.stopp();
-    if (['rh', 'lh', 'beide'].includes(this.lies('hand'))) this.hand = this.lies('hand');
+    if (!this.LIEDER[id]) id = 'in-the-end';
+    this.ID = id;
+    this.L = this.LIEDER[id];
+    Object.assign(this, { VON: this.L.VON, BIS: this.L.BIS, GROSS: this.L.GROSS, NUMMER: this.L.NUMMER, SPIEL: this.L.SPIEL, HAENDE: this.L.HAENDE });
+    this.stueck = this.stuecke[id] || null;
+    this.zeile = 0;
+    this.hand = this.HAENDE[0];
+    this.bpm = this.L.bpm;
+    if (this.HAENDE.includes(this.lies('hand'))) this.hand = this.lies('hand');
     if (['schritt', 'mit', 'sterne'].includes(this.lies('art'))) this.art = this.lies('art');
     const b = Number(this.lies('bpm'));
-    if (b >= 40 && b <= 120) this.bpm = b;
+    if (b >= 40 && b <= this.L.bpmMax) this.bpm = b;
     this.andere = this.lies('andere') !== 'aus';
     this.metro = this.lies('metro') !== 'aus';
     this.namen = this.lies('namen') === 'an';
@@ -62,7 +103,8 @@ const Klavierpruefung = {
     };
     App.beimAufraeumen(() => { this.stopp(); this.zoomFrei(); });
     this.zoomSperren();
-    if (!Konto.angemeldet()) {
+    if (!this.stueck && !this.L.server) this.stueck = this.stuecke[id] = this.lesen(this.L.roh);
+    if (this.L.server && !Konto.angemeldet()) {
       return rahmen(`<h2>In the End</h2>
         <p class="hint">Die Noten gibt es nur für angemeldete Schülerinnen und Schüler – das Stück ist
           urheberrechtlich geschützt und darf nur im Unterricht genutzt werden.</p>
@@ -70,7 +112,7 @@ const Klavierpruefung = {
     }
     if (!this.stueck) {
       rahmen('<h2>In the End</h2><p class="hint">Noten werden geladen …</p>');
-      try { this.stueck = this.lesen((await Konto.api(`/api/stueck/${this.ID}`)).stueck); }
+      try { this.stueck = this.stuecke[id] = this.lesen((await Konto.api(`/api/stueck/${id}`)).stueck); }
       catch (e) {
         if (App.art !== 'klavierpruefung') return;
         return rahmen(`<h2>In the End</h2><p class="hint">${e.status === 404
@@ -88,14 +130,17 @@ const Klavierpruefung = {
   lesen(roh) {
     const hand = (text, h) => text.trim().split(/\s+/).map(e => {
       const [start, dauer, st, fi = ''] = e.split(':');
-      const stufen = st.split('+').map(Number);
-      return { start: Number(start), dauer: Number(dauer), stufen, finger: fi ? fi.split('+') : [],
-        midis: stufen.map(s => this.midi(s, roh.vz)), hand: h };
+      const teile = st.split('+');
+      const stufen = teile.map(t => parseInt(t, 10));
+      const kreuz = teile.map(t => t.endsWith('#'));          // „-7#“ = cis: Kreuz nur an diesem Ton
+      return { start: Number(start), dauer: Number(dauer), stufen, kreuz, finger: fi ? fi.split('+') : [],
+        midis: stufen.map((s, k) => this.midi(s, roh.vz) + (kreuz[k] ? 1 : 0)), hand: h };
     });
     const noten = [...hand(roh.rh, 'rh'), ...hand(roh.lh, 'lh')].map((n, i) => ({ ...n, i }));
     /* Gezeichnet ist die Zeile nur einmal (mit Wiederholung): Noten des zweiten Durchgangs
        leuchten an der Note, die an derselben Stelle der Zeile steht */
     const zeile = 16;
+    if (!this.L?.wiederholung) { noten.forEach(n => { n.bild = n.i; }); return { titel: roh.titel, von: roh.von, vz: roh.vz, takte: roh.takte, noten }; }
     noten.forEach(n => {
       const an = n.start % zeile;
       const vorbild = noten.find(v => v.hand === n.hand && v.start === an);
@@ -117,24 +162,27 @@ const Klavierpruefung = {
     const knopf = (gruppe, wert, text, an) => `<button type="button" data-${gruppe}="${wert}" aria-pressed="${an}">${text}</button>`;
     this.el.querySelector('.kp-seite').innerHTML = `
       <div class="kp-kopf">
-        <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>${s.titel} <span class="hint">${s.von} · Intro</span>
+        <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>${s.titel} <span class="hint">${s.von} · ${this.L.untertitel}</span>
           <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
           <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
         <div class="kp-hilfe" id="kp-hilfe" hidden>
-          <p>Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
+          ${this.L.wiederholung ? `<p>Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
             (Fermate <span class="ns">\u{1D110}</span>) und lässt ihn liegen.</p>
-          <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>
+          <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>`
+          : `<p>Die Melodie spielst du mit der <strong>rechten Hand</strong>. Die Zahlen über den Noten stehen auf den Tasten:
+            c = 1, d = 2, e = 3, f = 4, g = 5 – wie auf dem Arbeitsblatt. 16 Takte, die Noten blättern mit.</p>
+          <p>Die <strong>Begleitung</strong> (Akkorde C, A7, Dm, G7, D7) spielt auf Wunsch mit. Gut klingt es ab Tempo 140.</p>`}
           <ul>
             <li><strong>Schritt für Schritt:</strong> Der Cursor wartet an jeder Note, bis du die richtige Taste drückst – die leuchtende.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Cursor im Tempo. Gibt keine Sterne.
               Mit dem Schalter ${Icons.raw('tastenLicht')} leuchten die Tasten mit.</li>
             <li><strong>Sterne sammeln:</strong> Wie Üben, aber es zählt. Ab 95 % gibt es sechs Sterne.</li>
-            <li><strong>Größer:</strong> Nur die Tasten von A bis a¹, dafür breiter.</li>
+            <li><strong>Größer:</strong> Nur die Tasten von ${this.L.groesseText}, dafür breiter.</li>
           </ul>
         </div>
       </div>
       <div class="kp-leiste">
-        <div class="klavier-groesse" role="group" aria-label="Hand">
+        <div class="klavier-groesse" role="group" aria-label="Hand"${this.HAENDE.length < 2 ? ' hidden' : ''}>
           ${knopf('hand', 'rh', 'Rechte Hand', this.hand === 'rh')}${knopf('hand', 'lh', 'Linke Hand', this.hand === 'lh')}${knopf('hand', 'beide', 'Beide', this.hand === 'beide')}
         </div>
         <div class="klavier-groesse" role="group" aria-label="Übeart">
@@ -150,7 +198,7 @@ const Klavierpruefung = {
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
       </div>
       <div class="kp-noten">${this.svg()}<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div></div>
-      <div class="kp-tasten-kopf"><span class="kp-schalter"><label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>Andere Hand spielt mit</label><label class="schalter kp-licht" id="kp-leuchten-feld" title="Tasten leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Tasten leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label><label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label><label class="schalter kp-licht" title="Notennamen auf den Tasten"><input type="checkbox" role="switch" id="kp-namen" aria-label="Notennamen auf den Tasten" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenName')}</label></span><button type="button" class="small kp-gross" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: ohne die Randtasten G und h">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button></div>
+      <div class="kp-tasten-kopf"><span class="kp-schalter"><label class="schalter" id="kp-andere-feld"><input type="checkbox" role="switch" id="kp-andere" ${this.andere ? 'checked' : ''}><span class="schalter-bahn"></span>${this.L.andereText}</label><label class="schalter kp-licht" id="kp-leuchten-feld" title="Tasten leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Tasten leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label><label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label><label class="schalter kp-licht" title="Notennamen auf den Tasten"><input type="checkbox" role="switch" id="kp-namen" aria-label="Notennamen auf den Tasten" ${this.namen ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenName')}</label></span><button type="button" class="small kp-gross" id="kp-gross" aria-pressed="${this.gross}" title="Tasten größer: nur ${this.L.groesseText}">${Icons.raw(this.gross ? 'lupeMinus' : 'lupePlus')}<span>${this.gross ? 'Kleiner' : 'Größer'}</span></button></div>
       <div class="klaviatur kp-tasten${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>`;
     // Wie das Klavier: festes Bild über dem ganzen Fenster, Tasten von Rand zu Rand
     Vollbild.binden(this.el.querySelector('.kp-seite'));
@@ -178,7 +226,8 @@ const Klavierpruefung = {
       m.innerHTML = st ? ` ${Icons.raw('star')}${st}` : '';
     });
   },
-  sterneSumme() { return this.HAENDE.reduce((s, _, i) => s + Fortschritt.bester(this.SPIEL, i).sterne, 0); },
+  sterneSumme(id = 'in-the-end') { const L = this.LIEDER[id]; return L.HAENDE.reduce((s, _, i) => s + Fortschritt.bester(L.SPIEL, i).sterne, 0); },
+  sterneMax(id = 'in-the-end') { return this.LIEDER[id].HAENDE.length * 6; },
 
   /* Kein Zoomen (Zwei-Finger, Doppeltipp) und kein Markieren, solange die Seite offen ist –
      beim Spielen mit mehreren Fingern vergrößert Safari sonst versehentlich */
@@ -211,7 +260,7 @@ const Klavierpruefung = {
   taktX(t) { return this.X0 + t * this.TAKT; },
   /* x zur Zeit in Schlägen – beide Durchgänge laufen über dieselbe Zeile */
   x(zeit) {
-    const z = zeit >= 16 ? zeit - 16 : zeit;
+    const z = this.L?.wiederholung === false ? zeit - this.zeile * 16 : zeit >= 16 ? zeit - 16 : zeit;
     const t = Math.min(3, Math.max(0, Math.floor(z / 4)));
     return this.taktX(t) + this.RAND + (z - t * 4) * this.SCHLAG;
   },
@@ -231,16 +280,38 @@ const Klavierpruefung = {
       s += `<text x="78" y="${u - 21}" class="nt kp-takt">4</text><text x="78" y="${u - 1}" class="nt kp-takt">4</text>`;
     });
     const oben = this.OBEN - 40;
+    const letzte = !this.L.wiederholung && (this.zeile + 1) * 16 >= this.ende() - 0.01;
+    if (!this.L.wiederholung) s += `<text x="${this.X0 + 4}" y="${this.OBEN - 58}" class="kp-taktnr">${this.zeile * 4 + 1}</text>`;
     for (let t = 1; t <= 4; t++) {
       const x = this.taktX(t) - 1;
-      if (t < 4) s += `<line x1="${x}" x2="${x}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/>`;
+      if (t < 4 || (!this.L.wiederholung && !letzte)) s += `<line x1="${x}" x2="${x}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/>`;
+      else if (letzte) s += `<line x1="${x - 7}" x2="${x - 7}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/><rect x="${x - 4}" y="${oben}" width="4" height="${this.UNTEN_Y - oben}" class="nb"/>`;
       else {
         // Wiederholungszeichen: Punkte, dünner und dicker Strich
         s += `<line x1="${x - 7}" x2="${x - 7}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/><rect x="${x - 4}" y="${oben}" width="4" height="${this.UNTEN_Y - oben}" class="nb"/>`;
         [this.OBEN, this.UNTEN_Y].forEach(u => { s += `<circle cx="${x - 13}" cy="${u - 25}" r="2.4" class="nb"/><circle cx="${x - 13}" cy="${u - 15}" r="2.4" class="nb"/>`; });
       }
     }
-    const noten = this.stueck.noten.filter(n => n.start < 16);
+    const noten = this.L.wiederholung ? this.stueck.noten.filter(n => n.start < 16)
+      : this.stueck.noten.filter(n => Math.floor(n.start / 16) === this.zeile);
+    // Pausen der rechten Hand (Halbe, Ganze, Viertel) – Lücken in jedem Takt
+    if (!this.L.wiederholung) for (let t = 0; t < 4; t++) {
+      const a = this.zeile * 16 + t * 4;
+      const frei = [0, 1, 2, 3].filter(b => !noten.some(n => n.hand === 'rh' && n.start <= a + b && n.start + n.dauer > a + b));
+      for (let i = 0; i < frei.length;) {
+        let j = i; while (j + 1 < frei.length && frei[j + 1] === frei[j] + 1) j++;
+        let b = frei[i], laenge = j - i + 1;
+        while (laenge > 0) {
+          const d = laenge >= 4 && b === 0 ? 4 : laenge >= 2 && b % 2 === 0 ? 2 : 1;
+          const xp = this.x(a + b);
+          s += d === 4 ? `<rect x="${xp - 7}" y="${this.OBEN - 30}" width="14" height="5" class="nb"/>`
+            : d === 2 ? `<rect x="${xp - 7}" y="${this.OBEN - 25}" width="14" height="5" class="nb"/>`
+            : `<path transform="translate(${xp - 4} ${this.OBEN - 34})" class="np" d="M2 0 L9 8 L4 14 L10 22 C5 20 2 23 6 29 C-1 25 0 18 6 20 L0 13 L5 7 Z"/>`;
+          b += d; laenge -= d;
+        }
+        i = j + 1;
+      }
+    }
     const achtel = noten.filter(n => n.dauer === 0.5 && n.hand === 'rh');
     for (const n of noten) {
       const x = this.x(n.start);
@@ -249,6 +320,7 @@ const Klavierpruefung = {
       n.stufen.forEach((st, k) => {
         const y = this.y(st, n.hand);
         g += this.hilfslinien(x, y, n.hand) + Notenbild.kopf(x, y, hohl);
+        if (n.kreuz?.[k]) g += `<text x="${x - 20}" y="${y + 5}" class="ns ns-vz">♯</text>`;
         if (n.dauer < 4) {
           const hoch = n.hand === 'rh' ? st < 6 : st < -6;
           if (k === 0) g += hoch
@@ -271,8 +343,8 @@ const Klavierpruefung = {
       s += `<path d="M${xa - .8} ${ya} L${xb + .8} ${yb} L${xb + .8} ${yb + 5} L${xa - .8} ${ya + 5} Z" class="nb kp-balken" data-i="${a.i}"/>`;
     }
  // Ende beim 2. Mal: Pfeil über dem ersten Ton von Takt 4, liegen lassen
-    const xe = this.x(12);
-    s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
+    const xe = this.x(this.L.fermate ?? 12);
+    if (this.L.fermate !== undefined) s += `<g class="kp-endpfeil"><text x="${xe}" y="${this.OBEN - 66}" class="ns kp-fermate">\u{1D110}</text></g>`;
     s += `<rect class="kp-cursor" x="0" y="${oben - 14}" width="3" height="${this.UNTEN_Y - oben + 28}" rx="1.5" hidden/>`;
     return `<svg class="notenbild kp-system" viewBox="0 ${oben - 50} ${breite} ${this.UNTEN_Y - oben + 82}" role="img" aria-label="Noten">${s}</svg>`;
   },
@@ -323,7 +395,7 @@ const Klavierpruefung = {
       this.art = b.dataset.art; this.merken('art', this.art); this.stopp(); this.leisteZeigen();
     }));
     el.querySelectorAll('[data-bpm]').forEach(b => b.addEventListener('click', () => {
-      this.bpm = Math.min(120, Math.max(40, this.bpm + Number(b.dataset.bpm)));
+      this.bpm = Math.min(this.L.bpmMax, Math.max(40, this.bpm + Number(b.dataset.bpm)));
       el.querySelector('#kp-bpm-text').textContent = this.bpm;
       this.merken('bpm', this.bpm);
       if (this.lauf) this.lauf.tempoNeu = true;
@@ -467,7 +539,7 @@ const Klavierpruefung = {
         }
       }
     }
-    if (l.t < 16 && t >= 16) this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
+    if (this.L.wiederholung && l.t < 16 && t >= 16) this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
     l.t = t;
     // Die andere Hand
     for (const a of l.auto) {
@@ -547,12 +619,24 @@ const Klavierpruefung = {
     this.el.querySelectorAll(`.kp-n[data-i="${i}"], .kp-balken[data-i="${i}"]`).forEach(g => g.classList.toggle(klasse, an));
   },
 
+  /* Ohne Wiederholung: die Zeile mit der Zeit t zeigen (neu gezeichnet, Markierungen fallen weg) */
+  zeileZeigen(z) {
+    const max = Math.max(0, Math.ceil(this.ende() / 16) - 1);
+    z = Math.min(max, Math.max(0, z));
+    if (z === this.zeile && this.el.querySelector('.kp-system')) return;
+    this.zeile = z;
+    const alt = this.el.querySelector('.kp-noten .kp-system');
+    if (!alt) return;
+    alt.outerHTML = this.svg();
+    this.el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
+  },
   cursor(t) {
+    if (this.L.wiederholung === false && t >= 0) this.zeileZeigen(Math.floor(Math.min(t, this.ende() - 0.01) / 16));
     const c = this.el.querySelector('.kp-cursor');
     if (t < 0) { c.setAttribute('hidden', ''); return; }
     c.removeAttribute('hidden');
     // Am Ende (liegen lassen) bleibt der Cursor auf dem letzten Ton stehen
-    c.setAttribute('x', this.x(Math.min(t, 28)) - 1.5);
+    c.setAttribute('x', this.x(Math.min(t, this.L.wiederholung ? 28 : this.ende() - 0.01)) - 1.5);
     this.el.querySelector('.kp-endpfeil')?.classList.toggle('jetzt', t >= 16);
   },
 
@@ -606,6 +690,7 @@ const Klavierpruefung = {
 
   zuruecksetzen() {
     if (!this.el?.querySelector('.kp-seite')) return;
+    if (this.L && !this.L.wiederholung) this.zeileZeigen(0);
     this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
     const erg = this.el.querySelector('#kp-ergebnis');
     if (erg) erg.textContent = '';

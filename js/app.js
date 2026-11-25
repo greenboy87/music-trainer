@@ -306,7 +306,7 @@ const App = {
     else if (art === 'schlagzeug') Schlagzeugseite.zeigen(this.el, id);
     else if (art === 'songbaukasten') Songbaukasten.zeigen(this.el, id);
     else if (art === 'pruefung') Pruefungsseite.zeigen(this.el, id);
-    else if (art === 'klavierpruefung') Klavierpruefung.zeigen(this.el);
+    else if (art === 'klavierpruefung') Klavierpruefung.zeigen(this.el, id);
     else if (art === 'drumgrooves') Drumgrooves.zeigen(this.el);
     else if (art === 'groovefill') Drumgrooves.zeigen(this.el, 'fill');
     else if (art === 'drumgrooves2') Drumgrooves.zeigen(this.el, 'part2');
@@ -450,12 +450,25 @@ const App = {
   },
 
   /* Sterne einer Kategorie: ihre Spiele, dazu die Seiten mit eigenen Sternen (Prüfungen bei Rhythmus, Trainer bei Drums) */
+  /* Saison: Weihnachtliches (saison: 'weihnachten') erscheint nur von November bis Januar auf der
+     Startseite und zählt nur dann bei den Sternen mit. Neue Weihnachtsspiele und -songs einfach so markieren. */
+  SAISON_MONATE: { weihnachten: [10, 11, 0] },   // getMonth(): 0 = Januar
+  saisonAktiv(saison) { return !saison || (this.SAISON_MONATE[saison] || []).includes(new Date().getMonth()); },
+  spiele() { return SPIELE.filter(s => this.saisonAktiv(s.saison)); },
+  /* Lieder der Kategorie Piano (eigene Seite #/klavierpruefung/<id>) */
+  klavierLieder() {
+    return [
+      { id: 'in-the-end', titel: 'In the End', farbe: '#e07b2e', text: 'Das Intro auf dem Klavier – rechte und linke Hand, Schritt für Schritt oder im Tempo.' },
+      { id: 'jingle-bells', titel: 'Jingle Bells', farbe: '#ef4444', saison: 'weihnachten', text: 'Mein erster Song: die Melodie mit den Tasten 1–5, die Begleitung spielt mit.' },
+    ].filter(l => this.saisonAktiv(l.saison));
+  },
+
   bereichSterne(b) {
-    const spiele = SPIELE.filter(s => s.bereich === b);
+    const spiele = this.spiele().filter(s => s.bereich === b);
     let hat = spiele.reduce((n, sp) => n + Fortschritt.sterneVon(sp), 0);
     let von = spiele.reduce((n, sp) => n + sp.stufen.length * Bewertung.MAX, 0);
     if (b === 'Rhythmus') { hat += Pruefungsseite.sterneSumme(); von += 60; }
-    if (b === 'Piano') { hat += Klavierpruefung.sterneSumme(); von += 18; }
+    if (b === 'Piano') this.klavierLieder().forEach(l => { hat += Klavierpruefung.sterneSumme(l.id); von += Klavierpruefung.sterneMax(l.id); });
     if (b === 'Drums') {
       hat += Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('part2') + Drumgrooves.sterneSumme('fill');
       von += 30 + 30 + 48;
@@ -499,16 +512,17 @@ const App = {
     return unter.map(u => `
         <h3 class="unter-titel">${u.name}<span class="bereich-info">${u.info}</span></h3>
         <div class="spiele-raster">${u.trainer}
-          ${SPIELE.filter(s => s.bereich === 'Drums' && s.unter === u.name).map(s => this.spielKarte(s)).join('')}
+          ${this.spiele().filter(s => s.bereich === 'Drums' && s.unter === u.name).map(s => this.spielKarte(s)).join('')}
         </div>`).join('');
   },
 
   zeigeStart() {
     // Die Rhythmus-Prüfung (Sterne sammeln, eigene Seite) zählt mit – sonst wäre ihre Kachel größer als „gesamt“
-    const gesamt = SPIELE.reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + Klavierpruefung.sterneSumme() + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill') + Drumgrooves.sterneSumme('part2');
-    const moeglich = SPIELE.reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + 18 + 30 + 48 + 30;
+    const lieder = this.klavierLieder();
+    const gesamt = this.spiele().reduce((s, sp) => s + Fortschritt.sterneVon(sp), 0) + Pruefungsseite.sterneSumme() + lieder.reduce((n, l) => n + Klavierpruefung.sterneSumme(l.id), 0) + Drumgrooves.sterneSumme() + Drumgrooves.sterneSumme('fill') + Drumgrooves.sterneSumme('part2');
+    const moeglich = this.spiele().reduce((s, sp) => s + sp.stufen.length * Bewertung.MAX, 0) + 60 + lieder.reduce((n, l) => n + Klavierpruefung.sterneMax(l.id), 0) + 30 + 48 + 30;
     // Piano hat (noch) keine Spiele in SPIELE, nur eigene Seiten – steht hinter Drums
-    const bereiche = [...new Set([...SPIELE.map(s => s.bereich), 'Piano'])];
+    const bereiche = [...new Set([...this.spiele().map(s => s.bereich), 'Piano'])];
     const konto = Konto.angemeldet() ? Konto.daten : null;
     const name = konto ? konto.name : Fortschritt.name();
     const willkommen = this.willkommen;
@@ -541,14 +555,14 @@ const App = {
       <div class="spiele-alle${this.beschreibungen() ? '' : ' ohne-texte'}">
       ${bereiche.map(b => `
         <h2 class="bereich-titel">${b}${this.bereichSterne(b)}${typeof BEREICH_INFO !== 'undefined' && BEREICH_INFO[b] ? `<span class="bereich-info">${BEREICH_INFO[b]}</span>` : ''}</h2>
-        ${b === 'Drums' ? this.drumsKarten() : b === 'Piano' ? `<div class="spiele-raster">
-            <a class="card spiel-karte" href="#/klavierpruefung" style="--farbe:#e07b2e">
+        ${b === 'Drums' ? this.drumsKarten() : b === 'Piano' ? `<div class="spiele-raster">${lieder.map(l => `
+            <a class="card spiel-karte" href="#/klavierpruefung/${l.id}" style="--farbe:${l.farbe}">
               <span class="spiel-icon">${Icons.raw('piano')}</span>
-              <span class="spiel-titel">In the End</span>
-              <span class="hint">Das Intro auf dem Klavier – rechte und linke Hand, Schritt für Schritt oder im Tempo.</span>
-              <span class="spiel-sterne">${Icons.raw('star')} ${Klavierpruefung.sterneSumme()} / 18</span>
-            </a></div>` : `<div class="spiele-raster">
-          ${SPIELE.filter(s => s.bereich === b).map(s => this.spielKarte(s)).join('')}
+              <span class="spiel-titel">${l.titel}</span>
+              <span class="hint">${l.text}</span>
+              <span class="spiel-sterne">${Icons.raw('star')} ${Klavierpruefung.sterneSumme(l.id)} / ${Klavierpruefung.sterneMax(l.id)}</span>
+            </a>`).join('')}</div>` : `<div class="spiele-raster">
+          ${this.spiele().filter(s => s.bereich === b).map(s => this.spielKarte(s)).join('')}
           ${b === 'Rhythmus' ? `
             <a class="card spiel-karte" href="#/pruefung" style="--farbe:#5eead4">
               <span class="spiel-icon">${Icons.raw('drum')}</span>
