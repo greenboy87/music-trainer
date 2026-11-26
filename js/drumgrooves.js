@@ -243,11 +243,12 @@ const Drumgrooves = {
     const fill = this.modus === 'fill';
     const hilfe = fill ? `
           <p>Ein Takt <strong>Groove</strong> (Groove 2: Hi-Hat in Achteln, Snare auf 2 und 4, Bassdrum auf 1 und 3), dann ein Takt
-            <strong>Fill</strong> auf Snare und Toms – insgesamt ${this.DURCHGAENGE}×. Vier Rhythmen aus Vierteln und Achteln, jeder nur auf der Snare und auf Snare + Toms.</p>
+            <strong>Fill</strong> auf Snare und Toms. Bei „Sterne sammeln“ läuft das ${this.DURCHGAENGE}×, sonst bis du stoppst. Vier Rhythmen aus Vierteln und Achteln, jeder nur auf der Snare und auf Snare + Toms.</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst nur der Fill (den Groove spielt der Computer), dann Groove + Fill.</li>
-            <li><strong>Üben:</strong> Ein Takt wird eingezählt. Gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
-            <li><strong>Sterne sammeln:</strong> Groove + Fill, gewertet. Ab 95 % gibt es sechs Sterne.</li>
+            <li><strong>Anhören:</strong> Der Computer spielt alles vor, bis du stoppst.</li>
+            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann spielst du, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
+            <li><strong>Sterne sammeln:</strong> Groove + Fill ${this.DURCHGAENGE}×, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ⇄ umdrehen. Oder das Drumset.</li>
           </ul>` : `
           <p>${this.modus === 'part2'
@@ -255,9 +256,10 @@ const Drumgrooves = {
             : 'Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.'}</p>
           <ul>
             <li><strong>Aufbauen:</strong> erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
-            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove ${this.DURCHGAENGE}× durch. Gibt keine Sterne.
+            <li><strong>Anhören:</strong> Der Computer spielt den Groove vor, bis du stoppst.</li>
+            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne.
               Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
-            <li><strong>Sterne sammeln:</strong> der ganze Groove, gewertet. Ab 95 % gibt es sechs Sterne.</li>
+            <li><strong>Sterne sammeln:</strong> der ganze Groove ${this.DURCHGAENGE}×, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Pads</strong> oder <strong>Drumset</strong> – mit ⇄ drehst du die Pads um. Tasten am Computer: A, S, D.</li>
             <li><strong>Bodypercussion:</strong> Hi-Hat = Brust (rechte Hand), Snare = Oberschenkel (linke Hand), Bassdrum = stampfen (rechter Fuß).</li>
           </ul>`;
@@ -418,7 +420,13 @@ const Drumgrooves = {
       if (feld === 'sticks') this.sticksZeigen(this.lauf?.t ?? null);
     });
     schalter('#kp-leuchten', 'leuchten'); schalter('#kp-metro', 'metro'); schalter('#dg-koerper', 'koerper'); schalter('#dg-sticks', 'sticks');
-    el.querySelector('#kp-los').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(false); });
+    // Üben läuft endlos: Stopp zeigt dann das Ergebnis der gespielten Durchgänge
+    el.querySelector('#kp-los').addEventListener('click', () => {
+      Ton.audio();
+      if (!this.lauf) this.starten(false);
+      else if (this.lauf.endlos && !this.lauf.hoeren && this.lauf.t > 0) this.fertig();
+      else this.stopp();
+    });
     el.querySelector('#dg-hoeren').addEventListener('click', () => { Ton.audio(); this.lauf ? this.stopp() : this.starten(true); });
     const i = el.querySelector('#kp-i'), hilfe = el.querySelector('#kp-hilfe');
     const hilfeZeigen = an => { hilfe.hidden = !an; i.setAttribute('aria-expanded', String(an)); };
@@ -469,21 +477,19 @@ const Drumgrooves = {
     g.classList.remove('dg-ok', 'dg-falsch'); g.classList.add(klasse);
   },
 
-  /* hoeren: alles spielt sich selbst vor (eingezählt, zwei Durchgänge), sonst spielt man mit.
-     Ein Durchgang ist ein Takt (Groove) bzw. zwei Takte (Groove + Fill), die Zeit t in Schlägen. */
+  /* hoeren: alles spielt sich selbst vor, sonst spielt man mit. Anhören und Üben laufen endlos bis Stopp,
+     Sterne sammeln DURCHGAENGE-mal. Ein Durchgang ist ein Takt (Groove) bzw. zwei Takte (Groove + Fill),
+     die Zeit t in Schlägen. Endlos werden die Schläge immer zwei Durchgänge im Voraus angehängt. */
   starten(hoeren) {
     this.stopp();
     this.el.querySelector('#kp-ergebnis').textContent = '';
     const laenge = this.takte() * 4;
-    const durchgaenge = hoeren ? 2 : this.DURCHGAENGE;
-    const noten = this.durchgang();
-    const erwartet = [], auto = [];
-    for (let d = 0; d < durchgaenge; d++) noten.forEach(n => (hoeren || n.auto ? auto : erwartet).push({ ...n, t: d * laenge + n.p / 2, ok: false }));
-    // Was die Sticks spielen: alles, was der Computer vorspielt, je Hand nach der Zeit
-    const plan = { R: [], L: [], F: [] };
-    auto.filter(e => plan[e.h]).forEach(e => plan[e.h].push(e));
-    Object.values(plan).forEach(l => l.sort((a, b) => a.t - b.t));
-    this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, laenge, durchgaenge, hoeren, erwartet, auto, falsch: 0, d: -1, plan };
+    const endlos = hoeren || this.art === 'mit';
+    const durchgaenge = endlos ? Infinity : this.DURCHGAENGE;
+    this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, laenge, durchgaenge, endlos, hoeren, noten: this.durchgang(),
+      erwartet: [], auto: [], plan: { R: [], L: [], F: [] }, falsch: 0, d: -1, angehaengt: 0, okAlt: 0, alleAlt: 0 };
+    this.anhaengen(endlos ? 2 : durchgaenge);
+    this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los').innerHTML = '■ Stopp';
     this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los').innerHTML = '■ Stopp';
     const schritt = () => {
       if (!this.lauf) return;
@@ -491,6 +497,29 @@ const Drumgrooves = {
       if (this.lauf) this.raf = requestAnimationFrame(schritt);
     };
     this.raf = requestAnimationFrame(schritt);
+  },
+
+  // Schläge bis einschließlich Durchgang bis-1 anhängen; was der Computer spielt, kommt auch in den Plan der Sticks
+  anhaengen(bis) {
+    const l = this.lauf;
+    for (; l.angehaengt < bis; l.angehaengt++) {
+      const d = l.angehaengt;
+      l.noten.forEach(n => {
+        const e = { ...n, t: d * l.laenge + n.p / 2, ok: false };
+        (l.hoeren || n.auto ? l.auto : l.erwartet).push(e);
+        if ((l.hoeren || n.auto) && l.plan[e.h]) l.plan[e.h].push(e);
+      });
+    }
+    Object.values(l.plan).forEach(p => p.sort((a, b) => a.t - b.t));
+  },
+  // Endlos: alte Durchgänge wegräumen, die Wertung der erwarteten Schläge bleibt in okAlt/alleAlt
+  aufraeumen(vor) {
+    const l = this.lauf;
+    const alt = l.erwartet.filter(e => e.t < vor);
+    l.okAlt += alt.filter(e => e.ok).length; l.alleAlt += alt.length;
+    l.erwartet = l.erwartet.filter(e => e.t >= vor);
+    l.auto = l.auto.filter(e => e.t >= vor);
+    Object.keys(l.plan).forEach(h => { l.plan[h] = l.plan[h].filter(e => e.t >= vor - 2); });
   },
 
   weiter() {
@@ -518,7 +547,8 @@ const Drumgrooves = {
       l.d = d;
       this.el.querySelectorAll('.dg-noten .dg-ok, .dg-noten .dg-falsch').forEach(g => g.classList.remove('dg-ok', 'dg-falsch'));
       const z = this.el.querySelector('.dg-takt-zaehler');
-      z.hidden = false; z.textContent = `${d + 1} von ${l.durchgaenge}`;
+      z.hidden = false; z.textContent = l.endlos ? `${d + 1}. Durchgang` : `${d + 1} von ${l.durchgaenge}`;
+      if (l.endlos) { this.anhaengen(d + 3); if (d >= 2) this.aufraeumen((d - 1) * l.laenge); }
     }
     // Der Computer spielt (Anhören, Groove unter dem Fill); verpasste eigene Schläge
     for (const e of l.auto) if (!e.ok && t >= e.t) { e.ok = true; Drums.spielen(e.k, undefined, e.k === 'hh' ? 0.7 : 1); this.blitz(e.k); }
@@ -550,18 +580,21 @@ const Drumgrooves = {
     this.stopp();
     if (l.hoeren) return;
     const erg = this.el.querySelector('#kp-ergebnis');
-    const ok = l.erwartet.filter(e => e.ok).length;
-    const p = Math.max(0, Math.round((ok - l.falsch * 0.5) / l.erwartet.length * 100));
+    const vorbei = l.endlos ? l.erwartet.filter(e => e.ok || e.verpasst) : l.erwartet;
+    const ok = l.okAlt + vorbei.filter(e => e.ok).length, alle = l.alleAlt + vorbei.length;
+    if (!alle) return;
+    const p = Math.max(0, Math.round((ok - l.falsch * 0.5) / alle * 100));
     if (this.art === 'mit') {
       const weiter = this.teile().indexOf(this.teil) < this.teile().length - 1;
-      erg.innerHTML = `${p} % · ${ok} von ${l.erwartet.length} Schlägen${l.falsch ? ` · ${l.falsch}× daneben` : ''}.
+      const runden = Math.max(1, Math.floor(l.t / l.laenge));
+      erg.innerHTML = `${p} % · ${ok} von ${alle} Schlägen${l.falsch ? ` · ${l.falsch}× daneben` : ''} · ${runden} ${runden === 1 ? 'Durchgang' : 'Durchgänge'}.
         ${p >= 85 ? (weiter ? 'Gut! Weiter zum nächsten Schritt.' : 'Gut! Jetzt probier es bei „Sterne sammeln“.') : 'Weiter üben – gern etwas langsamer.'}`;
       return;
     }
     const sterne = Math.max(1, Pruefungsseite.sterne(p));
     const spiel = this.m().spiel;
     const alt = Fortschritt.bester(spiel, this.g).punkte || 0;
-    Fortschritt.eintragen(spiel, this.g, sterne, p, ok, l.erwartet.length, Math.round(l.durchgaenge * l.laenge * this.spb()));
+    Fortschritt.eintragen(spiel, this.g, sterne, p, ok, alle, Math.round(l.durchgaenge * l.laenge * this.spb()));
     const letzte = this.g >= this.auswahl().length - 1;
     const wort = this.modus === 'fill' ? 'Fill' : this.modus === 'part2' ? 'Level' : 'Groove';
     erg.innerHTML = `<span class="kp-sterne">${sterneHtml(sterne)}</span>
