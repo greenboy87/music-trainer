@@ -171,9 +171,9 @@ const Drumgrooves = {
     part2: { spiel: 'drumgrooves-2', titel: 'Drumgrooves Part II', takte: 1, teile: ['hs', 'bs', 'alle'] },
   },
   TEILE: {
-    hs: { name: 'Hi-Hat + Snare', stimmen: ['hh', 's'] },
-    bs: { name: 'Bassdrum + Snare', stimmen: ['b', 's'] },
-    alle: { name: 'Alles', stimmen: ['hh', 's', 'b'] },
+    hs: { name: 'Hi-Hat + Snare', stimmen: ['hh', 's'], icons: ['hihat', 'snare'] },
+    bs: { name: 'Bassdrum + Snare', stimmen: ['b', 's'], icons: ['bassdrum', 'snare'] },
+    alle: { name: 'Alles', stimmen: ['hh', 's', 'b'], icons: ['hihat', 'snare', 'bassdrum'] },
     fill: { name: 'Nur der Fill' },
     beide: { name: 'Groove + Fill' },
   },
@@ -249,31 +249,32 @@ const Drumgrooves = {
             <li><strong>Anhören:</strong> Der Computer spielt alles vor, bis du stoppst.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann spielst du, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> Groove + Fill ${this.DURCHGAENGE}×, gewertet. Ab 95 % gibt es sechs Sterne.</li>
-            <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ⇄ umdrehen. Oder das Drumset.</li>
+            <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ${Icons.raw('hihat')}${Icons.raw('pfeileTausch')}${Icons.raw('bassdrum')} umdrehen. Oder ${Icons.raw('drumset')} das Drumset.</li>
           </ul>` : `
           <p>${this.modus === 'part2'
             ? 'Fünf Level von Level 1 (Note 5) bis Level 5 (Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat, die <strong>Bassdrum</strong> spielt mehr Achtel. Level 5 hat zwei Takte.'
             : 'Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.'}</p>
           <ul>
-            <li><strong>Aufbauen:</strong> erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
+            <li><strong>Aufbauen:</strong> erst ${Icons.raw('hihat')}+${Icons.raw('snare')} Hi-Hat + Snare, dann ${Icons.raw('bassdrum')}+${Icons.raw('snare')} Bassdrum + Snare, dann ${Icons.raw('hihat')}${Icons.raw('snare')}${Icons.raw('bassdrum')} alles.</li>
             <li><strong>Anhören:</strong> Der Computer spielt den Groove vor, bis du stoppst.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne.
               Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> der ganze Groove ${this.DURCHGAENGE}×, gewertet. Ab 95 % gibt es sechs Sterne.</li>
-            <li><strong>Pads</strong> oder <strong>Drumset</strong> – mit ⇄ drehst du die Pads um. Tasten am Computer: A, S, D.</li>
+            <li>${Icons.raw('pads')} <strong>Pads</strong> oder ${Icons.raw('drumset')} <strong>Drumset</strong> – mit ${Icons.raw('pfeileTausch')} drehst du die Pads um. Tasten am Computer: A, S, D.</li>
             <li><strong>Bodypercussion:</strong> Hi-Hat = Brust (rechte Hand), Snare = Oberschenkel (linke Hand), Bassdrum = stampfen (rechter Fuß).</li>
           </ul>`;
     const wort = this.modus === 'part2' ? 'Level' : 'Groove';
     const wahl = fill
       ? DG.FILLS.map((f, i) => knopf('g', i, `${f.nr}<small>${f.art}</small><span class="kp-best"></span>`, i === this.g).replace('<button ', `<button title="Fill ${f.nr}: ${f.kurz}" `)).join('')
-      : this.liste().map((gr, i) => knopf('g', i, `${wort} ${gr.nr}<small>Note ${gr.note}</small><span class="kp-best"></span>`, i === this.g)).join('');
+      : this.liste().map((gr, i) => knopf('g', i, `${gr.nr}<span class="kp-best"></span>`, i === this.g)
+        .replace('<button ', `<button title="${wort} ${gr.nr}" aria-label="${wort} ${gr.nr}" `)).join('');
     this.el.querySelector('.dg-seite').innerHTML = `
       <div class="kp-kopf">
         <h2><a class="karte-zurueck" href="#/" title="Zur Startseite" aria-label="Zur Startseite">${Icons.raw('back')}</a>${this.m().titel}
           <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
           <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
         <div class="kp-hilfe" id="kp-hilfe" hidden>${hilfe}
-          <p class="hint">Anhören: So klingt es.</p>
+          <p class="hint">${Icons.raw('ear')} Anhören: So klingt es.</p>
         </div>
       </div>
       <div class="kp-leiste">
@@ -288,7 +289,7 @@ const Drumgrooves = {
       </div>
       <div class="kp-start">
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
-        <button type="button" id="dg-hoeren">${Icons.raw('ear')}Anhören</button>
+        <button type="button" id="dg-hoeren" class="dg-icon-knopf" title="Anhören" aria-label="Anhören">${Icons.raw('ear')}</button>
         <div class="klavier-groesse dg-teile" role="group" aria-label="Aufbau"></div>
         <span class="kp-ergebnis" id="kp-ergebnis" aria-live="polite"></span>
       </div>
@@ -300,9 +301,9 @@ const Drumgrooves = {
           ${fill ? '' : `<label class="schalter" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>`}
         </span>
         <span class="dg-instrument">
-          <button type="button" class="small" id="dg-drehen" title="Pads umdrehen">⇄<span>Umdrehen</span></button>
+          <button type="button" class="small" id="dg-drehen" title="Pads umdrehen: Hi-Hat und Bassdrum tauschen die Seite" aria-label="Pads umdrehen">${Icons.raw('hihat')}${Icons.raw('pfeileTausch', 'dg-pfeile')}${Icons.raw('bassdrum')}</button>
           <span class="klavier-groesse" role="group" aria-label="Instrument">
-            ${knopf('instrument', 'pads', 'Pads', this.instrument === 'pads')}${knopf('instrument', 'set', 'Drumset', this.instrument === 'set')}
+            ${knopf('instrument', 'pads', Icons.raw('pads'), this.instrument === 'pads').replace('<button ', '<button title="Pads" aria-label="Pads" ')}${knopf('instrument', 'set', Icons.raw('drumset'), this.instrument === 'set').replace('<button ', '<button title="Drumset" aria-label="Drumset" ')}
           </span>
         </span>
       </div>
@@ -321,7 +322,10 @@ const Drumgrooves = {
     el.querySelectorAll('button[data-instrument]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.instrument === this.instrument)));
     const teile = el.querySelector('.dg-teile');
     teile.hidden = this.art === 'sterne' || this.teile().length < 2;
-    teile.innerHTML = this.teile().map((t, i) => `<button type="button" data-teil="${t}" aria-pressed="${t === this.teil}">${i + 1}. ${this.TEILE[t].name}</button>`).join('');
+    teile.innerHTML = this.teile().map(t => {
+      const icons = this.TEILE[t].icons;
+      return `<button type="button" data-teil="${t}" aria-pressed="${t === this.teil}"${icons ? ` class="dg-teil-icons" title="${this.TEILE[t].name}" aria-label="${this.TEILE[t].name}"` : ''}>${icons ? icons.map(n => Icons.raw(n)).join('<span class="dg-plus">+</span>') : this.TEILE[t].name}</button>`;
+    }).join('');
     teile.querySelectorAll('[data-teil]').forEach(b => b.addEventListener('click', () => {
       this.teil = b.dataset.teil; this.merken('teil', this.teil); this.allesZeigen();
     }));
@@ -489,8 +493,8 @@ const Drumgrooves = {
     this.lauf = { t: -4, zuletzt: this.uhr(), schlag: -5, laenge, durchgaenge, endlos, hoeren, noten: this.durchgang(),
       erwartet: [], auto: [], plan: { R: [], L: [], F: [] }, falsch: 0, d: -1, angehaengt: 0, okAlt: 0, alleAlt: 0 };
     this.anhaengen(endlos ? 2 : durchgaenge);
-    this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los').innerHTML = '■ Stopp';
-    this.el.querySelector(hoeren ? '#dg-hoeren' : '#kp-los').innerHTML = '■ Stopp';
+    if (hoeren) this.el.querySelector('#dg-hoeren').innerHTML = Icons.raw('stop');
+    else this.el.querySelector('#kp-los').innerHTML = '■ Stopp';
     const schritt = () => {
       if (!this.lauf) return;
       this.weiter();
@@ -614,7 +618,7 @@ const Drumgrooves = {
     this.lauf = null;
     if (!this.el?.querySelector('.dg-seite .kp-start')) return;
     this.el.querySelector('#kp-los').innerHTML = `${Icons.raw('play')}${l && !l.hoeren ? 'Nochmal' : 'Start'}`;
-    this.el.querySelector('#dg-hoeren').innerHTML = `${Icons.raw('ear')}Anhören`;
+    this.el.querySelector('#dg-hoeren').innerHTML = Icons.raw('ear');
     this.el.querySelector('.dg-noten .kp-cursor')?.setAttribute('hidden', '');
     const ez = this.el.querySelector('.dg-noten .pz-einzaehler');
     if (ez) ez.hidden = true;

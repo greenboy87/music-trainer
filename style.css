@@ -1368,7 +1368,18 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .dg-teile button { font-size: .85rem; }
 .dg-instrument { display: inline-flex; align-items: center; gap: .6rem; }
 #dg-drehen { display: inline-flex; align-items: center; gap: .3rem; font-size: 1.1rem; }
-#dg-drehen span { font-size: .85rem; }
+#dg-drehen { gap: .1rem; padding: .3rem .5rem; }
+#dg-drehen .icon { width: 1.35rem; height: 1.35rem; }
+#dg-drehen .icon.dg-pfeile { width: 1rem; height: 1rem; opacity: .7; }
+#dg-hoeren.dg-icon-knopf { padding: .45rem .7rem; }
+#dg-hoeren.dg-icon-knopf .icon { width: 1.4rem; height: 1.4rem; margin: 0; }
+.dg-teile .dg-teil-icons { display: inline-flex; align-items: center; gap: .1rem; padding: .3rem .55rem; }
+.dg-teile .dg-teil-icons .icon { width: 1.35rem; height: 1.35rem; margin: 0; }
+.dg-teile .dg-plus { font-size: .8rem; opacity: .6; font-weight: 700; }
+.dg-instrument button[data-instrument] { display: inline-flex; align-items: center; padding: .3rem .6rem; }
+.dg-instrument button[data-instrument] .icon { width: 1.45rem; height: 1.45rem; margin: 0; }
+.dg-grooves:not(.fills) button { min-width: 2.6rem; font-weight: 700; }
+.kp-hilfe .icon { width: 1.1em; height: 1.1em; vertical-align: -.2em; }
 .dg-spielfeld { display: flex; justify-content: center; margin-top: .5rem; }
 .dg-pads { width: 100%; max-width: none; }
 .dg-pad[data-aus] { opacity: .25; filter: grayscale(.8); }
