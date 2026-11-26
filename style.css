@@ -1379,6 +1379,8 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .dg-teile .dg-teil-icons { display: inline-flex; align-items: center; gap: .1rem; padding: .3rem .55rem; }
 .dg-teile .dg-teil-icons .icon { width: 1.35rem; height: 1.35rem; margin: 0; }
 .dg-teile .dg-plus { font-size: .8rem; opacity: .6; font-weight: 700; }
+.dg-teile button[data-stimme][aria-pressed="false"] .icon { opacity: .45; }
+.dg-teile button[data-stimme]:disabled { opacity: .3; }
 .dg-instrument button[data-instrument] { display: inline-flex; align-items: center; padding: .3rem .6rem; }
 .dg-instrument button[data-instrument] .icon { width: 1.45rem; height: 1.45rem; margin: 0; }
 .dg-grooves:not(.fills) button { min-width: 2.6rem; font-weight: 700; }

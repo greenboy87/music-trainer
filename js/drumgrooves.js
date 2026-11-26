@@ -183,7 +183,7 @@ const Drumgrooves = {
   PAD_TASTEN: ['a', 's', 'd'],
   TOM_TASTEN: ['q', 'w', 'e'],
   REIHEN: { hsb: ['hh', 's', 'b'], bsh: ['b', 's', 'hh'] },   // Snare immer in der Mitte
-  modus: 'groove', g: 0, teil: 'hs', art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: false, sticks: true, instrument: 'pads', reihe: 'hsb',
+  modus: 'groove', g: 0, teil: 'hs', stimmen: ['hh', 's', 'b'], art: 'mit', bpm: 70, metro: true, leuchten: false, koerper: false, sticks: true, instrument: 'pads', reihe: 'hsb',
 
   m() { return this.MODI[this.modus]; },
   lies(s, modus = this.modus) { try { return localStorage.getItem(`musiktrainer-dg-${modus === 'groove' ? '' : `${modus}-`}${s}`); } catch { return null; } },
@@ -196,6 +196,16 @@ const Drumgrooves = {
   /* Groove 1 hat keine Bassdrum: dort gibt es nur einen Teil */
   teile() { return this.modus !== 'fill' && !this.groove().bass.length ? ['hs'] : this.m().teile; },
   teilJetzt() { return this.art === 'sterne' ? this.teile()[this.teile().length - 1] : this.teil; },
+  /* Groove und Part II: Hi-Hat, Snare, Bassdrum einzeln an- und abwählen – gespielt, vorgespielt und
+     deutlich gezeigt wird nur das Gewählte (Sterne sammeln: immer alles). Groove 1 hat keine Bassdrum. */
+  STIMMEN: [['hh', 'hihat', 'Hi-Hat'], ['s', 'snare', 'Snare'], ['b', 'bassdrum', 'Bassdrum']],
+  stimmenDa() { return ['hh', 's', 'b'].filter(k => k !== 'b' || this.groove().bass.length); },
+  stimmenJetzt() {
+    const da = this.stimmenDa();
+    if (this.art === 'sterne') return da;
+    const wahl = da.filter(k => this.stimmen.includes(k));
+    return wahl.length ? wahl : da;
+  },
   sterneSumme(modus = 'groove') {
     const m = this.MODI[modus];
     return this.liste(modus).reduce((s, _, i) => s + Fortschritt.bester(m.spiel, i).sterne, 0);
@@ -204,7 +214,7 @@ const Drumgrooves = {
   /* Was in einem Durchgang erklingt: [{ k, p, v, auto }] – auto spielt der Computer */
   durchgang() {
     const teil = this.teilJetzt();
-    if (this.modus !== 'fill') return DG.schlaege(this.groove(), this.TEILE[teil].stimmen);
+    if (this.modus !== 'fill') return DG.schlaege(this.groove(), this.stimmenJetzt());
     const groove = DG.schlaege(this.groove()).map(n => ({ ...n, auto: teil === 'fill' }));
     return [...groove, ...DG.fillSchlaege(DG.FILLS[this.g], 8).map(n => ({ ...n, fill: true }))];
   },
@@ -220,6 +230,8 @@ const Drumgrooves = {
     this.g = g >= 0 && g < this.auswahl().length ? g : 0;
     this.teil = this.TEILE[this.lies('teil')] && this.m().teile.includes(this.lies('teil')) ? this.lies('teil') : this.m().teile[0];
     this.art = ['mit', 'sterne'].includes(this.lies('art')) ? this.lies('art') : 'mit';
+    const st = (this.lies('stimmen') || '').split(',').filter(k => ['hh', 's', 'b'].includes(k));
+    this.stimmen = st.length ? st : ['hh', 's', 'b'];
     // Instrument, Reihenfolge, Tempo und Schalter gelten für beide Seiten
     const gemein = s => this.lies(s, 'groove');
     if (['pads', 'set'].includes(gemein('instrument'))) this.instrument = gemein('instrument');
@@ -255,7 +267,8 @@ const Drumgrooves = {
             ? 'Fünf Level von Level 1 (Note 5) bis Level 5 (Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat, die <strong>Bassdrum</strong> spielt mehr Achtel. Level 5 hat zwei Takte.'
             : 'Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.'}</p>
           <ul>
-            <li><strong>Aufbauen:</strong> erst ${Icons.raw('hihat')}+${Icons.raw('snare')} Hi-Hat + Snare, dann ${Icons.raw('bassdrum')}+${Icons.raw('snare')} Bassdrum + Snare, dann ${Icons.raw('hihat')}${Icons.raw('snare')}${Icons.raw('bassdrum')} alles.</li>
+            <li><strong>Instrumente wählen:</strong> ${Icons.raw('hihat')} Hi-Hat, ${Icons.raw('snare')} Snare, ${Icons.raw('bassdrum')} Bassdrum einzeln an- und ausschalten.
+              Nur was an ist, spielst du, hörst du bei ${Icons.raw('ear')} und siehst du deutlich in den Noten. Tipp: erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
             <li><strong>Anhören:</strong> Der Computer spielt den Groove vor, bis du stoppst.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne.
               Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
@@ -321,12 +334,22 @@ const Drumgrooves = {
     el.querySelectorAll('button[data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === this.art)));
     el.querySelectorAll('button[data-instrument]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.instrument === this.instrument)));
     const teile = el.querySelector('.dg-teile');
-    teile.hidden = this.art === 'sterne' || this.teile().length < 2;
-    teile.innerHTML = this.teile().map(t => {
+    teile.hidden = this.art === 'sterne' || (this.modus === 'fill' && this.teile().length < 2);
+    if (this.modus !== 'fill') {
+      const da = this.stimmenDa(), an = this.stimmenJetzt();
+      teile.innerHTML = this.STIMMEN.map(([k, icon, name]) => `<button type="button" class="dg-teil-icons" data-stimme="${k}"
+        aria-pressed="${an.includes(k)}" title="${name}" aria-label="${name}"${da.includes(k) ? '' : ' disabled'}>${Icons.raw(icon)}</button>`).join('');
+      teile.querySelectorAll('[data-stimme]').forEach(b => b.addEventListener('click', () => {
+        const k = b.dataset.stimme, jetzt = this.stimmenJetzt();
+        const neu = jetzt.includes(k) ? jetzt.filter(x => x !== k) : [...jetzt, k];
+        if (!neu.length) return;   // eins bleibt immer an
+        this.stimmen = neu; this.merken('stimmen', neu.join(',')); this.allesZeigen();
+      }));
+    } else teile.innerHTML = this.teile().map(t => {
       const icons = this.TEILE[t].icons;
       return `<button type="button" data-teil="${t}" aria-pressed="${t === this.teil}"${icons ? ` class="dg-teil-icons" title="${this.TEILE[t].name}" aria-label="${this.TEILE[t].name}"` : ''}>${icons ? icons.map(n => Icons.raw(n)).join('<span class="dg-plus">+</span>') : this.TEILE[t].name}</button>`;
     }).join('');
-    teile.querySelectorAll('[data-teil]').forEach(b => b.addEventListener('click', () => {
+    if (this.modus === 'fill') teile.querySelectorAll('[data-teil]').forEach(b => b.addEventListener('click', () => {
       this.teil = b.dataset.teil; this.merken('teil', this.teil); this.allesZeigen();
     }));
     el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
@@ -589,10 +612,10 @@ const Drumgrooves = {
     if (!alle) return;
     const p = Math.max(0, Math.round((ok - l.falsch * 0.5) / alle * 100));
     if (this.art === 'mit') {
-      const weiter = this.teile().indexOf(this.teil) < this.teile().length - 1;
+      const weiter = this.modus === 'fill' ? this.teile().indexOf(this.teil) < this.teile().length - 1 : this.stimmenJetzt().length < this.stimmenDa().length;
       const runden = Math.max(1, Math.floor(l.t / l.laenge));
       erg.innerHTML = `${p} % · ${ok} von ${alle} Schlägen${l.falsch ? ` · ${l.falsch}× daneben` : ''} · ${runden} ${runden === 1 ? 'Durchgang' : 'Durchgänge'}.
-        ${p >= 85 ? (weiter ? 'Gut! Weiter zum nächsten Schritt.' : 'Gut! Jetzt probier es bei „Sterne sammeln“.') : 'Weiter üben – gern etwas langsamer.'}`;
+        ${p >= 85 ? (weiter ? (this.modus === 'fill' ? 'Gut! Weiter zum nächsten Schritt.' : 'Gut! Nimm noch ein Instrument dazu.') : 'Gut! Jetzt probier es bei „Sterne sammeln“.') : 'Weiter üben – gern etwas langsamer.'}`;
       return;
     }
     const sterne = Math.max(1, Pruefungsseite.sterne(p));
