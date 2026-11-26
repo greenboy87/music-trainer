@@ -26,14 +26,14 @@ const Klavierpruefung = {
      die auf Wunsch der Computer spielt. Ohne Wiederholung: 16 Takte, je Zeile 4, die Zeile blättert mit. */
   LIEDER: {
     'in-the-end': {
-      server: true, untertitel: 'Intro', wiederholung: true, fermate: 12, bpm: 60, bpmMax: 120,
+      titel: 'In the End', server: true, untertitel: 'Intro', wiederholung: true, fermate: 12, bpm: 60, bpmMax: 120,
       VON: 43, BIS: 71, GROSS: [45, 69], groesseText: 'A bis a¹', andereText: 'Andere Hand spielt mit',
       NUMMER: { lh: { 45: '1', 46: '2', 47: '–', 48: '3', 50: '4', 52: '5', 53: '6' },
                 rh: { 62: '1', 64: '2', 65: '3', 67: '4', 69: '5' } },
       SPIEL: 'klavier-pruefung', HAENDE: ['rh', 'lh', 'beide'],
     },
     'jingle-bells': {
-      untertitel: 'Mein erster Song', wiederholung: false, bpm: 90, bpmMax: 160,
+      titel: 'Jingle Bells', untertitel: 'Mein erster Song', wiederholung: false, bpm: 90, bpmMax: 160,
       VON: 55, BIS: 76, GROSS: [57, 74], groesseText: 'a bis d²', andereText: 'Begleitung spielt mit',
       NUMMER: { lh: {}, rh: { 60: '1', 62: '2', 64: '3', 65: '4', 67: '5' } },
       SPIEL: 'klavier-jingle-bells', HAENDE: ['rh'], laufend: true,
@@ -50,6 +50,55 @@ const Klavierpruefung = {
             '18:2:-10+-8+-6+-4=G7 20:4:-7+-5+-3=C 24:4:-6+-4#+-2+0=D7 28:4:-10+-8+-6+-4=G7 32:4:-7+-5+-3=C ' +
             '36:4:-7+-5+-3=C 40:4:-7+-5+-3=C 44:2:-7+-5+-3=C 46:2:-9+-7#+-5+-3=A7 48:2:-6+-4+-2=Dm ' +
             '50:2:-10+-8+-6+-4=G7 52:4:-7+-5+-3=C 56:4:-10+-8+-6+-4=G7 60:4:-7+-5+-3=C',
+      },
+    },
+    /* Yellow Submarine (Lennon/McCartney, geschützt): Noten wie „In the End“ nur vom Worker (STUECKE,
+       Schlüssel „yellow-submarine“). Toms Fassung aus der Stunde „Yellow Submarine“ (Klasse 5): C-Dur,
+       Strophe einmal, Refrain zweimal; zwei Handlagen (blau C-Lage, orange D-Lage), Zahlen = Finger. */
+    'yellow-submarine': {
+      titel: 'Yellow Submarine', server: true, untertitel: 'Strophe und Refrain', wiederholung: false, laufend: true,
+      bpm: 80, bpmMax: 130, TAKT: 290, fenster: 3,   // breitere Takte, damit die Sechzehntel Platz haben
+      VON: 55, BIS: 76, GROSS: [57, 74], groesseText: 'a bis d²', andereText: 'Begleitung spielt mit',
+      NUMMER: { lh: {}, rh: {} },
+      SPIEL: 'klavier-yellow-submarine', HAENDE: ['rh'],
+      LAGEN: {
+        C: { name: 'C-Lage', farbe: '#2f6fd6', tasten: { 60: '1', 62: '2', 64: '3', 65: '4', 67: '5' } },
+        D: { name: 'D-Lage', farbe: '#e07b2e', tasten: { 62: '1', 64: '2', 65: '3', 67: '4', 69: '5' } },
+      },
+      hilfe: `<p>Die Melodie spielst du mit der <strong>rechten Hand</strong>. Die Zahlen sind deine <strong>Finger</strong>.
+          Das farbige Feld zeigt die Handlage: <strong style="color:#2f6fd6">C-Lage</strong> = Daumen auf c¹,
+          <strong style="color:#e07b2e">D-Lage</strong> = Daumen auf d¹ – wie auf dem Arbeitsblatt.</p>
+        <p>Im Refrain wechselst du nach Takt 2 in die C-Lage. Die Zahlen auf den Tasten wechseln mit.</p>`,
+    },
+    /* Leise rieselt der Schnee (Text Eduard Ebel 1895, Melodie überliefert – gemeinfrei): F-Dur, 6/8,
+       Fassung nach singkinderlieder.de; ein Schlag = eine Achtel (einheit 0.5), Balken je punktierte Viertel.
+       Zwei Handlagen (F-Lage, C-Lage), Begleitakkorde links spielt der Computer. */
+    'leise-rieselt': {
+      titel: 'Leise rieselt der Schnee', untertitel: 'Weihnachtslied', wiederholung: false, laufend: true,
+      takt: 6, taktart: [6, 8], einheit: 0.5, balken: 3,
+      bpm: 120, bpmMax: 200,
+      VON: 55, BIS: 76, GROSS: [57, 74], groesseText: 'a bis d²', andereText: 'Begleitung spielt mit',
+      NUMMER: { lh: {}, rh: {} },
+      SPIEL: 'klavier-leise-rieselt', HAENDE: ['rh'],
+      LAGEN: {
+        F: { name: 'F-Lage', farbe: '#16a34a', tasten: { 65: '1', 67: '2', 69: '3', 70: '4', 72: '5' } },
+        C: { name: 'C-Lage', farbe: '#2f6fd6', tasten: { 60: '1', 62: '2', 64: '3', 65: '4', 67: '5' } },
+      },
+      hilfe: `<p>Die Melodie spielst du mit der <strong>rechten Hand</strong>, die Zahlen sind deine <strong>Finger</strong>.
+          <strong style="color:#16a34a">F-Lage</strong> = Daumen auf f¹ (das b¹ ist die schwarze Taste unter dem 4. Finger),
+          <strong style="color:#2f6fd6">C-Lage</strong> = Daumen auf c¹. In Takt 5 spielt der Daumen kurz das fis¹.</p>
+        <p>6/8-Takt: Ein Klick ist eine Achtel, sechs Klicks sind ein Takt. Die <strong>Begleitung</strong>
+          (F, C, B, A7, Dm) spielt auf Wunsch mit.</p>`,
+      roh: {
+        titel: 'Leise rieselt der Schnee', von: 'Eduard Ebel', vz: -1, takte: 8,
+        lagen: '0:F 12:C 24:F 36:C',
+        rh: '0:2:5:3 2:1:5:3 3:1:4:2 4:1:5:3 5:1:4:2 6:3:3:1 9:2:3:~ ' +
+            '12:2:3:4 14:1:1:2 15:1:3:4 16:1:2:3 17:1:1:2 18:3:0:1 21:2:0:~ ' +
+            '24:1:4:2 25:1:3#:1 26:1:4:2 27:1:6:4 28:1:5:3 29:1:4:2 30:3:3:1 33:2:3:~ ' +
+            '36:1.5:4:5 37.5:.5:1:2 38:1:1:2 39:1:2:3 40:1:1:2 41:1:2:3 42:3:3:4 45:2:3:~',
+        // F = c f a · C = c e g · B = d f b · A7 = A cis e g · Dm = d f a
+        lh: '0:3:-7+-4+-2=F 3:3:-7+-5+-3=C 6:6:-7+-4+-2=F 12:6:-6+-4+-1=B 18:6:-7+-4+-2=F ' +
+            '24:3:-7+-5+-3=C 27:3:-9+-7#+-5+-3=A7 30:6:-6+-4+-2=Dm 36:3:-6+-4+-1=B 39:3:-7+-5+-3=C 42:6:-7+-4+-2=F',
       },
     },
   },
@@ -85,7 +134,7 @@ const Klavierpruefung = {
     if (!this.LIEDER[id]) id = 'in-the-end';
     this.ID = id;
     this.L = this.LIEDER[id];
-    Object.assign(this, { NUMMER: this.L.NUMMER, SPIEL: this.L.SPIEL, HAENDE: this.L.HAENDE });
+    Object.assign(this, { NUMMER: this.L.NUMMER, SPIEL: this.L.SPIEL, HAENDE: this.L.HAENDE, TAKT: this.L.TAKT || 214 });
     this.stueck = this.stuecke[id] || null;
     this.zeile = 0;
     this.hand = this.HAENDE[0];
@@ -109,17 +158,17 @@ const Klavierpruefung = {
     this.zoomSperren();
     if (!this.stueck && !this.L.server) this.stueck = this.stuecke[id] = this.lesen(this.L.roh);
     if (this.L.server && !Konto.angemeldet()) {
-      return rahmen(`<h2>In the End</h2>
+      return rahmen(`<h2>${this.L.titel}</h2>
         <p class="hint">Die Noten gibt es nur für angemeldete Schülerinnen und Schüler – das Stück ist
           urheberrechtlich geschützt und darf nur im Unterricht genutzt werden.</p>
         <a class="knopf primary" href="#/anmelden">Anmelden</a>`);
     }
     if (!this.stueck) {
-      rahmen('<h2>In the End</h2><p class="hint">Noten werden geladen …</p>');
+      rahmen(`<h2>${this.L.titel}</h2><p class="hint">Noten werden geladen …</p>`);
       try { this.stueck = this.stuecke[id] = this.lesen((await Konto.api(`/api/stueck/${id}`)).stueck); }
       catch (e) {
         if (App.art !== 'klavierpruefung') return;
-        return rahmen(`<h2>In the End</h2><p class="hint">${e.status === 404
+        return rahmen(`<h2>${this.L.titel}</h2><p class="hint">${e.status === 404
           ? 'Die Noten sind noch nicht eingerichtet. Sag deiner Lehrkraft Bescheid.'
           : e.status === 401 ? 'Deine Anmeldung ist abgelaufen – bitte neu anmelden.'
           : 'Die Noten ließen sich nicht laden. Bist du online?'}</p>`);
@@ -132,22 +181,27 @@ const Klavierpruefung = {
 
   /* „0:1:1:1 …“ → [{ start, dauer, stufen, finger, midis, hand, i }] */
   lesen(roh) {
-    const hand = (text, h) => text.trim().split(/\s+/).map(e => {
+    const hand = (text, h) => (text || '').trim().split(/\s+/).filter(Boolean).map(e => {
       const [start, dauer, stRoh, fi = ''] = e.split(':');
       const [st, akkord] = stRoh.split('=');
       const teile = st.split('+');
       const stufen = teile.map(t => parseInt(t, 10));
       const kreuz = teile.map(t => t.endsWith('#'));          // „-7#“ = cis: Kreuz nur an diesem Ton
-      return { start: Number(start), dauer: Number(dauer), stufen, kreuz, finger: fi ? fi.split('+') : [],
+      // Finger „~“: Haltebogen von der vorigen Note – wird gezeichnet, aber nicht gespielt
+      const gebunden = fi === '~';
+      return { start: Number(start), dauer: Number(dauer), stufen, kreuz, finger: fi && !gebunden ? fi.split('+') : [], gebunden,
         midis: stufen.map((s, k) => this.midi(s, roh.vz) + (kreuz[k] ? 1 : 0)), hand: h, akkord,
         // Klang der Begleitung: ganzer Akkord, wenn das Lied ihn kennt
         klang: akkord && this.L?.AKKORDE?.[akkord] ? this.L.AKKORDE[akkord].split('+').map(t => this.midi(parseInt(t, 10), roh.vz) + (t.endsWith('#') ? 1 : 0)) : null };
     });
     const noten = [...hand(roh.rh, 'rh'), ...hand(roh.lh, 'lh')].map((n, i) => ({ ...n, i }));
+    // Handlagen „Schlag:Lage …“ (Lage = Schlüssel in L.LAGEN); jede Note kennt ihre Lage (Farbe der Fingerzahl)
+    const lagen = (roh.lagen || '').trim().split(/\s+/).filter(Boolean).map(e => { const [st, lage] = e.split(':'); return { start: Number(st), lage }; });
+    noten.forEach(n => { n.lage = lagen.filter(l => l.start <= n.start + 1e-6).pop()?.lage ?? null; });
     /* Gezeichnet ist die Zeile nur einmal (mit Wiederholung): Noten des zweiten Durchgangs
        leuchten an der Note, die an derselben Stelle der Zeile steht */
     const zeile = 16;
-    if (!this.L?.wiederholung) { noten.forEach(n => { n.bild = n.i; }); return { titel: roh.titel, von: roh.von, vz: roh.vz, takte: roh.takte, noten }; }
+    if (!this.L?.wiederholung) { noten.forEach(n => { n.bild = n.i; }); return { titel: roh.titel, von: roh.von, vz: roh.vz, takte: roh.takte, noten, lagen }; }
     noten.forEach(n => {
       const an = n.start % zeile;
       const vorbild = noten.find(v => v.hand === n.hand && v.start === an);
@@ -161,7 +215,19 @@ const Klavierpruefung = {
     return m;
   },
   ende() { return Math.max(...this.stueck.noten.map(n => n.start + n.dauer)); },
-  meine() { return this.stueck.noten.filter(n => this.hand === 'beide' || n.hand === this.hand); },
+  meine() { return this.stueck.noten.filter(n => !n.gebunden && (this.hand === 'beide' || n.hand === this.hand)); },
+  /* Taktlänge in Schlägen (4/4: 4, 6/8: 6 Achtel) und Breite eines Schlags – ein Takt ist immer gleich breit */
+  taktLaenge() { return this.L?.takt || 4; },
+  schlagBreite() { return (this.TAKT - 34) / this.taktLaenge(); },
+  fensterBreite() { return this.taktX(this.L?.fenster || 4) + 6; },
+  /* Notenwert in Vierteln (6/8: ein Schlag = eine Achtel) */
+  wert(n) { return n.dauer * (this.L?.einheit || 1); },
+  /* Handlage zur Zeit t (etwas vorausschauend, damit die Hand rechtzeitig umsetzt) */
+  lageBei(t) {
+    const f = this.stueck?.lagen;
+    if (!f?.length) return null;
+    return f.filter(l => l.start <= t + 1e-6).pop()?.lage ?? f[0].lage;
+  },
   fremde() { return this.stueck.noten.filter(n => this.hand !== 'beide' && n.hand !== this.hand); },
 
   aufbauen() {
@@ -173,7 +239,7 @@ const Klavierpruefung = {
           <button type="button" class="kp-i" id="kp-i" aria-expanded="false" aria-controls="kp-hilfe" title="Erklärung" aria-label="Erklärung">i</button>
           <span class="kp-oben-rechts">${Vollbild.knopf()}</span></h2>
         <div class="kp-hilfe" id="kp-hilfe" hidden>
-          ${this.L.wiederholung ? `<p>Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
+          ${this.L.hilfe ? this.L.hilfe : this.L.wiederholung ? `<p>Spiel die Zeile <strong>zweimal</strong>. Beim zweiten Mal hörst du auf dem ersten Ton von Takt 4 auf
             (Fermate <span class="ns">\u{1D110}</span>) und lässt ihn liegen.</p>
           <p>Die Zahlen über und unter den Noten stehen auch auf den Tasten.</p>`
           : `<p>Die Melodie spielst du mit der <strong>rechten Hand</strong>. Die Zahlen über den Noten stehen auf den Tasten:
@@ -211,6 +277,7 @@ const Klavierpruefung = {
       <div class="klaviatur kp-tasten${this.namen ? '' : ' ohne-namen'}" role="group" aria-label="Klaviertasten"></div>`;
     // Wie das Klavier: festes Bild über dem ganzen Fenster, Tasten von Rand zu Rand
     Vollbild.binden(this.el.querySelector('.kp-seite'));
+    this.lageJetzt = this.lageBei(0);
     this.tastenZeichnen();
     this.bedienen();
     this.leisteZeigen();
@@ -220,7 +287,7 @@ const Klavierpruefung = {
     const el = this.el;
     el.querySelectorAll('button[data-hand]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hand === this.hand)));
     el.querySelectorAll('[data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === this.art)));
-    el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide';
+    el.querySelector('#kp-andere-feld').hidden = this.hand === 'beide' || !this.fremde().length;
     el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
     el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
     this.zuruecksetzen();
@@ -270,10 +337,13 @@ const Klavierpruefung = {
   /* x zur Zeit in Schlägen – beide Durchgänge laufen über dieselbe Zeile */
   x(zeit) {
     const laufend = !!this.L?.laufend;
-    const z = laufend ? zeit : this.L?.wiederholung === false ? zeit - this.zeile * 16 : zeit >= 16 ? zeit - 16 : zeit;
-    const t = Math.min(laufend ? (this.stueck?.takte || 16) - 1 : 3, Math.max(0, Math.floor(z / 4)));
-    return this.taktX(t) + this.RAND + (z - t * 4) * this.SCHLAG;
+    const T = this.taktLaenge();
+    const z = laufend ? zeit : this.L?.wiederholung === false ? zeit - this.zeile * 4 * T : zeit >= 16 ? zeit - 16 : zeit;
+    const t = Math.min(laufend ? (this.stueck?.takte || 16) - 1 : 3, Math.max(0, Math.floor(z / T + 1e-9)));
+    return this.taktX(t) + this.RAND + (z - t * T) * this.schlagBreite();
   },
+  /* x einer Note: Sechzehntel rücken optisch ein Stück nach links, sonst kleben sie am nächsten Schlag */
+  xn(n) { return this.x(n.start - (n.hand === 'rh' && this.wert(n) < 0.5 - 1e-6 ? n.dauer / 2 : 0)); },
   y(stufe, hand) {
     return hand === 'rh' ? this.OBEN - (stufe - 2) * 5 : this.UNTEN_Y - (stufe + 10) * 5;
   },
@@ -315,10 +385,18 @@ const Klavierpruefung = {
   /* Noten, Pausen (nur ab != null: Takte ab … ab+anzahl-1) und Balken als SVG-Text */
   notenInhalt(noten, ab, anzahl) {
     let s = '';
-    // Pausen der rechten Hand (Halbe, Ganze, Viertel) – Lücken in jedem Takt
+    const T = this.taktLaenge(), achtelTakt = (this.L?.einheit || 1) < 1;
+    // Pausen der rechten Hand – Lücken in jedem Takt (4/4: Ganze, Halbe, Viertel; 6/8: Achtelpausen)
     if (ab !== null) for (let t = 0; t < anzahl; t++) {
-      const a = (ab + t) * 4;
-      const frei = [0, 1, 2, 3].filter(b => !noten.some(n => n.hand === 'rh' && n.start <= a + b && n.start + n.dauer > a + b));
+      const a = (ab + t) * T;
+      const frei = [...Array(T).keys()].filter(b => !noten.some(n => n.hand === 'rh' && n.start <= a + b && n.start + n.dauer > a + b));
+      if (achtelTakt) {
+        frei.forEach(b => {
+          const xp = this.x(a + b);
+          s += `<g transform="translate(${xp - 4} ${this.OBEN - 27})"><circle cx="2.6" cy="3" r="2.7" class="nb"/><path d="M1.5 5.3 Q5 6.5 8.5 1.5 L4 16" class="nh" fill="none"/></g>`;
+        });
+        continue;
+      }
       for (let i = 0; i < frei.length;) {
         let j = i; while (j + 1 < frei.length && frei[j + 1] === frei[j] + 1) j++;
         let b = frei[i], laenge = j - i + 1;
@@ -333,37 +411,81 @@ const Klavierpruefung = {
         i = j + 1;
       }
     }
-    const achtel = noten.filter(n => n.dauer === 0.5 && n.hand === 'rh');
+    // Balkengruppen der rechten Hand: kurze Noten (unter einer Viertel) im selben Schlag
+    // (6/8: in derselben punktierten Viertel), die direkt aufeinander folgen. Hälse nach oben, Balken waagrecht.
+    const G = this.L?.balken || 1;
+    const kurz = noten.filter(n => n.hand === 'rh' && this.wert(n) < 1).sort((p, q) => p.start - q.start);
+    const gruppen = [];
+    for (const n of kurz) {
+      const g = gruppen[gruppen.length - 1], v = g?.[g.length - 1];
+      if (v && Math.floor(v.start / G + 1e-9) === Math.floor(n.start / G + 1e-9) && Math.abs(v.start + v.dauer - n.start) < 1e-6) g.push(n);
+      else gruppen.push([n]);
+    }
+    const balkenY = new Map();
+    for (const g of gruppen) if (g.length > 1) {
+      const yb = Math.min(...g.map(n => this.y(n.stufen[0], 'rh'))) - 30;
+      g.forEach(n => balkenY.set(n, yb));
+    }
+    const punktiert = w => [0.75, 1.5, 3].some(v => Math.abs(w - v) < 1e-6);
     for (const n of noten) {
-      const x = this.x(n.start);
+      const x = this.xn(n);
+      const w = this.wert(n);
       let g = '';
-      const hohl = n.dauer >= 2;
+      const hohl = w >= 2;
       n.stufen.forEach((st, k) => {
         const y = this.y(st, n.hand);
         g += this.hilfslinien(x, y, n.hand) + Notenbild.kopf(x, y, hohl);
         if (n.kreuz?.[k]) g += `<text x="${x - 20}" y="${y + 5}" class="ns ns-vz">♯</text>`;
-        if (n.dauer < 4) {
-          const hoch = n.hand === 'rh' ? st < 6 : st < -6;
-          if (k === 0) g += hoch
-            ? `<line x1="${x + 5.8}" x2="${x + 5.8}" y1="${y - 1}" y2="${y - 31}" class="nh"/>`
-            : `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 31}" class="nh"/>`;
+        if (punktiert(w)) {
+          const aufLinie = (((n.hand === 'rh' ? st - 2 : st + 10) % 2) + 2) % 2 === 0;
+          g += `<circle cx="${x + 11}" cy="${aufLinie ? y - 4 : y}" r="2" class="nb"/>`;
+        }
+        if (w < 4 && k === 0) {
+          const yb = balkenY.get(n);
+          const hoch = yb !== undefined || (n.hand === 'rh' ? st < 6 : st < -6);
+          if (yb !== undefined) g += `<line x1="${x + 5.8}" x2="${x + 5.8}" y1="${y - 1}" y2="${yb}" class="nh"/>`;
+          else if (hoch) g += `<line x1="${x + 5.8}" x2="${x + 5.8}" y1="${y - 1}" y2="${y - 31}" class="nh"/>`;
+          else g += `<line x1="${x - 5.8}" x2="${x - 5.8}" y1="${y + 1}" y2="${y + 31}" class="nh"/>`;
+          // Fähnchen: kurze Note ohne Balken (Achtel eins, Sechzehntel zwei)
+          if (w < 1 && yb === undefined && n.hand === 'rh') {
+            const fahne = dy => hoch
+              ? `<path d="M${x + 5.8} ${y - 31 + dy} q1 7 8 11 q2 3 0 9 q0 -6 -8 -12 Z" class="nb"/>`
+              : `<path d="M${x - 5.8} ${y + 31 - dy} q1 -7 8 -11 q2 -3 0 -9 q0 6 -8 12 Z" class="nb"/>`;
+            g += fahne(0) + (w < 0.5 ? fahne(7) : '');
+          }
         }
       });
-      // Tastennummern: rechte Hand über dem oberen System, linke unter dem unteren (hoher Ton zuerst)
-      const nr = [...n.midis].sort((a, b) => b - a).map(m => this.NUMMER[n.hand][m]).filter(Boolean);
+      // Haltebogen von der vorigen gleichen Note (unter den Köpfen, die Hälse zeigen nach oben)
+      if (n.gebunden) {
+        const vor = noten.filter(v => v.hand === n.hand && v.start < n.start && v.stufen[0] === n.stufen[0]).pop();
+        if (vor) {
+          const x1 = this.xn(vor) + 6, x2 = x - 6, yb = this.y(n.stufen[0], n.hand) + 8, m = (x1 + x2) / 2;
+          g += `<path d="M${x1} ${yb} Q${m} ${yb + 10} ${x2} ${yb} Q${m} ${yb + 6.5} ${x1} ${yb} Z" class="nb"/>`;
+        }
+      }
+      // Zahlen: rechte Hand über dem oberen System, linke unter dem unteren (hoher Ton zuerst).
+      // Mit Fingersatz in den Noten (Lieder mit Handlagen) steht der Finger da, in der Farbe der Lage.
+      const lage = this.L?.LAGEN?.[n.lage];
+      const nr = n.finger.length ? n.finger : n.gebunden ? [] : [...n.midis].sort((a, b) => b - a).map(m => this.NUMMER[n.hand][m]).filter(Boolean);
+      const farbe = lage && n.hand === 'rh' ? ` style="--hand:${lage.farbe}"` : '';
       g += n.hand === 'rh'
-        ? nr.map(z => `<text x="${x}" y="${this.OBEN - 50}" class="kp-finger">${z}</text>`).join('')
+        ? nr.map(z => `<text x="${x}" y="${this.OBEN - 50}" class="kp-finger"${farbe}>${z}</text>`).join('')
         : nr.map((z, k) => `<text x="${x}" y="${this.UNTEN_Y + 17 + k * 14}" class="kp-finger">${z}</text>`).join('');
       s += `<g class="kp-n" data-i="${n.i}" data-hand="${n.hand}" style="--hand:${this.FARBE[n.hand]}">${g}</g>`;
       // Akkordname zwischen den Systemen – immer gut sichtbar, auch wenn die linke Hand blass ist
       if (n.akkord) s += `<text x="${x}" y="${this.OBEN + 34}" class="kp-akkord" style="--hand:${this.FARBE.lh}">${n.akkord}</text>`;
     }
-    // Achtelpaare mit Balken
-    for (let k = 0; k + 1 < achtel.length; k += 2) {
-      const [a, b] = [achtel[k], achtel[k + 1]];
-      const xa = this.x(a.start) + 5.8, xb = this.x(b.start) + 5.8;
-      const ya = this.y(a.stufen[0], 'rh') - 31, yb = this.y(b.stufen[0], 'rh') - 31;
-      s += `<path d="M${xa - .8} ${ya} L${xb + .8} ${yb} L${xb + .8} ${yb + 5} L${xa - .8} ${ya + 5} Z" class="nb kp-balken" data-i="${a.i}"/>`;
+    // Balken (Sechzehntel bekommen einen zweiten, kurzen Balken)
+    for (const g of gruppen) if (g.length > 1) {
+      const yb = balkenY.get(g[0]);
+      const xa = this.xn(g[0]) + 5.8, xb = this.xn(g[g.length - 1]) + 5.8;
+      s += `<rect x="${xa - .8}" y="${yb}" width="${xb - xa + 1.6}" height="5" class="nb kp-balken" data-i="${g[0].i}"/>`;
+      g.forEach((n, k) => {
+        if (this.wert(n) >= 0.5 - 1e-6) return;
+        const xn = this.xn(n) + 5.8;
+        const [x1, x2] = k > 0 ? [xn - 10, xn] : [xn, xn + 10];
+        s += `<rect x="${x1 - .8}" y="${yb + 8}" width="${x2 - x1 + 1.6}" height="5" class="nb kp-balken" data-i="${g[0].i}"/>`;
+      });
     }
     return s;
   },
@@ -372,14 +494,27 @@ const Klavierpruefung = {
      (cursor → laufen). Schlüssel, Vorzeichen und Taktart bleiben fest; der Streifen ist links davon abgeschnitten. */
   svgLaufend() {
     const takte = this.stueck.takte || 16;
-    const fenster = this.taktX(4) + 6;
+    const fenster = this.fensterBreite();
     const ende = this.taktX(takte);
     const oben = this.OBEN - 40;
     let fest = Notenbild.klavierLinien(fenster);
+    if (this.stueck.vz < 0) {
+      fest += `<text x="56" y="${this.y(6, 'rh') + 3}" class="ns ns-vz">♭</text>`;
+      fest += `<text x="56" y="${this.y(-8, 'lh') + 3}" class="ns ns-vz">♭</text>`;
+    }
+    const [oz, un] = this.L.taktart || [4, 4];
     [this.OBEN, this.UNTEN_Y].forEach(u => {
-      fest += `<text x="78" y="${u - 20.4}" class="nt kp-takt">4</text><text x="78" y="${u - 0.4}" class="nt kp-takt">4</text>`;
+      fest += `<text x="78" y="${u - 20.4}" class="nt kp-takt">${oz}</text><text x="78" y="${u - 0.4}" class="nt kp-takt">${un}</text>`;
     });
     let s = '';
+    // Handlagen als farbiges Feld über dem Takt, in dem sie beginnen
+    for (const l of this.stueck.lagen || []) {
+      const lage = this.L.LAGEN?.[l.lage];
+      if (!lage) continue;
+      const xl = this.taktX(Math.floor(l.start / this.taktLaenge() + 1e-9)) + 18;
+      s += `<g class="kp-lage"><rect x="${xl}" y="${this.OBEN - 86}" width="54" height="16" rx="8" fill="${lage.farbe}"/>
+        <text x="${xl + 27}" y="${this.OBEN - 74}" class="kp-lage-text">${lage.name}</text></g>`;
+    }
     for (let t = 0; t < takte; t++) {
       s += `<text x="${this.taktX(t) + 2}" y="${this.OBEN - 68}" class="kp-taktnr">${t + 1}</text>`;
       if (t > 0) s += `<line x1="${this.taktX(t) - 1}" x2="${this.taktX(t) - 1}" y1="${oben}" y2="${this.UNTEN_Y}" class="nh"/>`;
@@ -425,13 +560,24 @@ const Klavierpruefung = {
     weisse.forEach((m, i) => { if (!this.weiss(m + 1)) schwarz(m + 1, i + 1); });
     this.tastenEl = this.el.querySelector('.kp-tasten');
     this.tastenEl.innerHTML = html;
-    for (const h of ['lh', 'rh']) for (const [m, z] of Object.entries(this.NUMMER[h])) {
-      const k = this.taste(Number(m));
-      if (k) k.insertAdjacentHTML('afterbegin', `<span class="kp-nr" style="--hand:${this.FARBE[h]}">${z}</span>`);
-    }
+    this.nummernSetzen();
     this.tastenEl.style.setProperty('--taste', `${this.tastenEl.clientWidth / weisse.length}px`);
   },
   taste(m) { return this.tastenEl.querySelector(`[data-m="${m}"]`); },
+  /* Zahlen auf den Tasten; bei Liedern mit Handlagen die Finger der aktuellen Lage in ihrer Farbe */
+  nummernSetzen() {
+    if (!this.tastenEl) return;
+    this.tastenEl.querySelectorAll('.kp-nr').forEach(sp => sp.remove());
+    const lage = this.L.LAGEN?.[this.lageJetzt];
+    for (const h of ['lh', 'rh']) {
+      const nummer = h === 'rh' && lage ? lage.tasten : this.NUMMER[h];
+      const farbe = h === 'rh' && lage ? lage.farbe : this.FARBE[h];
+      for (const [m, z] of Object.entries(nummer)) {
+        const k = this.taste(Number(m));
+        if (k) k.insertAdjacentHTML('afterbegin', `<span class="kp-nr" style="--hand:${farbe}">${z}</span>`);
+      }
+    }
+  },
 
   bedienen() {
     const el = this.el;
@@ -540,7 +686,7 @@ const Klavierpruefung = {
   starten() {
     this.zuruecksetzen();
     const imTempo = this.art !== 'schritt';
-    const vorlauf = imTempo ? 4 : 0;
+    const vorlauf = imTempo ? this.taktLaenge() : 0;
     this.lauf = {
       t: -vorlauf,                     // Schläge ab Beginn, beim Mitspielen erst der Einzähltakt
       zuletzt: this.uhr(),
@@ -574,14 +720,15 @@ const Klavierpruefung = {
     const schlag = Math.floor(t + 1e-6);
     if (schlag > l.schlag) {
       l.schlag = schlag;
-      if ((this.metro || schlag < 0) && schlag < this.ende()) Ton.klick(0, ((schlag % 4) + 4) % 4 === 0);
+      const T = this.taktLaenge();
+      if ((this.metro || schlag < 0) && schlag < this.ende()) Ton.klick(0, ((schlag % T) + T) % T === 0);
       // Einzähltakt groß über den Noten: 1 – 2 – 3 – 4, auf jedem Schlag neu angestoßen
       const ez = this.el.querySelector('.kp-noten .pz-einzaehler');
       if (ez) {
         ez.hidden = schlag >= 0;
         if (schlag < 0) {
           const zahl = ez.firstChild;
-          zahl.textContent = schlag + 5;
+          zahl.textContent = schlag + this.taktLaenge() + 1;
           zahl.classList.remove('schlag'); void zahl.offsetWidth; zahl.classList.add('schlag');
         }
       }
@@ -677,7 +824,7 @@ const Klavierpruefung = {
   laufen(t) {
     const g = this.el.querySelector('.kp-lauf');
     if (!g) return;
-    const fenster = this.taktX(4) + 6;
+    const fenster = this.fensterBreite();
     const max = Math.max(0, this.taktX(this.stueck.takte || 16) + 6 - fenster);
     const dx = t < 0 ? 0 : Math.min(max, Math.max(0, this.x(Math.min(t, this.ende() - 0.01)) - (this.X0 + this.TAKT * 0.6)));
     g.setAttribute('transform', `translate(${-dx.toFixed(1)} 0)`);
@@ -693,6 +840,10 @@ const Klavierpruefung = {
     this.el.querySelectorAll('.kp-n').forEach(g => g.classList.toggle('kp-aus', this.hand !== 'beide' && g.dataset.hand !== this.hand));
   },
   cursor(t) {
+    if (this.L.LAGEN) {
+      const lage = this.lageBei(Math.max(0, t) + 0.5);
+      if (lage !== this.lageJetzt) { this.lageJetzt = lage; this.nummernSetzen(); }
+    }
     if (this.L.laufend) this.laufen(t);
     else if (this.L.wiederholung === false && t >= 0) this.zeileZeigen(Math.floor(Math.min(t, this.ende() - 0.01) / 16));
     const c = this.el.querySelector('.kp-cursor');
@@ -754,6 +905,7 @@ const Klavierpruefung = {
   zuruecksetzen() {
     if (!this.el?.querySelector('.kp-seite')) return;
     if (this.L?.laufend) this.laufen(-1);
+    if (this.L?.LAGEN && this.lageJetzt !== this.lageBei(0)) { this.lageJetzt = this.lageBei(0); this.nummernSetzen(); }
     else if (this.L && !this.L.wiederholung) this.zeileZeigen(0);
     this.el.querySelectorAll('.kp-ok, .kp-falsch').forEach(g => g.classList.remove('kp-ok', 'kp-falsch'));
     const erg = this.el.querySelector('#kp-ergebnis');

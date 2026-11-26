@@ -1465,3 +1465,4 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-taktnr { font-size: 13px; font-style: italic; fill: currentColor; opacity: .6; }
 .kp-akkord { font-size: 14px; font-weight: 800; text-anchor: middle; fill: var(--hand, currentColor); }
 .kp-laufend .kp-taktnr { font-size: 12px; }
+.kp-lage-text { font-size: 10.5px; font-weight: 800; text-anchor: middle; fill: #fff; }

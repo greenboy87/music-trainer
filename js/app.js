@@ -460,6 +460,8 @@ const App = {
     return [
       { id: 'in-the-end', titel: 'In the End', farbe: '#e07b2e', text: 'Das Intro auf dem Klavier – rechte und linke Hand, Schritt für Schritt oder im Tempo.' },
       { id: 'jingle-bells', titel: 'Jingle Bells', farbe: '#ef4444', saison: 'weihnachten', text: 'Mein erster Song: die Melodie mit den Tasten 1–5, die Begleitung spielt mit.' },
+      { id: 'yellow-submarine', titel: 'Yellow Submarine', farbe: '#facc15', text: 'Strophe und Refrain mit zwei Handlagen – C-Lage und D-Lage wie im Unterricht.' },
+      { id: 'leise-rieselt', titel: 'Leise rieselt der Schnee', farbe: '#7dd3fc', saison: 'weihnachten', text: 'Weihnachtslied im 6/8-Takt mit F-Lage und C-Lage, die Begleitung spielt mit.' },
     ].filter(l => this.saisonAktiv(l.saison));
   },
 

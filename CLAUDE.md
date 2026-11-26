@@ -174,3 +174,11 @@ künftigen Weihnachtssachen.
 Fassung aus „Mein erster Song“, Klasse 6: Melodie rechts mit Tasten 1–5 = c¹–g¹, Begleitakkorde links, die der
 Computer spielt; 16 Takte; Pausen werden aus Lücken gezeichnet, `#` an der Stufe
 = Kreuz). Nur rechte Hand (Profi mit 2 Händen hat Tom wieder verworfen). Begleitakkorde links mit Namen (`Stufe…=Akkord`), spielt der Computer. Laufende Notenzeile (`laufend: true`, `svgLaufend`/`laufen`): ganzes Lied als Streifen, der Cursor bleibt im ersten Takt des Fensters, rechts drei Takte Vorschau. Spiel `klavier-jingle-bells`, Stufe 0. Saison Weihnachten.
+`yellow-submarine` (geschützt wie In the End: Noten nur vom Worker, Schlüssel `yellow-submarine` in `STUECKE`;
+Toms Fassung aus der Stunde Klasse 5: Auftakt, Strophe 1×, Refrain 2×, 17 Takte, Spiel `klavier-yellow-submarine`) und
+`leise-rieselt` (gemeinfrei, offen im Code; F-Dur 6/8 nach singkinderlieder.de, 8 Takte, Begleitakkorde, Saison
+Weihnachten, Spiel `klavier-leise-rieselt`). Dafür kann ein Lied: `takt` (Schläge je Takt), `taktart`, `einheit`
+(Wert eines Schlags in Vierteln, 6/8: 0.5), `balken` (Balkengruppe in Schlägen), `TAKT`/`fenster` (breitere Takte,
+weniger im Fenster), Handlagen `LAGEN` + `lagen: 'Schlag:Lage …'` in den Noten (Feld mit Farbe über dem Takt, Zahlen
+auf den Tasten wechseln mit). Vierter Teil eines Eintrags = Finger (in Lagenfarbe), `~` = Haltebogen von der vorigen
+Note (gezeichnet, nicht gespielt). Punktierte Noten, Fähnchen und Sechzehntel-Balken werden gezeichnet.
