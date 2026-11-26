@@ -1361,6 +1361,7 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .notenbild.dg-gross { max-height: 24vh; max-height: 24dvh; }
 .notenbild.dg-quiz { max-width: 460px; }
 .dg-takt { font-size: 28px; }
+.dg-wdh { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
 .dg-zahl { font-size: 15px; font-weight: 800; text-anchor: middle; fill: currentColor; }
 .dg-zahl.und { opacity: .55; }
 .dg-kreuz { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }

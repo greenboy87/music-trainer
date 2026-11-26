@@ -103,7 +103,7 @@ const DG = {
      aus: Instrumente blass; ausAb/ausBis: Positionen blass; markiert: { k, p }; zaehlen: Zählzeiten */
   B: 52, X0: 58, RAND: 22, LUECKE: 34,
   x(p) { return this.X0 + this.RAND + p * this.B + Math.floor(p / 8) * (this.LUECKE + this.RAND); },
-  svg(noten, { takte = 1, aus = [], ausTakt = null, markiert = null, zaehlen = true, cursor = false, klasse = '' } = {}) {
+  svg(noten, { takte = 1, aus = [], ausTakt = null, markiert = null, zaehlen = true, cursor = false, klasse = '', wdh = 0 } = {}) {
     const x = p => this.x(p);
     const breite = x(takte * 8 - 1) + this.B + 4;
     let s = '';
@@ -112,6 +112,9 @@ const DG = {
     s += '<text x="40" y="39.6" class="nt dg-takt">4</text><text x="40" y="59.6" class="nt dg-takt">4</text>';
     for (let t = 1; t < takte; t++) { const xs = x(t * 8) - this.RAND - this.LUECKE / 2; s += `<line x1="${xs}" x2="${xs}" y1="20" y2="60" class="nh"/>`; }
     s += `<line x1="${breite - 13}" x2="${breite - 13}" y1="20" y2="60" class="nh"/><rect x="${breite - 10}" y="20" width="4" height="40" class="nb"/>`;
+    // wdh: Wiederholungszeichen am Ende (zwei Punkte) und „4×“ darüber
+    if (wdh) s += `<circle cx="${breite - 19}" cy="35" r="2.4" class="nb"/><circle cx="${breite - 19}" cy="45" r="2.4" class="nb"/>
+      <text x="${breite - 12}" y="12" class="dg-wdh">${wdh}×</text>`;
     if (zaehlen) for (let p = 0; p < takte * 8; p++) { const z = this.ZAEHL[p % 8]; s += `<text x="${x(p)}" y="-22" class="dg-zahl${z === '+' ? ' und' : ''}">${z}</text>`; }
     const positionen = [...new Set(noten.map(n => n.p))].sort((a, b) => a - b);
     const BALKEN = -10;
@@ -395,7 +398,7 @@ const Drumgrooves = {
       : DG.schlaege(this.groove());
     const aus = this.modus !== 'fill' ? ['hh', 's', 'b'].filter(k => !this.meineInstrumente().includes(k)) : [];
     const ausTakt = this.modus === 'fill' && this.teilJetzt() === 'fill' ? 0 : null;
-    el.querySelector('.dg-noten').innerHTML = DG.svg(alle, { takte, aus, ausTakt, cursor: true, klasse: 'dg-gross' }) +
+    el.querySelector('.dg-noten').innerHTML = DG.svg(alle, { takte, aus, ausTakt, cursor: true, klasse: 'dg-gross', wdh: this.art === 'sterne' ? this.DURCHGAENGE : 0 }) +
       '<div class="pz-einzaehler" hidden aria-hidden="true"><span></span></div><span class="dg-takt-zaehler" hidden></span>';
     this.spielfeld();
     this.besteZeigen();
