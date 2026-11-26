@@ -180,5 +180,5 @@ Toms Fassung aus der Stunde Klasse 5: Auftakt, Strophe 1×, Refrain 2×, 17 Takt
 Weihnachten, Spiel `klavier-leise-rieselt`). Dafür kann ein Lied: `takt` (Schläge je Takt), `taktart`, `einheit`
 (Wert eines Schlags in Vierteln, 6/8: 0.5), `balken` (Balkengruppe in Schlägen), `TAKT`/`fenster` (breitere Takte,
 weniger im Fenster), Handlagen `LAGEN` + `lagen: 'Schlag:Lage …'` in den Noten (Feld mit Farbe über dem Takt, Zahlen
-auf den Tasten wechseln mit). Vierter Teil eines Eintrags = Finger (in Lagenfarbe), `~` = Haltebogen von der vorigen
+auf den Tasten wechseln schon, sobald die letzte Note der alten Lage angeschlagen ist: `lageAnzeige`). Vierter Teil eines Eintrags = Finger (in Lagenfarbe), `~` = Haltebogen von der vorigen
 Note (gezeichnet, nicht gespielt). Punktierte Noten, Fähnchen und Sechzehntel-Balken werden gezeichnet.

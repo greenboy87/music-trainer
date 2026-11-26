@@ -223,6 +223,9 @@ const Klavierpruefung = {
   /* Notenwert in Vierteln (6/8: ein Schlag = eine Achtel) */
   wert(n) { return n.dauer * (this.L?.einheit || 1); },
   /* Handlage zur Zeit t (etwas vorausschauend, damit die Hand rechtzeitig umsetzt) */
+  /* Lage für die Tasten: die der nächsten Note, die noch zu spielen ist. So stehen die neuen Zahlen schon da,
+     sobald die letzte Note der alten Lage angeschlagen ist – die Hand kann rechtzeitig umsetzen. */
+  lageAnzeige(t) { return this.meine().find(n => n.start > t - 0.05)?.lage ?? this.lageBei(t); },
   lageBei(t) {
     const f = this.stueck?.lagen;
     if (!f?.length) return null;
@@ -841,7 +844,7 @@ const Klavierpruefung = {
   },
   cursor(t) {
     if (this.L.LAGEN) {
-      const lage = this.lageBei(Math.max(0, t) + 0.5);
+      const lage = this.lageAnzeige(Math.max(0, t));
       if (lage !== this.lageJetzt) { this.lageJetzt = lage; this.nummernSetzen(); }
     }
     if (this.L.laufend) this.laufen(t);
