@@ -1284,6 +1284,7 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
 .kp-tempo { display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .9rem; }
 .kp-tempo span { min-width: 2.2em; font-variant-numeric: tabular-nums; }
 .kp-tempo #kp-bpm-text { text-align: center; }
+.kp-tempo .kp-metro-feld { margin-left: .5rem; }
 .kp-pm { min-width: 2.4rem; min-height: 2.4rem; padding: 0; font-size: 1.3rem; font-weight: 800; line-height: 1; }
 .kp-best { font-size: .85em; opacity: .85; display: inline-flex; align-items: center; gap: .1rem; }
 .kp-best svg { width: 1em; height: 1em; color: #f5b301; }

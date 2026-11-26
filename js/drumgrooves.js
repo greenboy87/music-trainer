@@ -324,7 +324,8 @@ const Drumgrooves = {
         <span class="kp-tempo" role="group" aria-label="Tempo">Tempo
           <button type="button" class="kp-pm" data-bpm="-5" aria-label="Langsamer">−</button>
           <span id="kp-bpm-text" aria-live="polite">${this.bpm}</span>
-          <button type="button" class="kp-pm" data-bpm="5" aria-label="Schneller">+</button></span>
+          <button type="button" class="kp-pm" data-bpm="5" aria-label="Schneller">+</button>
+          <label class="schalter kp-licht kp-metro-feld" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label></span>
       </div>
       <div class="kp-start">
         <button type="button" class="primary" id="kp-los">${Icons.raw('play')}Start</button>
@@ -334,10 +335,9 @@ const Drumgrooves = {
       </div>
       <div class="kp-noten dg-noten"></div>
       <div class="kp-tasten-kopf"><span class="kp-schalter">
-          <label class="schalter kp-licht" id="kp-leuchten-feld" title="Pads leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Pads leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('padLicht')}</label>
-          <label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label>
           <label class="schalter" id="dg-sticks-feld" title="Beim Vorspielen schlagen Sticks (R, L) und das Bassdrum-Pedal (F) aufs Drumset"><input type="checkbox" role="switch" id="dg-sticks" ${this.sticks ? 'checked' : ''}><span class="schalter-bahn"></span>Sticks <span class="dg-hand R">R</span><span class="dg-hand L">L</span><span class="dg-hand F">F</span></label>
           ${fill ? '' : `<label class="schalter" id="dg-koerper-feld" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>`}
+          <label class="schalter kp-licht" id="kp-leuchten-feld" title="Pads leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Pads leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('padLicht')}</label>
         </span>
         <span class="dg-instrument">
           <button type="button" class="small" id="dg-drehen" title="Pads umdrehen: Hi-Hat und Bassdrum tauschen die Seite" aria-label="Pads umdrehen">${Icons.raw('hihat')}${Icons.raw('pfeileTausch', 'dg-pfeile')}${Icons.raw('bassdrum')}</button>
