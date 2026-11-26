@@ -203,8 +203,34 @@ const Drumgrooves = {
   stimmenJetzt() {
     const da = this.stimmenDa();
     if (this.art === 'sterne') return da;
-    const wahl = da.filter(k => this.stimmen.includes(k));
-    return wahl.length ? wahl : da;
+    return da.filter(k => this.stimmen.includes(k));   // darf auch leer sein: dann klingt nichts
+  },
+  /* Instrument an/aus – auch während es läuft: Knöpfe, blasse Noten und Pads sofort; im Lauf fallen
+     die kommenden Schläge abgewählter Instrumente weg und die neu gewählten kommen dazu. */
+  stimmenLive() {
+    const el = this.el, an = this.stimmenJetzt();
+    el.querySelectorAll('[data-stimme]').forEach(b => b.setAttribute('aria-pressed', String(an.includes(b.dataset.stimme))));
+    el.querySelectorAll('.dg-noten .dg-n').forEach(g => g.classList.toggle('dg-aus', !an.includes(g.dataset.k)));
+    el.querySelectorAll('.dg-spielfeld [data-k]').forEach(p => {
+      if (['hh', 's', 'b'].includes(p.dataset.k)) p.toggleAttribute('data-aus', !an.includes(p.dataset.k));
+    });
+    const l = this.lauf;
+    if (!l) return;
+    const t = l.t;
+    l.noten = this.durchgang();
+    const bleibt = e => e.t <= t || an.includes(e.k);
+    l.erwartet = l.erwartet.filter(bleibt); l.auto = l.auto.filter(bleibt);
+    Object.keys(l.plan).forEach(h => { l.plan[h] = l.plan[h].filter(bleibt); });
+    for (let d = Math.max(0, Math.floor(t / l.laenge)); d < l.angehaengt; d++) {
+      l.noten.forEach(n => {
+        const zeit = d * l.laenge + n.p / 2, computer = l.hoeren || n.auto, liste = computer ? l.auto : l.erwartet;
+        if (zeit <= t || liste.some(e => e.k === n.k && e.t === zeit)) return;
+        const e = { ...n, t: zeit, ok: false };
+        liste.push(e);
+        if (computer && l.plan[e.h]) l.plan[e.h].push(e);
+      });
+    }
+    Object.values(l.plan).forEach(p => p.sort((a, b) => a.t - b.t));
   },
   sterneSumme(modus = 'groove') {
     const m = this.MODI[modus];
@@ -231,7 +257,7 @@ const Drumgrooves = {
     this.teil = this.TEILE[this.lies('teil')] && this.m().teile.includes(this.lies('teil')) ? this.lies('teil') : this.m().teile[0];
     this.art = ['mit', 'sterne'].includes(this.lies('art')) ? this.lies('art') : 'mit';
     const st = (this.lies('stimmen') || '').split(',').filter(k => ['hh', 's', 'b'].includes(k));
-    this.stimmen = st.length ? st : ['hh', 's', 'b'];
+    this.stimmen = st.length || this.lies('stimmen') === 'keine' ? st : ['hh', 's', 'b'];
     // Instrument, Reihenfolge, Tempo und Schalter gelten für beide Seiten
     const gemein = s => this.lies(s, 'groove');
     if (['pads', 'set'].includes(gemein('instrument'))) this.instrument = gemein('instrument');
@@ -268,7 +294,7 @@ const Drumgrooves = {
             : 'Fünf Grooves von leicht (Groove 1 = Note 5) bis schwer (Groove 5 = Note 1). Die <strong>Hi-Hat</strong> spielt alle Achtel, die <strong>Snare</strong> den Backbeat auf 2 und 4, die <strong>Bassdrum</strong> wird von Groove zu Groove schwerer.'}</p>
           <ul>
             <li><strong>Instrumente wählen:</strong> ${Icons.raw('hihat')} Hi-Hat, ${Icons.raw('snare')} Snare, ${Icons.raw('bassdrum')} Bassdrum einzeln an- und ausschalten.
-              Nur was an ist, spielst du, hörst du bei ${Icons.raw('ear')} und siehst du deutlich in den Noten. Tipp: erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
+              Nur was an ist, spielst du, hörst du bei ${Icons.raw('ear')} und siehst du deutlich in den Noten – das geht auch, während es läuft. Tipp: erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
             <li><strong>Anhören:</strong> Der Computer spielt den Groove vor, bis du stoppst.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne.
               Mit ${Icons.raw('padLicht')} leuchten die Pads mit.</li>
@@ -341,9 +367,9 @@ const Drumgrooves = {
         aria-pressed="${an.includes(k)}" title="${name}" aria-label="${name}"${da.includes(k) ? '' : ' disabled'}>${Icons.raw(icon)}</button>`).join('');
       teile.querySelectorAll('[data-stimme]').forEach(b => b.addEventListener('click', () => {
         const k = b.dataset.stimme, jetzt = this.stimmenJetzt();
-        const neu = jetzt.includes(k) ? jetzt.filter(x => x !== k) : [...jetzt, k];
-        if (!neu.length) return;   // eins bleibt immer an
-        this.stimmen = neu; this.merken('stimmen', neu.join(',')); this.allesZeigen();
+        this.stimmen = jetzt.includes(k) ? jetzt.filter(x => x !== k) : [...jetzt, k];
+        this.merken('stimmen', this.stimmen.join(',') || 'keine');
+        this.stimmenLive();
       }));
     } else teile.innerHTML = this.teile().map(t => {
       const icons = this.TEILE[t].icons;
