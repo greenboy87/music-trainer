@@ -1294,6 +1294,9 @@ body.sb-offen .topbar, body.sb-offen .fusszeile { display: none; }
 .kp-gross { padding: .2rem .6rem; }
 .kp-licht svg { width: 1.6rem; height: 1.6rem; }
 #kp-leuchten-feld:has(input:checked) svg path:first-child { fill: #facc15; stroke: #ca8a04; }
+/* Drums: Pad mit Strahlen – eingeschaltet leuchten Strahlen und Pad gelb */
+.dg-seite #kp-leuchten-feld:has(input:checked) svg { color: #eab308; }
+.dg-seite #kp-leuchten-feld:has(input:checked) svg rect:first-child { fill: #fde04755; }
 .kp-sterne { display: inline-flex; gap: .15rem; }
 .kp-sterne .stern svg { width: 1.3rem; height: 1.3rem; }
 /* Klavier-Prüfung: kein Zoomen, kein Markieren, kein Lupen-/Kopiermenü */

@@ -259,7 +259,7 @@ const Drumgrooves = {
           <ul>
             <li><strong>Aufbauen:</strong> erst nur der Fill (den Groove spielt der Computer), dann Groove + Fill.</li>
             <li><strong>Anhören:</strong> Der Computer spielt alles vor, bis du stoppst.</li>
-            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann spielst du, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne. Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
+            <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann spielst du, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne. Mit ${Icons.raw('padLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> Groove + Fill ${this.DURCHGAENGE}×, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li><strong>Pads:</strong> oben die Toms (Q W E), unten Hi-Hat, Snare, Bassdrum (A S D) – mit ${Icons.raw('hihat')}${Icons.raw('pfeileTausch')}${Icons.raw('bassdrum')} umdrehen. Oder ${Icons.raw('drumset')} das Drumset.</li>
           </ul>` : `
@@ -271,7 +271,7 @@ const Drumgrooves = {
               Nur was an ist, spielst du, hörst du bei ${Icons.raw('ear')} und siehst du deutlich in den Noten. Tipp: erst Hi-Hat + Snare, dann Bassdrum + Snare, dann alles.</li>
             <li><strong>Anhören:</strong> Der Computer spielt den Groove vor, bis du stoppst.</li>
             <li><strong>Üben:</strong> Ein Takt wird eingezählt, dann läuft der Groove, bis du stoppst. Beim Stoppen siehst du, wie viel gepasst hat. Gibt keine Sterne.
-              Mit ${Icons.raw('tastenLicht')} leuchten die Pads mit.</li>
+              Mit ${Icons.raw('padLicht')} leuchten die Pads mit.</li>
             <li><strong>Sterne sammeln:</strong> der ganze Groove ${this.DURCHGAENGE}×, gewertet. Ab 95 % gibt es sechs Sterne.</li>
             <li>${Icons.raw('pads')} <strong>Pads</strong> oder ${Icons.raw('drumset')} <strong>Drumset</strong> – mit ${Icons.raw('pfeileTausch')} drehst du die Pads um. Tasten am Computer: A, S, D.</li>
             <li><strong>Bodypercussion:</strong> Hi-Hat = Brust (rechte Hand), Snare = Oberschenkel (linke Hand), Bassdrum = stampfen (rechter Fuß).</li>
@@ -308,10 +308,10 @@ const Drumgrooves = {
       </div>
       <div class="kp-noten dg-noten"></div>
       <div class="kp-tasten-kopf"><span class="kp-schalter">
-          <label class="schalter kp-licht" id="kp-leuchten-feld" title="Pads leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Pads leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('tastenLicht')}</label>
+          <label class="schalter kp-licht" id="kp-leuchten-feld" title="Pads leuchten mit"><input type="checkbox" role="switch" id="kp-leuchten" aria-label="Pads leuchten mit" ${this.leuchten ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('padLicht')}</label>
           <label class="schalter kp-licht" title="Metronom"><input type="checkbox" role="switch" id="kp-metro" aria-label="Metronom" ${this.metro ? 'checked' : ''}><span class="schalter-bahn"></span>${Icons.raw('metronom')}</label>
           <label class="schalter" id="dg-sticks-feld" title="Beim Vorspielen schlagen Sticks (R, L) und das Bassdrum-Pedal (F) aufs Drumset"><input type="checkbox" role="switch" id="dg-sticks" ${this.sticks ? 'checked' : ''}><span class="schalter-bahn"></span>Sticks <span class="dg-hand R">R</span><span class="dg-hand L">L</span><span class="dg-hand F">F</span></label>
-          ${fill ? '' : `<label class="schalter" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>`}
+          ${fill ? '' : `<label class="schalter" id="dg-koerper-feld" title="Bodypercussion auf den Pads zeigen"><input type="checkbox" role="switch" id="dg-koerper" ${this.koerper ? 'checked' : ''}><span class="schalter-bahn"></span>Bodypercussion</label>`}
         </span>
         <span class="dg-instrument">
           <button type="button" class="small" id="dg-drehen" title="Pads umdrehen: Hi-Hat und Bassdrum tauschen die Seite" aria-label="Pads umdrehen">${Icons.raw('hihat')}${Icons.raw('pfeileTausch', 'dg-pfeile')}${Icons.raw('bassdrum')}</button>
@@ -352,9 +352,17 @@ const Drumgrooves = {
     if (this.modus === 'fill') teile.querySelectorAll('[data-teil]').forEach(b => b.addEventListener('click', () => {
       this.teil = b.dataset.teil; this.merken('teil', this.teil); this.allesZeigen();
     }));
-    el.querySelector('#kp-leuchten-feld').hidden = this.art !== 'mit';
-    el.querySelector('#dg-drehen').hidden = this.instrument !== 'pads';
-    el.querySelector('#dg-sticks-feld').hidden = this.instrument !== 'set';
+    /* Schalter nur, wo sie etwas tun: Leuchten nur beim Üben (bei Sterne sammeln gibt es keine Hilfe),
+       Bodypercussion und Umdrehen nur bei den Pads, Sticks nur am Drumset. Metronom immer. */
+    const set = this.instrument === 'set';
+    const licht = el.querySelector('#kp-leuchten-feld');
+    licht.hidden = this.art !== 'mit';
+    licht.title = set ? 'Drumset leuchtet mit' : 'Pads leuchten mit';
+    licht.querySelector('input').setAttribute('aria-label', licht.title);
+    el.querySelector('#dg-drehen').hidden = set;
+    el.querySelector('#dg-sticks-feld').hidden = !set;
+    const koerper = el.querySelector('#dg-koerper-feld');
+    if (koerper) koerper.hidden = set;
     const takte = this.takte();
     const alle = this.modus === 'fill'
       ? [...DG.schlaege(this.groove()), ...DG.fillSchlaege(DG.FILLS[this.g], 8)]

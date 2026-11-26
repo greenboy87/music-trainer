@@ -42,6 +42,7 @@ const Icons = {
     hand:      '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5"/><path d="M14 10.5V5.5a1.5 1.5 0 0 1 3 0V13"/><path d="M17 9.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L3.6 15.6a1.6 1.6 0 0 1 2.5-2L8 15.5"/>',
     undo:      '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
     stop:      '<rect x="5.5" y="5.5" width="13" height="13" rx="1.5" fill="currentColor"/>',
+    padLicht:  '<rect x="5" y="9" width="14" height="13" rx="3"/><rect x="8.5" y="12.5" width="7" height="6" rx="1.5" fill="currentColor" stroke="none" opacity=".55"/><path d="M12 1.8v3.4M4.6 3.8l2.2 2.6M19.4 3.8l-2.2 2.6M1.6 10.5h2M20.4 10.5h2"/>',
     hihat:     '<path d="M3 8.2c3.2-2.4 14.8-2.4 18 0"/><path d="M3 10.6c3.2 2.2 14.8 2.2 18 0"/><path d="M12 5.4V22M8 22l4-3.5 4 3.5"/>',
     snare:     '<ellipse cx="12" cy="8.5" rx="9" ry="3"/><path d="M3 8.5v6.5c0 1.7 4 3 9 3s9-1.3 9-3V8.5"/><path d="M6.5 11.3v6M12 11.5v6.5M17.5 11.3v6"/>',
     bassdrum:  '<circle cx="12" cy="11" r="8.5"/><circle cx="12" cy="11" r="3"/><path d="M6.5 18 4.5 22M17.5 18l2 4"/>',
