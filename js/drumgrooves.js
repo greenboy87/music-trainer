@@ -628,10 +628,9 @@ const Drumgrooves = {
       c.removeAttribute('hidden');
       c.setAttribute('x', DG.x(ganz) + (p - ganz) * DG.B - 8);
     }
-    // Pads leuchten (nur Üben mit Schalter): was gerade fällig ist
+    // Pads leuchten (nur Üben mit Schalter): genau im Moment des Schlags kurz aufblitzen – wie beim Anhören
     if (!l.hoeren && this.art === 'mit' && this.leuchten) {
-      const faellig = new Set(l.erwartet.filter(e => t >= e.t - 0.2 && t < e.t + 0.25).map(e => e.k));
-      this.el.querySelectorAll('.dg-spielfeld [data-k]').forEach(p => p.classList.toggle('ziel', faellig.has(p.dataset.k)));
+      for (const e of l.erwartet) if (!e.geblitzt && t >= e.t) { e.geblitzt = true; if (t - e.t < 0.25) this.blitz(e.k); }
     }
     if (t >= ende + 0.5) this.fertig();
   },
