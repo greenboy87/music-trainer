@@ -109,7 +109,7 @@ const DG = {
     let s = '';
     for (let l = 0; l < 5; l++) s += `<line x1="4" x2="${breite - 6}" y1="${20 + l * 10}" y2="${20 + l * 10}" class="nl"/>`;
     s += '<rect x="10" y="30" width="3.4" height="20" class="nb"/><rect x="17" y="30" width="3.4" height="20" class="nb"/>';
-    s += '<text x="40" y="38" class="nt dg-takt">4</text><text x="40" y="58" class="nt dg-takt">4</text>';
+    s += '<text x="40" y="39.6" class="nt dg-takt">4</text><text x="40" y="59.6" class="nt dg-takt">4</text>';
     for (let t = 1; t < takte; t++) { const xs = x(t * 8) - this.RAND - this.LUECKE / 2; s += `<line x1="${xs}" x2="${xs}" y1="20" y2="60" class="nh"/>`; }
     s += `<line x1="${breite - 13}" x2="${breite - 13}" y1="20" y2="60" class="nh"/><rect x="${breite - 10}" y="20" width="4" height="40" class="nb"/>`;
     if (zaehlen) for (let p = 0; p < takte * 8; p++) { const z = this.ZAEHL[p % 8]; s += `<text x="${x(p)}" y="-22" class="dg-zahl${z === '+' ? ' und' : ''}">${z}</text>`; }

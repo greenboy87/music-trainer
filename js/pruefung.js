@@ -106,7 +106,7 @@ const Pruefungsseite = {
     const ende = this.taktX(4) - 8;
     for (let l = 0; l < 5; l++) s += `<line x1="4" x2="${ende}" y1="${20 + l * 10}" y2="${20 + l * 10}" class="nl"/>`;
     s += '<rect x="10" y="30" width="3.4" height="20" class="nb"/><rect x="17" y="30" width="3.4" height="20" class="nb"/>';
-    s += '<text x="36" y="38" class="nt pz-takt">4</text><text x="36" y="58" class="nt pz-takt">4</text>';
+    s += '<text x="36" y="39.6" class="nt pz-takt">4</text><text x="36" y="59.6" class="nt pz-takt">4</text>';
     let n = 0;
     const hand = ohneHand ? '' : (z.hand || '').replace(/[^RL]/g, '');
     const buchstabe = x => (hand[n] ? `<g class="pz-hand ${hand[n]}"><rect x="${x - 6.5}" y="-17" width="13" height="14" rx="2.5"/><text x="${x}" y="-6.2">${hand[n]}</text></g>` : '');

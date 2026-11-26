@@ -313,6 +313,9 @@ input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-of
 .ns-violin { font-size: 52px; }
 .ns-bass { font-size: 52px; }
 .nt { fill: currentColor; font-size: 22px; font-weight: 800; font-family: Georgia, serif; text-anchor: middle; }
+/* Taktangaben: Georgia hat Mediävalziffern (die 4 hängt unter die Grundlinie) – Times hat gleich hohe Ziffern,
+   die Grundlinie liegt auf der mittleren bzw. untersten Linie, die Ziffer füllt genau zwei Zwischenräume */
+.nt-takt, .pz-takt, .kp-takt, .dg-takt { font-family: "Times New Roman", Times, serif; font-weight: 800; }
 
 /* ---------- Klavier ---------- */
 .klavier {
@@ -881,7 +884,7 @@ code { background: var(--panel); border-radius: 4px; padding: 0 .3em; }
 }
 .pz-nr.gross { width: 3.8rem; height: 3.8rem; font-size: 1.8rem; }
 .notenbild.pz-zeile { width: 100%; max-width: none; height: auto; display: block; margin: 0; color: var(--text); }
-.pz-takt { font-size: 21px; }
+.pz-takt { font-size: 28px; }
 .pz-best { font-size: .78rem; color: var(--muted); text-align: right; }
 .pz-best strong { display: block; font-size: 1.15rem; color: var(--text); }
 @media (max-width: 620px) {
@@ -1322,7 +1325,7 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .kp-hilfe ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; }
 .kp-hilfe svg { width: 1.3em; height: 1.3em; vertical-align: -.25em; }
 .kp-endpfeil.jetzt .kp-fermate { fill: var(--accent); opacity: 1; }
-.kp-takt { font-size: 21px; }
+.kp-takt { font-size: 28px; }
 .kp-finger { font-size: 13px; font-weight: 800; text-anchor: middle; fill: var(--hand, currentColor); }
 .kp-fermate { font-size: 30px; text-anchor: middle; }
 .kp-n { transition: opacity .2s; }
@@ -1353,7 +1356,7 @@ html.kp-gesperrt, html.kp-gesperrt body { touch-action: pan-x pan-y; overscroll-
 .notenbild.dg-system { width: 100%; max-width: none; height: auto; color: var(--text); overflow: visible; }
 .notenbild.dg-gross { max-height: 24vh; max-height: 24dvh; }
 .notenbild.dg-quiz { max-width: 460px; }
-.dg-takt { font-size: 21px; }
+.dg-takt { font-size: 28px; }
 .dg-zahl { font-size: 15px; font-weight: 800; text-anchor: middle; fill: currentColor; }
 .dg-zahl.und { opacity: .55; }
 .dg-kreuz { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }

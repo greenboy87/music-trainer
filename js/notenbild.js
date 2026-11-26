@@ -146,7 +146,7 @@ const Notenbild = {
     // Frei: wie weit die Zeichen links und rechts über den ersten Notenkopf reichen, zum Mittig-Setzen
     const AUSDEHNUNG = { AA: [-7, 31], pA: [-5, 38], Ap: [-7, 34], Vp: [-4, 6] };
     let links = Infinity, rechts = -Infinity;
-    if (!frei) s += `<text x="22" y="${y - 3}" class="nt">${schlaege}</text><text x="22" y="${y + 21}" class="nt">4</text>`;
+    if (!frei) s += `<text x="22" y="${y - 3}" class="nt nt-takt">${schlaege}</text><text x="22" y="${y + 21}" class="nt nt-takt">4</text>`;
     takte.forEach((takt, ti) => {
       const von = x;
       takt.forEach((b, bi) => {

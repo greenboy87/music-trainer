@@ -287,7 +287,7 @@ const Klavierpruefung = {
       s += `<text x="56" y="${this.y(-8, 'lh') + 3}" class="ns ns-vz">♭</text>`;
     }
     [this.OBEN, this.UNTEN_Y].forEach(u => {
-      s += `<text x="78" y="${u - 21}" class="nt kp-takt">4</text><text x="78" y="${u - 1}" class="nt kp-takt">4</text>`;
+      s += `<text x="78" y="${u - 20.4}" class="nt kp-takt">4</text><text x="78" y="${u - 0.4}" class="nt kp-takt">4</text>`;
     });
     const oben = this.OBEN - 40;
     const letzte = !this.L.wiederholung && (this.zeile + 1) * 16 >= this.ende() - 0.01;
@@ -376,7 +376,7 @@ const Klavierpruefung = {
     const oben = this.OBEN - 40;
     let fest = Notenbild.klavierLinien(fenster);
     [this.OBEN, this.UNTEN_Y].forEach(u => {
-      fest += `<text x="78" y="${u - 21}" class="nt kp-takt">4</text><text x="78" y="${u - 1}" class="nt kp-takt">4</text>`;
+      fest += `<text x="78" y="${u - 20.4}" class="nt kp-takt">4</text><text x="78" y="${u - 0.4}" class="nt kp-takt">4</text>`;
     });
     let s = '';
     for (let t = 0; t < takte; t++) {
